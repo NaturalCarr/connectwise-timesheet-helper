@@ -1,0 +1,22 @@
+ConnectWise Timesheet Helper
+
+1. Extract this ZIP into a permanent folder on your computer.
+2. In Brave, open brave://extensions. Turn on Developer mode.
+3. Click Load unpacked and select the extracted folder containing manifest.json.
+4. Pin ConnectWise Timesheet Helper from the browser Extensions menu.
+5. Open the helper. At the top, enter your exact ConnectWise display name
+   under Ticket Owner and click Save Ticket Owner.
+6. Sign in to ConnectWise with your own account and open the helper there.
+
+The saved owner stays until you manually replace it in the settings form.
+Clearing draft inputs and submitting work do not remove it. Uninstalling the
+extension or deleting browser extension data can remove local settings.
+Assign Me uses your signed-in account; the helper verifies the saved owner.
+
+Company/Site defaults are Example Public Schools. This build targets
+na.myconnectwise.net. No Node.js or separate agent is needed for the GUI.
+Use actual work dates/times/notes. Check the runner's saved-record result.
+Final automated completion has not yet been verified in production.
+
+For an update: replace files in this same folder and click Reload on the
+extension page. Keep the same folder to preserve its extension identity.

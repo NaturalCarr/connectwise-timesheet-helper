@@ -1,0 +1,11 @@
+node_modules/
+.local/
+dist/
+.env
+.env.*
+!.env.example
+*.csv
+*.log
+*.png
+*.zip
+*.bundle

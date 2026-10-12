@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>ConnectWise ticket run</title>
+  <style>
+    body { font: 15px system-ui, sans-serif; max-width: 740px; margin: 40px auto; line-height: 1.5; }
+    pre { white-space: pre-wrap; overflow-wrap: anywhere; padding: 16px; background: #f2f4f6; }
+    button { padding: 8px 12px; }
+  </style>
+</head>
+<body>
+  <h1>ConnectWise ticket run</h1>
+  <p id="status" role="status">Loading the ticket record…</p>
+  <button id="show-ticket" type="button" hidden>Show ConnectWise tab</button>
+  <pre id="result"></pre>
+  <script type="module" src="ticket-runner.mjs"></script>
+</body>
+</html>
