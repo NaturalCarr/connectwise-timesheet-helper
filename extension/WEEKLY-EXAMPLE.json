@@ -1,0 +1,70 @@
+{
+  "schemaVersion": "1.1",
+  "exampleOnly": true,
+  "timeZone": "America/New_York",
+  "weekStart": "2026-10-05",
+  "items": [
+    {
+      "recordId": "voice-2026-10-06-hphs-issue-1",
+      "school": "SCHE",
+      "issue": "Classroom projector has no image",
+      "description": "A classroom projector displayed no image from the connected computer. Troubleshoot the display path and document the result.",
+      "context": {
+        "building": "SCHE",
+        "room": "Example room 204",
+        "asset": "Example classroom projector",
+        "people": [
+          { "name": "Example Staff Member", "role": "reportedBy" }
+        ]
+      },
+      "sourceRecordIds": ["voice-note-example-001"],
+      "timeEntries": [
+        {
+          "recordId": "voice-2026-10-06-hphs-time-1",
+          "date": "2026-10-06",
+          "start": "09:00",
+          "end": "09:25",
+          "notes": "Checked the classroom projector and computer connection. Reseated the video cable and confirmed the computer display appeared on the projector.",
+          "workFacts": [
+            "Checked projector and computer connection",
+            "Reseated video cable",
+            "Confirmed computer display appeared on projector"
+          ],
+          "outcome": "Projector displayed the computer image.",
+          "followUp": "",
+          "workType": "Onsite Support",
+          "workRole": "Onsite Engineer",
+          "billable": "B",
+          "location": "ACS",
+          "businessUnit": "Managed Services",
+          "agreement": "Example Service Agreement",
+          "ticketStatus": "Working Issue Now",
+          "addNoteTo": "Discussion",
+          "sourceRecordIds": ["voice-note-example-001"]
+        },
+        {
+          "recordId": "voice-2026-10-06-hphs-time-2",
+          "date": "2026-10-06",
+          "start": "10:10",
+          "end": "10:20",
+          "notes": "Returned to the classroom and confirmed the projector still displayed the computer image after a restart.",
+          "workFacts": [
+            "Returned to classroom",
+            "Verified image after restart"
+          ],
+          "outcome": "Display remained functional after restart.",
+          "followUp": "",
+          "workType": "Onsite Support",
+          "workRole": "Onsite Engineer",
+          "billable": "B",
+          "location": "ACS",
+          "businessUnit": "Managed Services",
+          "agreement": "Example Service Agreement",
+          "ticketStatus": "Working Issue Now",
+          "addNoteTo": "Discussion",
+          "sourceRecordIds": ["voice-note-example-002"]
+        }
+      ]
+    }
+  ]
+}
