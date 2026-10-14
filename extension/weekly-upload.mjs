@@ -1,5 +1,5 @@
 import { withTicketOwner } from './owner-settings.mjs';
-import { planWeek } from './plan.mjs';
+import { planWeek, planDay } from './plan.mjs';
 
 const fileInput = document.getElementById('week-file');
 const textInput = document.getElementById('week-json');
@@ -39,14 +39,14 @@ validateButton.addEventListener('click', async () => {
     const record = JSON.parse(raw);
     const response = await fetch(chrome.runtime.getURL('ticket-settings.json'));
     if (!response.ok) throw new Error('Extension ticket defaults could not be loaded.');
-    const plan = planWeek(record, await withTicketOwner(await response.json()));
+    const plan = (record.date ? planDay : planWeek)(record, await withTicketOwner(await response.json()));
     if (plan.exampleOnly) throw new Error('Example-only JSON cannot be run in ConnectWise.');
     validatedPlan = plan;
     preview.textContent = plan.tickets.map(({ ticket, timeEntries }) =>
       `${ticket.summary}\n${timeEntries.map((entry) =>
         `  ${entry.date} ${entry.start}–${entry.end} ${entry.billable}: ${entry.notes}`).join('\n')}`
     ).join('\n\n');
-    status.textContent = `Validated ${plan.tickets.length} ticket(s) and ${plan.totalEntries} time entry/entries for ${plan.weekStart}–${plan.weekEnd}. Nothing has been saved.`;
+    status.textContent = `Validated ${plan.tickets.length} ticket(s) and ${plan.totalEntries} time entry/entries for ${plan.mode === 'daily' ? plan.date : `${plan.weekStart}–${plan.weekEnd}`}. Nothing has been saved.`;
     runButton.disabled = false;
   } catch (error) {
     status.textContent = `Validation failed: ${error.message}`;

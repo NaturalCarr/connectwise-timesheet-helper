@@ -1,4 +1,5 @@
 import { applyTicketOwner } from './owner-settings.mjs';
+import { dailyReport } from './daily-report.mjs';
 import { executePlan } from './execute-plan.mjs';
 import { chooseConnectWiseTab, mainWorkspaceTab } from './navigation.mjs';
 
@@ -48,6 +49,9 @@ async function main() {
   const tabId = await mainWorkspaceTab(await chooseConnectWiseTab(params),
     (message) => { status.textContent = message; });
   const driver = {
+    async readTicketSummary(ticketId) {
+      return (await send('inspectTicket', tabId, { ticketId })).summary;
+    },
     async findTickets(ticket) {
       status.textContent = `Searching for ${ticket.summary}…`;
       return (await send('findTickets', tabId, { ticket })).matches;
@@ -99,9 +103,28 @@ async function main() {
     }
   };
   const result = await executePlan(plan, driver);
+  if (result.ok && plan.mode === 'daily') {
+    result.endOfDay = dailyReport(plan, result);
+    const html = result.endOfDay.html;
+    const preview = document.getElementById('email-preview');
+    preview.innerHTML = html;
+    document.getElementById('daily-report').hidden = false;
+    document.getElementById('copy-daily-email').onclick = async () => {
+      try {
+        await navigator.clipboard.write([new ClipboardItem({ 'text/html': new Blob([html], { type: 'text/html' }),
+          'text/plain': new Blob([preview.innerText], { type: 'text/plain' }) })]);
+        document.getElementById('email-status').textContent = 'Copied. Review in your email composer before sending. Nothing was sent.';
+      } catch (error) { document.getElementById('email-status').textContent = `Copy failed: ${error.message}. Use Download HTML.`; }
+    };
+    document.getElementById('download-daily-email').onclick = () => {
+      const url = URL.createObjectURL(new Blob([html], { type: 'text/html' }));
+      const link = document.createElement('a'); link.href = url; link.download = `end-of-day-${plan.date}.html`; link.click();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+    };
+  }
   if (result.ok) await chrome.storage.local.remove('popupDraft:week').catch(() => {});
   output.textContent = JSON.stringify(result, null, 2);
-  status.textContent = result.ok ? 'Weekly run saved and verified.' : 'Weekly run stopped. Review the result below.';
+  status.textContent = result.ok ? 'Run saved and verified. Daily runs include the end-of-day email table below.' : 'Run stopped. Review the result below; no complete end-of-day email was generated.';
   if (reportResult) await reportResult(result);
 }
 

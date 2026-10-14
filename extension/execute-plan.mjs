@@ -30,6 +30,7 @@ export async function executePlan(plan, driver) {
       result.ticketId = ticketId;
       const opened = await driver.openTicket(ticketId, item.ticket, { numberOnly: Boolean(item.existingTicketId || item.ticket.titleContains) });
       if (opened !== true) throw new Error(`Ticket #${ticketId} identity was not verified.`);
+      if (driver.readTicketSummary) result.summary = await driver.readTicketSummary(ticketId);
       if (await driver.ensureTicketOwner(ticketId, item.ticket.owner) !== true) {
         throw new Error(`Ticket #${ticketId} Owner ${item.ticket.owner} was not verified.`);
       }
@@ -67,7 +68,8 @@ export async function executePlan(plan, driver) {
       if (await driver.verifyTicketStatus(ticketId, item.completedStatus) !== true) {
         throw new Error(`Ticket #${ticketId} was not verified as ${item.completedStatus}.`);
       }
-      result.status = 'completed_verified';
+      result.status = item.completedStatus === 'Completed' ? 'completed_verified' : 'status_changed_verified';
+      result.ticketStatus = item.completedStatus;
     } catch (error) {
       if (!result.ticketId && Number.isSafeInteger(error.ticketId)) result.ticketId = error.ticketId;
       result.status = 'stopped';

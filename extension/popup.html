@@ -79,13 +79,13 @@
   <p id="ticket-status" role="status"></p>
   <button id="open-eod" type="button">End-of-day email update</button>
   <details class="workflow" id="weekly-section">
-  <summary>Weekly ticket and time run</summary>
-  <p>Choose any signed-in ConnectWise tab. Paste a weekly JSON record or select a file, then validate it. The runner opens Service Board when needed.</p>
+  <summary>Daily / weekly tickets and time</summary>
+  <p>Choose any signed-in ConnectWise tab. Paste a daily or weekly JSON record or select a file, then validate it. The runner opens Service Board when needed.</p>
   <button id="select-tab" type="button">Use this ConnectWise tab for runs</button>
-  <label>Weekly JSON file<input id="week-file" type="file" accept=".json,application/json"></label>
-  <label>Or paste weekly JSON<textarea id="week-json" spellcheck="false" placeholder="Paste the complete weekly JSON here"></textarea></label>
-  <button id="validate-week" type="button">Validate weekly JSON</button>
-  <button id="run-week" type="button" disabled>Run validated week in ConnectWise</button>
+  <label>Daily / weekly JSON file<input id="week-file" type="file" accept=".json,application/json"></label>
+  <label>Or paste daily / weekly JSON<textarea id="week-json" spellcheck="false" placeholder="Paste the complete daily or weekly JSON here"></textarea></label>
+  <button id="validate-week" type="button">Validate JSON</button>
+  <button id="run-week" type="button" disabled>Run validated tickets in ConnectWise</button>
   <p id="week-status" role="status"></p>
   <pre id="week-preview"></pre>
   <p>Browser submission has not yet passed a saved end-to-end ConnectWise run. Watch the runner tab for the actual saved-record result.</p>
@@ -131,4 +131,5 @@
   <script type="module" src="status-popup.mjs"></script>
 </body>
 </html>
+
 

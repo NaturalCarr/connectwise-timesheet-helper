@@ -1,0 +1,35 @@
+{
+  "schemaVersion": "1.2",
+  "exampleOnly": true,
+  "timeZone": "America/New_York",
+  "date": "2026-10-14",
+  "endOfDay": { "subject": "SCHC - End of day update - 10/14/2026" },
+  "items": [
+    {
+      "recordId": "example-copier",
+      "school": "SCHC",
+      "issue": "Example copier issue",
+      "description": "Replace this example with the actual issue details.",
+      "finalStatus": "Waiting Parts/Repair",
+      "endOfDayNotes": "Replace with the actual work performed.",
+      "nextStep": "Replace with the actual next step.",
+      "timeEntries": [{
+        "date": "2026-10-14", "start": "09:00", "end": "09:30",
+        "notes": "Example only. Replace with actual notes.",
+        "workType": "Onsite Support", "workRole": "Onsite Engineer", "billable": "AUTO"
+      }]
+    },
+    {
+      "recordId": "example-existing",
+      "school": "SCHC",
+      "issue": "Example imported issue",
+      "titleContains": "EXAMPLE-REFERENCE",
+      "finalStatus": "Completed",
+      "timeEntries": [{
+        "date": "2026-10-14", "start": "10:00", "end": "10:15",
+        "notes": "Example only. Replace with the actual work performed.",
+        "workType": "Remote Support", "workRole": "Onsite Engineer", "billable": "AUTO"
+      }]
+    }
+  ]
+}

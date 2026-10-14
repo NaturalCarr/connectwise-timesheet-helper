@@ -277,7 +277,8 @@ export function planWeek(input, settings) {
           `Item ${itemIndex + 1}, entry ${entryIndex + 1} sourceRecordIds`) };
     });
     const { timeEntry: _unused, ...ticket } = base;
-    return { ...ticket, recordId: issueRecordId || null, context: item.context || null,
+    if (item.finalStatus !== undefined && !eodStatuses.includes(item.finalStatus)) throw new Error(`Item ${itemIndex + 1}: unsupported finalStatus.`);
+    return { ...ticket, completedStatus: item.finalStatus || ticket.completedStatus, recordId: issueRecordId || null, context: item.context || null,
       sourceRecordIds, timeEntries, requiresTimeEntryDetails: false };
   });
   const steps = tickets.flatMap((ticket, ticketIndex) => [
@@ -290,5 +291,24 @@ export function planWeek(input, settings) {
   return { schemaVersion: input.schemaVersion || '1.1', exampleOnly: input.exampleOnly === true,
     timeZone: input.timeZone || 'America/New_York', weekStart, weekEnd, tickets, steps,
     totalEntries: tickets.reduce((sum, ticket) => sum + ticket.timeEntries.length, 0) };
+}
+
+export function planDay(input, settings) {
+  if (!input || typeof input !== 'object' || Array.isArray(input)) throw new Error('Daily input must be an object.');
+  const date = clean(input.date);
+  const parsed = new Date(`${date}T12:00:00Z`);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || Number.isNaN(parsed.getTime()) || parsed.toISOString().slice(0, 10) !== date) throw new Error('Daily date must use YYYY-MM-DD.');
+  if (input.schemaVersion !== undefined && input.schemaVersion !== '1.2') throw new Error('Daily schemaVersion must be 1.2.');
+  if (!Array.isArray(input.items) || !input.items.length) throw new Error('A daily run requires at least one ticket.');
+  for (const item of input.items) {
+    if (!Array.isArray(item?.timeEntries) || !item.timeEntries.length || item.timeEntries.some((entry) => entry.date !== date)) throw new Error('Every daily time entry must have the daily date.');
+  }
+  const monday = new Date(parsed); monday.setUTCDate(monday.getUTCDate() - (monday.getUTCDay() + 6) % 7);
+  const plan = planWeek({ ...input, schemaVersion: '1.1', weekStart: monday.toISOString().slice(0,10) }, settings);
+  const subject = clean(input.endOfDay?.subject) || `End of day update - ${date}`;
+  return { ...plan, mode: 'daily', schemaVersion: '1.2', date, endOfDay: { subject,
+    tickets: input.items.map((item, index) => ({ status: plan.tickets[index].completedStatus,
+      notes: cleanBlock(item.endOfDayNotes) || item.timeEntries.map((entry) => cleanBlock(entry.notes)).join('\n'),
+      nextStep: cleanBlock(item.nextStep) || item.timeEntries.map((entry) => cleanBlock(entry.followUp)).filter(Boolean).join('\n') })) } };
 }
 
