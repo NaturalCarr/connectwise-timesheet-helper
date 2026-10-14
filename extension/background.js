@@ -2,7 +2,7 @@ if (typeof importScripts === 'function') importScripts('form-functions.js');
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message?.action === 'helperBuild') {
-    sendResponse({ ok: true, version: '0.8.29', ticketSaveMethod: 'exact-element' });
+    sendResponse({ ok: true, version: '0.8.30', ticketSaveMethod: 'exact-element' });
     return false;
   }
   const actions = {
@@ -27,7 +27,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   const action = actions[message?.action];
   if (!action) return false;
   action(message).then(sendResponse, (error) => sendResponse({ ok: false,
-    error: `[Helper 0.8.29; ${message.action}] ${error.message}`,
+    error: `[Helper 0.8.30; ${message.action}] ${error.message}`,
     ticketId: Number.isSafeInteger(error.ticketId) ? error.ticketId : null }));
   return true;
 });
@@ -1559,7 +1559,7 @@ async function readTimeRowsInTab({ tabId, ticketId }) {
 }
 
 function timeRowMatchesEntryFields(row, entry) {
-  const combo = (value) => String(value || '').trim().replace(/^\$/, '')
+  const combo = (value) => String(value || '').replace(/\s+/g, ' ').trim().replace(/^\$/, '')
     .replace(/\s+/g, ' ').toLowerCase();
   return (entry.billable === 'AUTO' ? ['B', 'NB', 'NC'].includes(row.billable) : row.billable === entry.billable) && combo(row.workType) === combo(entry.workType)
     && combo(row.workRole) === combo(entry.workRole)
@@ -1808,7 +1808,7 @@ function verifyCompleteTimeDraft(ticketId, entry) {
     if (matches.length !== 1) throw new Error(`${selector}: expected one visible control.`);
     return matches[0];
   };
-  const combo = (value) => String(value || '').trim().replace(/^\$\s*/, '').toLowerCase();
+  const combo = (value) => String(value || '').replace(/\s+/g, ' ').trim().replace(/^\$\s*/, '').toLowerCase();
   const display = (value) => {
     const [hour, minute] = value.split(':').map(Number);
     return `${hour % 12 || 12}:${String(minute).padStart(2, '0')} ${hour < 12 ? 'AM' : 'PM'}`;
@@ -2017,6 +2017,8 @@ function verifyNotes(ticketId, notes) {
   if (actual !== notes.trim()) return { ok: false, error: 'The Notes editor did not retain the exact text.' };
   return { ok: true };
 }
+
+
 
 
 

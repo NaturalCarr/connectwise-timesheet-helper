@@ -115,22 +115,29 @@ async function fillTimeDraft(entry) {
     ]) {
       if (value) expected[label] = [one(selector, label), value];
     }
-    const normalizeCombo = (value) => String(value || '').trim().replace(/^\$\s*/, '').replace(/~$/, '').trim().toLowerCase();
+    const normalizeCombo = (value) => String(value || '').replace(/\s+/g, ' ').trim().replace(/^\$\s*/, '').replace(/~$/, '').trim().toLowerCase();
     const chooseCombo = async (label, input, value) => {
       if (normalizeCombo(input.value) === normalizeCombo(value)) return;
       const arrow = input.nextElementSibling?.tagName === 'DIV'
         ? input.nextElementSibling : input.parentElement?.querySelector('input + div');
       if (!arrow || !visible(arrow)) throw new Error(`${label}: dropdown arrow was not found.`);
-      arrow.click();
+      const readOptions = () => [...document.querySelectorAll('.gwt-dropdown-options .mm_label, .gwt-dropdown-options [role="option"]')]
+        .filter(visible);
+      if (!readOptions().some((option) => normalizeCombo(option.textContent) === normalizeCombo(value))) arrow.click();
       let options = [];
-      for (let attempt = 0; attempt < 10; attempt++) {
-        options = [...document.querySelectorAll('.gwt-dropdown-options > .mm_label')].filter(visible);
-        if (options.length) break;
+      let matches = [];
+      for (let attempt = 0; attempt < 80; attempt++) {
+        options = readOptions();
+        matches = options.filter((option) => normalizeCombo(option.textContent) === normalizeCombo(value));
+        if (matches.length) break;
         await new Promise((resolve) => setTimeout(resolve, 100));
       }
-      const matches = options.filter((option) => normalizeCombo(option.textContent) === normalizeCombo(value));
-      if (matches.length !== 1) throw new Error(`${label}: expected one ${value} choice, found ${matches.length}.`);
+      if (matches.length !== 1) throw new Error(`${label}: expected one ${value} choice, found ${matches.length}. Visible options: ${options.map((option) => option.textContent.trim()).slice(0, 25).join(' | ') || 'none'}.`);
+      matches[0].scrollIntoView({ block: 'nearest', inline: 'nearest' });
       matches[0].click();
+      for (let attempt = 0; attempt < 30 && normalizeCombo(input.value) !== normalizeCombo(value); attempt++) {
+        await new Promise((resolve) => setTimeout(resolve, 100));
+      }
       if (normalizeCombo(input.value) !== normalizeCombo(value)) {
         throw new Error(`${label}: selection did not take effect.`);
       }
