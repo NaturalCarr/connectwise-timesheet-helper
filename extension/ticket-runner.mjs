@@ -101,7 +101,12 @@ async function main() {
       return { verified: saved.verified, timeId: saved.row?.timeId || null };
     }
   };
-  const result = await executeTicket(plan, driver);
+  let result;
+  const continueButton = document.getElementById('continue-run');
+  const run = async (checkpoint = null) => {
+  continueButton.hidden = true;
+  continueButton.disabled = true;
+  result = await executeTicket(plan, driver, checkpoint);
   if (result.ok) await chrome.storage.local.remove('popupDraft:ticket').catch(() => {});
   output.textContent = JSON.stringify(result, null, 2);
   status.textContent = result.ok
@@ -109,9 +114,17 @@ async function main() {
     : 'Ticket run stopped. Review the result below; a ticket or time entry may already have been saved.';
   if (result.ticketId) {
     showTicket.hidden = false;
-    showTicket.addEventListener('click', () => chrome.tabs.update(tabId, { active: true }));
+    showTicket.onclick = () => chrome.tabs.update(tabId, { active: true });
   }
-  if (report) await report(result);
+  continueButton.hidden = result.ok;
+  continueButton.disabled = false;
+  if (report && !checkpoint) await report(result).catch(() => {});
+  };
+  continueButton.onclick = () => run(result).catch((error) => {
+    status.textContent = `Continue stopped: ${error.message}`;
+    continueButton.hidden = false; continueButton.disabled = false;
+  });
+  await run();
 }
 
 main().catch(async (error) => {

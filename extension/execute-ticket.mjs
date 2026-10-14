@@ -1,5 +1,5 @@
 // One daily ticket may include one time entry; every save is checked before continuing.
-export async function executeTicket(plan, driver) {
+export async function executeTicket(plan, driver, checkpoint = null) {
   if (!plan?.ticket || plan.exampleOnly) throw new Error('A validated, non-example ticket plan is required.');
   if (plan.completeAfterTime && (!plan.timeEntry || !plan.completedStatus)) {
     throw new Error('Completion requires a time entry and completed ticket status.');
@@ -14,7 +14,7 @@ export async function executeTicket(plan, driver) {
   const result = { ok: false, recordId: plan.recordId || null, summary: plan.ticket.summary,
     ticketId: null, status: 'pending' };
   try {
-    let ticketId = plan.existingTicketId;
+    let ticketId = checkpoint?.ticketId || plan.existingTicketId;
     let created = false;
     if (!ticketId) {
       const matches = await driver.findTickets(plan.ticket);
@@ -26,8 +26,23 @@ export async function executeTicket(plan, driver) {
     }
     if (!Number.isSafeInteger(ticketId) || ticketId <= 0) throw new Error('A saved ticket ID was not verified.');
     result.ticketId = ticketId;
-    if (await driver.openTicket(ticketId, plan.ticket, { numberOnly: Boolean(plan.existingTicketId || plan.ticket.titleContains) }) !== true) {
+    if (await driver.openTicket(ticketId, plan.ticket, { numberOnly: Boolean(checkpoint?.ticketId || plan.existingTicketId || plan.ticket.titleContains) }) !== true) {
       throw new Error(`Ticket #${ticketId} identity was not verified.`);
+    }
+    // Re-read saved time before resuming final status; a checkpoint is not proof.
+    if (checkpoint?.entry && ['saved_verified', 'existing_verified'].includes(checkpoint.entry.status) && plan.timeEntry) {
+      const matches = await driver.findTimeEntries(ticketId, plan.timeEntry);
+      if (!Array.isArray(matches) || matches.length !== 1) throw new Error('Resume could not verify exactly one saved time entry. Stop for reconciliation.');
+      const saved = await driver.verifyTimeEntry(ticketId, plan.timeEntry);
+      if (!saved?.verified) throw new Error('Resume saved time entry was not verified.');
+      result.entry = { ...checkpoint.entry, status: 'existing_verified', timeId: saved.timeId || null };
+      if (plan.completeAfterTime) {
+        await driver.setTicketStatus(ticketId, plan.completedStatus);
+        if (await driver.verifyTicketStatus(ticketId, plan.completedStatus) !== true) throw new Error('Resumed final status was not verified.');
+      }
+      return { ...result, ok: true, status: plan.completeAfterTime
+        ? (plan.completedStatus === 'Completed' ? 'completed_verified' : 'status_changed_verified') : 'working_with_time_verified',
+        ticketStatus: plan.completeAfterTime ? plan.completedStatus : plan.ticket.status };
     }
     if (await driver.ensureTicketOwner(ticketId, plan.ticket.owner) !== true) {
       throw new Error(`Ticket #${ticketId} Owner ${plan.ticket.owner} was not verified.`);
