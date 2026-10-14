@@ -75,6 +75,9 @@ export function planWorkItem(item, settings) {
     throw new Error('Existing ticket ID must be a positive integer.');
   }
 
+  const titleContains = clean(item.titleContains);
+  if (item.titleContains !== undefined && (!titleContains || /[*?]/.test(titleContains))) throw new Error('titleContains must be nonempty literal text without search wildcards.');
+  if (titleContains && existingTicketId) throw new Error('Choose ticket ID or titleContains, not both.');
   const summary = `${school} - ${issue}`;
   const ticket = {
     company: clean(settings.company),
@@ -89,7 +92,8 @@ export function planWorkItem(item, settings) {
     source: clean(settings.source),
     site,
     summary,
-    description: cleanBlock(item.description) || summary
+    description: cleanBlock(item.description) || summary,
+    ...(titleContains ? { titleContains } : {})
   };
   for (const [key, value] of Object.entries(ticket)) {
     if (!value) throw new Error(`Ticket ${key} is required.`);
@@ -114,7 +118,7 @@ export function planTicket(input, settings) {
     throw new Error('Ticket input must be an object.');
   }
   const allowed = new Set(['schemaVersion', 'exampleOnly', 'recordId', 'school', 'issue',
-    'description', 'site', 'existingTicketId', 'timeEntry', 'completeAfterTime']);
+    'description', 'site', 'existingTicketId', 'titleContains', 'timeEntry', 'completeAfterTime']);
   const unexpected = Object.keys(input).filter((key) => !allowed.has(key));
   if (unexpected.length) throw new Error(`Ticket-only JSON has unsupported fields: ${unexpected.join(', ')}.`);
   if (input.schemaVersion !== undefined && input.schemaVersion !== '1.0') {
@@ -283,3 +287,4 @@ export function planWeek(input, settings) {
     timeZone: input.timeZone || 'America/New_York', weekStart, weekEnd, tickets, steps,
     totalEntries: tickets.reduce((sum, ticket) => sum + ticket.timeEntries.length, 0) };
 }
+

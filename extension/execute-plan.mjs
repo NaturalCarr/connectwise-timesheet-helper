@@ -23,11 +23,12 @@ export async function executePlan(plan, driver) {
         const matches = await driver.findTickets(item.ticket);
         if (!Array.isArray(matches)) throw new Error('Ticket search was not verified.');
         if (matches.length > 1) throw new Error('Multiple matching tickets; choose one before continuing.');
+        if (!matches.length && item.ticket.titleContains) throw new Error('No ticket contains the requested title text. No replacement ticket was created.');
         ticketId = matches.length === 1 ? matches[0].ticketId : await driver.createTicket(item.ticket);
       }
       if (!Number.isSafeInteger(ticketId) || ticketId <= 0) throw new Error('A saved ticket ID was not verified.');
       result.ticketId = ticketId;
-      const opened = await driver.openTicket(ticketId, item.ticket, { numberOnly: Boolean(item.existingTicketId) });
+      const opened = await driver.openTicket(ticketId, item.ticket, { numberOnly: Boolean(item.existingTicketId || item.ticket.titleContains) });
       if (opened !== true) throw new Error(`Ticket #${ticketId} identity was not verified.`);
       if (await driver.ensureTicketOwner(ticketId, item.ticket.owner) !== true) {
         throw new Error(`Ticket #${ticketId} Owner ${item.ticket.owner} was not verified.`);
@@ -76,3 +77,4 @@ export async function executePlan(plan, driver) {
   }
   return { ok: true, results };
 }
+

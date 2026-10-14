@@ -18,5 +18,12 @@ na.myconnectwise.net. No Node.js or separate agent is needed for the GUI.
 Use actual work dates/times/notes. Check the runner's saved-record result.
 Final automated completion has not yet been verified in production.
 
+Find and open by title text accepts a reference from the original platform.
+It requires exactly one matching title at Example Schools and never creates a
+replacement when no match exists. Use an exact ConnectWise number if ambiguous.
+End-of-day email update lets you enter notes/next steps and choose each ticket's
+status. Update statuses and generate email saves/ verifies every status first.
+Copy email table pastes into your own email composer; the helper sends no email.
+
 For an update: replace files in this same folder and click Reload on the
 extension page. Keep the same folder to preserve its extension identity.

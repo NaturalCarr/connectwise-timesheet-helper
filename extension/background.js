@@ -2,7 +2,7 @@ if (typeof importScripts === 'function') importScripts('form-functions.js');
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message?.action === 'helperBuild') {
-    sendResponse({ ok: true, version: '0.8.25', ticketSaveMethod: 'exact-element' });
+    sendResponse({ ok: true, version: '0.8.26', ticketSaveMethod: 'exact-element' });
     return false;
   }
   const actions = {
@@ -27,7 +27,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   const action = actions[message?.action];
   if (!action) return false;
   action(message).then(sendResponse, (error) => sendResponse({ ok: false,
-    error: `[Helper 0.8.25; ${message.action}] ${error.message}`,
+    error: `[Helper 0.8.26; ${message.action}] ${error.message}`,
     ticketId: Number.isSafeInteger(error.ticketId) ? error.ticketId : null }));
   return true;
 });
@@ -426,7 +426,7 @@ function searchBoardForTicket(ticket) {
     input.dispatchEvent(new Event('change', { bubbles: true }));
     if (input.value !== value) throw new Error(`${selector} did not retain the search value.`);
   };
-  set('#Summary-input', `*${ticket.summary}*`);
+  set('#Summary-input', `*${ticket.titleContains || ticket.summary}*`);
   set('#Company_Name-input', ticket.company);
   set('#Site_name-input', ticket.site);
   one('.cw-toolbar-search').click();
@@ -436,7 +436,7 @@ function searchBoardForTicket(ticket) {
 function inspectBoardSearch(ticket) {
   const inputs = ['#Summary-input', '#Company_Name-input', '#Site_name-input']
     .map((selector) => document.querySelector(selector)?.value || '');
-  if (inputs[0] !== `*${ticket.summary}*` || inputs[1] !== ticket.company || inputs[2] !== ticket.site) {
+  if (inputs[0] !== `*${ticket.titleContains || ticket.summary}*` || inputs[1] !== ticket.company || inputs[2] !== ticket.site) {
     return { ready: false, reason: 'Search filters changed.' };
   }
   const count = document.body?.innerText.match(/View\s+(\d+)\s*-\s*(\d+)\s+of\s+(\d+)/i);
@@ -446,7 +446,7 @@ function inspectBoardSearch(ticket) {
   const rows = [...document.querySelectorAll('tr')].map((row) =>
     [...row.children].filter((cell) => cell.tagName === 'TD').map((cell) => cell.innerText.trim()))
     .filter((cells) => cells.length > 9 && /^\d+$/.test(cells[1] || ''));
-  const term = normalize(ticket.summary);
+  const term = normalize(ticket.titleContains || ticket.summary);
   if (rows.some((cells) => !normalize(cells[6]).includes(term)
     || normalize(cells[8]) !== normalize(ticket.company)
     || normalize(cells[9]) !== normalize(ticket.site))) {
@@ -455,7 +455,7 @@ function inspectBoardSearch(ticket) {
   if (count && Number(count[2]) < Number(count[3])) {
     return { ready: false, reason: 'Search has additional pages; duplicate check is incomplete.', paginated: true };
   }
-  const matches = rows.filter((cells) => normalize(cells[6]) === normalize(ticket.summary)
+  const matches = rows.filter((cells) => (ticket.titleContains ? normalize(cells[6]).includes(normalize(ticket.titleContains)) : normalize(cells[6]) === normalize(ticket.summary))
     && normalize(cells[8]) === normalize(ticket.company)
     && normalize(cells[9]) === normalize(ticket.site))
     .map((cells) => ({ ticketId: Number(cells[1]), summary: cells[6], company: cells[8], site: cells[9] }));
@@ -470,7 +470,7 @@ function inspectSearchedTicket(ticket) {
   const summary = visible('input.cw_PsaSummaryHeader')[0]?.value;
   const company = visible('input.cw_company')[0]?.value;
   const site = visible('input.cw_companyViewCompanyAddress')[0]?.value;
-  return { matches: Boolean(header && normalize(summary) === normalize(ticket.summary)
+  return { matches: Boolean(header && (ticket.titleContains ? normalize(summary).includes(normalize(ticket.titleContains)) : normalize(summary) === normalize(ticket.summary))
     && normalize(company) === normalize(ticket.company) && normalize(site) === normalize(ticket.site)),
     ticketId: header ? Number(header[1]) : null };
 }
@@ -1419,8 +1419,11 @@ function verifyTicketStatus(ticketId, status) {
     verified: matches && normalize(statuses[0].value) === normalize(status) && savedMessage && freshSaveMessage };
 }
 
-async function setTicketStatusInTab({ tabId, ticketId, status }) {
-  if (!['Working Issue Now', 'Completed'].includes(status)) throw new Error('Unsupported ticket status.');
+async function setTicketStatusInTab({ tabId, ticketId, status, forceSave = false }) {
+  if (!['Scheduled Remote', 'Scheduled Onsite', 'Working Issue Now', 'Scheduling Required',
+    'Waiting Parts/Repair', 'Waiting Client Response', 'Waiting on 3rd Party',
+    'Waiting for next onsite visit', 'Pending Closure', 'Completed', 'Closed',
+    'Closed/Client Unresponsive'].includes(status)) throw new Error('Unsupported ticket status.');
   let found;
   try { found = await matchingFrame(tabId, ticketId, inspectTicketFrame); }
   catch {
@@ -1437,7 +1440,7 @@ async function setTicketStatusInTab({ tabId, ticketId, status }) {
   if (!found) throw new Error('Ticket detail did not open from the Time list.');
   const { frameId, state } = found;
   const normalize = (value) => String(value || '').trim().replace(/~$/, '').trim().toLowerCase();
-  if (normalize(state.status) === normalize(status) && status !== 'Completed') {
+  if (!forceSave && normalize(state.status) === normalize(status) && status !== 'Completed') {
     return { ok: true, ticketId: Number(ticketId), status: state.status, alreadySet: true, saved: true };
   }
   const target = { tabId, frameIds: [frameId] };
@@ -1447,6 +1450,9 @@ async function setTicketStatusInTab({ tabId, ticketId, status }) {
     throw new Error(`status-option: ${error.message}`);
   }
   try {
+    if (forceSave) {
+      await executeConnectWiseScript({ target, func: clearStatusEmailRecipients });
+    }
     await trustedTicketSave(tabId, frameId, ticketId, status);
   } catch (error) {
     throw new Error(`exact-save: ${error.message}`);
@@ -1472,6 +1478,17 @@ async function setTicketStatusInTab({ tabId, ticketId, status }) {
     }
   }
   throw new Error('exact-save-confirmation: Save element was activated once, but no fresh saved-status confirmation was verified. No coordinate click was sent for ticket Save. Stop before entering more time.');
+}
+
+function clearStatusEmailRecipients() {
+  for (const label of ['Contact:', 'Resources:', 'Cc:']) {
+    const inputs = [...new Set([...document.querySelectorAll('*')]
+      .filter((el) => el.children.length < 3 && el.textContent.trim() === label)
+      .map((el) => el.querySelector('input[type="checkbox"]')).filter(Boolean))];
+    if (inputs.length > 1) throw new Error(`${label} email recipient is ambiguous. Save was not attempted.`);
+    if (inputs[0]?.checked) inputs[0].click();
+    if (inputs[0]?.checked) throw new Error(`${label} email recipient could not be cleared.`);
+  }
 }
 
 async function verifyTicketStatusInTab({ tabId, ticketId, status }) {
@@ -1998,6 +2015,8 @@ function verifyNotes(ticketId, notes) {
   if (actual !== notes.trim()) return { ok: false, error: 'The Notes editor did not retain the exact text.' };
   return { ok: true };
 }
+
+
 
 
 

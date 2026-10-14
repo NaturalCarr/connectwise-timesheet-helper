@@ -1,6 +1,9 @@
 const status = document.getElementById('status');
 const result = document.getElementById('result');
 const copy = document.getElementById('copy');
+document.getElementById('open-eod').addEventListener('click', () => {
+  chrome.tabs.create({ url: chrome.runtime.getURL('eod.html'), active: true });
+});
 chrome.runtime.sendMessage({ action: 'helperBuild' }).then((build) => {
   document.getElementById('helper-build').textContent = build?.version
     ? `Loaded helper ${build.version} · Ticket Save: ${build.ticketSaveMethod}`

@@ -1,4 +1,5 @@
 import { withTicketOwner } from './owner-settings.mjs';
+import { chooseConnectWiseTab, mainWorkspaceTab } from './navigation.mjs';
 import { planTicket } from './plan.mjs';
 
 const form = document.getElementById('ticket-form');
@@ -6,6 +7,7 @@ const school = document.getElementById('ticket-school');
 const issue = document.getElementById('ticket-issue');
 const description = document.getElementById('ticket-description');
 const existingId = document.getElementById('ticket-existing-id');
+const titleContains = document.getElementById('ticket-title-contains');
 const withTime = document.getElementById('ticket-with-time');
 const timeFields = document.getElementById('ticket-time-fields');
 const timeDate = document.getElementById('ticket-time-date');
@@ -23,6 +25,26 @@ const preview = document.getElementById('ticket-preview');
 let loadedRecordId = null;
 let loadedTimeEntry = null;
 let settingsPromise;
+document.getElementById('open-title-match').addEventListener('click', async () => {
+  const button = document.getElementById('open-title-match'); button.disabled = true;
+  try {
+    const term = titleContains.value.trim();
+    if (!term || /[*?]/.test(term)) throw new Error('Enter literal title text without wildcards.');
+    const defaults = await withTicketOwner(await settings());
+    const tabId = await mainWorkspaceTab(await chooseConnectWiseTab(new URLSearchParams()));
+    const send = async (action, fields) => {
+      const response = await chrome.runtime.sendMessage({ action, tabId, ...fields });
+      if (!response?.ok) throw new Error(response?.error || `${action} failed`);
+      return response;
+    };
+    const found = await send('findTickets', { ticket: { ...defaults, summary: term, titleContains: term } });
+    if (found.matches.length !== 1) throw new Error(`Found ${found.matches.length} matching tickets. Use an exact ConnectWise number if ambiguous. No ticket was created.`);
+    const ticketId = found.matches[0].ticketId;
+    await send('openTicket', { ticketId, ticket: defaults, numberOnly: true });
+    status.textContent = `Opened ticket #${ticketId}. Use Time on the current ticket to enter time.`;
+  } catch (error) { status.textContent = error.message; }
+  finally { button.disabled = false; }
+});
 
 function settings() {
   settingsPromise ||= fetch(chrome.runtime.getURL('ticket-settings.json')).then((response) => {
@@ -68,6 +90,7 @@ document.getElementById('load-ticket-json').addEventListener('click', async () =
     issue.value = record.issue.trim();
     description.value = record.description ?? '';
     existingId.value = record.existingTicketId ?? '';
+    titleContains.value = record.titleContains ?? '';
     loadedRecordId = record.recordId || null;
     loadedTimeEntry = record.timeEntry || null;
     withTime.checked = Boolean(record.timeEntry);
@@ -106,6 +129,7 @@ form.addEventListener('submit', async (event) => {
       description: description.value.trim()
     };
     if (existingId.value) record.existingTicketId = Number(existingId.value);
+    if (titleContains.value.trim()) record.titleContains = titleContains.value.trim();
     if (loadedRecordId) record.recordId = loadedRecordId;
     if (withTime.checked) {
       record.timeEntry = { ...loadedTimeEntry, date: timeDate.value, start: timeStart.value,
@@ -134,4 +158,5 @@ form.addEventListener('submit', async (event) => {
     button.disabled = false;
   }
 });
+
 

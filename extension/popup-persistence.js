@@ -1,5 +1,5 @@
 const popupDraftGroups = {
-  ticket: ['ticket-school', 'ticket-existing-id', 'ticket-issue', 'ticket-description',
+  ticket: ['ticket-title-contains', 'ticket-school', 'ticket-existing-id', 'ticket-issue', 'ticket-description',
     'ticket-with-time', 'ticket-time-date', 'ticket-time-billable', 'ticket-time-start',
     'ticket-time-end', 'ticket-time-work-type', 'ticket-time-work-role', 'ticket-time-notes',
     'ticket-complete-after-time', 'ticket-json'],
@@ -85,3 +85,4 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.dispatchEvent(new Event('popup-drafts-restored'));
   popupDraftMutating = false;
 });
+
