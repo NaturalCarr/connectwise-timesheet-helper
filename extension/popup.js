@@ -40,7 +40,7 @@ document.getElementById('save-current-time').addEventListener('click', async () 
     const key = `currentTimeJob:${jobId}`;
     await chrome.storage.session.set({ [key]: {
       tabId: tab.id, entry: readTimeEntry(),
-      completeAfterTime: document.getElementById('current-time-complete').checked
+      finalStatus: document.getElementById('current-time-complete').value
     } });
     try {
       await chrome.tabs.create({ url: chrome.runtime.getURL(`current-time-runner.html#${jobId}`), active: true });
@@ -232,5 +232,6 @@ function inspectForm() {
     editableBody: document.body ? { designMode: document.designMode, contentEditable: document.body.contentEditable, className: document.body.className } : null
   };
 }
+
 
 

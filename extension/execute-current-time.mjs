@@ -1,5 +1,5 @@
 // Records one time entry on the ticket already visible in ConnectWise.
-export async function executeCurrentTime(entry, completeAfterTime, driver) {
+export async function executeCurrentTime(entry, completeAfterTime, driver, finalStatus = 'Completed') {
   const result = { ok: false, ticketId: null, entry: {
     date: entry.date, start: entry.start, end: entry.end, status: 'pending'
   }, status: 'stopped', step: 'identify-current-ticket' };
@@ -19,13 +19,13 @@ export async function executeCurrentTime(entry, completeAfterTime, driver) {
       result.entry.status = 'existing_verified';
       if (completeAfterTime) {
         result.step = 'set-completed-status';
-        await driver.setTicketStatus(current.ticketId, 'Completed');
+        await driver.setTicketStatus(current.ticketId, finalStatus);
         result.step = 'verify-completed-status';
-        if (await driver.verifyTicketStatus(current.ticketId, 'Completed') !== true) {
+        if (await driver.verifyTicketStatus(current.ticketId, finalStatus) !== true) {
           throw new Error('Existing time was verified, but Completed status was not verified.');
         }
-        return { ...result, ok: true, status: 'completed_verified', step: 'done',
-          ticketStatus: 'Completed' };
+        return { ...result, ok: true, status: finalStatus === 'Completed' ? 'completed_verified' : 'status_changed_verified', step: 'done',
+          ticketStatus: finalStatus };
       }
       return { ...result, ok: true, status: 'existing_verified', step: 'done' };
     }
@@ -51,15 +51,16 @@ export async function executeCurrentTime(entry, completeAfterTime, driver) {
     result.entry.status = 'saved_verified';
     if (completeAfterTime) {
       result.step = 'set-completed-status';
-      await driver.setTicketStatus(current.ticketId, 'Completed');
+      await driver.setTicketStatus(current.ticketId, finalStatus);
       result.step = 'verify-completed-status';
-      if (await driver.verifyTicketStatus(current.ticketId, 'Completed') !== true) {
+      if (await driver.verifyTicketStatus(current.ticketId, finalStatus) !== true) {
         throw new Error('Time was saved, but Completed status was not verified.');
       }
     }
-    return { ...result, ok: true, status: completeAfterTime ? 'completed_verified' : 'time_saved_verified', step: 'done',
-      ticketStatus: completeAfterTime ? 'Completed' : 'Working Issue Now' };
+    return { ...result, ok: true, status: completeAfterTime ? (finalStatus === 'Completed' ? 'completed_verified' : 'status_changed_verified') : 'time_saved_verified', step: 'done',
+      ticketStatus: completeAfterTime ? finalStatus : 'Working Issue Now' };
   } catch (error) {
     return { ...result, error: error.message };
   }
 }
+

@@ -58,7 +58,7 @@ function showSummary() {
   const acronym = school.value.trim().toUpperCase();
   const title = issue.value.trim();
   preview.textContent = acronym && title ? `Ticket title: ${acronym} - ${title}${withTime.checked
-    ? `\nOne time entry${completeAfterTime.checked ? '; then complete ticket' : '; leave ticket working'}` : ''}` : '';
+    ? `\nOne time entry${'; then mark as ' + completeAfterTime.value}` : ''}` : '';
 }
 
 function updateTimeFields() {
@@ -100,8 +100,9 @@ document.getElementById('load-ticket-json').addEventListener('click', async () =
     timeNotes.value = record.timeEntry?.notes || '';
     timeWorkType.value = record.timeEntry?.workType || 'Onsite Support';
     timeWorkRole.value = record.timeEntry?.workRole || 'Onsite Engineer';
-    timeBillable.value = record.timeEntry?.billable || 'B';
-    completeAfterTime.checked = record.timeEntry ? record.completeAfterTime !== false : true;
+    timeBillable.value = 'AUTO';
+    completeAfterTime.value = record.finalStatus || (record.completeAfterTime === false ? 'Working Issue Now' : 'Completed');
+    completeAfterTime.dispatchEvent(new Event('change', { bubbles: true }));
     updateTimeFields();
     showSummary();
     await window.popupDraft.save('ticket');
@@ -135,7 +136,7 @@ form.addEventListener('submit', async (event) => {
       record.timeEntry = { ...loadedTimeEntry, date: timeDate.value, start: timeStart.value,
         end: timeEnd.value, notes: timeNotes.value.trim(), workType: timeWorkType.value.trim(),
         workRole: timeWorkRole.value.trim(), billable: timeBillable.value };
-      record.completeAfterTime = completeAfterTime.checked;
+      record.finalStatus = completeAfterTime.value;
     }
     const plan = planTicket(record, await withTicketOwner(await settings()));
     const [active] = await chrome.tabs.query({ active: true, currentWindow: true });
@@ -158,5 +159,7 @@ form.addEventListener('submit', async (event) => {
     button.disabled = false;
   }
 });
+
+
 
 

@@ -2,7 +2,7 @@ if (typeof importScripts === 'function') importScripts('form-functions.js');
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message?.action === 'helperBuild') {
-    sendResponse({ ok: true, version: '0.8.26', ticketSaveMethod: 'exact-element' });
+    sendResponse({ ok: true, version: '0.8.28', ticketSaveMethod: 'exact-element' });
     return false;
   }
   const actions = {
@@ -27,7 +27,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   const action = actions[message?.action];
   if (!action) return false;
   action(message).then(sendResponse, (error) => sendResponse({ ok: false,
-    error: `[Helper 0.8.26; ${message.action}] ${error.message}`,
+    error: `[Helper 0.8.28; ${message.action}] ${error.message}`,
     ticketId: Number.isSafeInteger(error.ticketId) ? error.ticketId : null }));
   return true;
 });
@@ -1561,7 +1561,7 @@ async function readTimeRowsInTab({ tabId, ticketId }) {
 function timeRowMatchesEntryFields(row, entry) {
   const combo = (value) => String(value || '').trim().replace(/^\$/, '')
     .replace(/\s+/g, ' ').toLowerCase();
-  return row.billable === entry.billable && combo(row.workType) === combo(entry.workType)
+  return (entry.billable === 'AUTO' ? ['B', 'NB', 'NC'].includes(row.billable) : row.billable === entry.billable) && combo(row.workType) === combo(entry.workType)
     && combo(row.workRole) === combo(entry.workRole)
     && (!entry.location || combo(row.location) === combo(entry.location))
     && (!entry.businessUnit || combo(row.businessUnit) === combo(entry.businessUnit))
@@ -1830,7 +1830,9 @@ function verifyCompleteTimeDraft(ticketId, entry) {
     if (combo(one('input.cw_workType').value) !== combo(entry.workType)
       || combo(one('input.cw_workRole').value) !== combo(entry.workRole)) throw new Error('Work Type or Role differs.');
     const billable = { B: 'Billable', NB: 'Do Not Bill', NC: 'No Charge' }[entry.billable];
-    if (combo(one('input.cw_billable').value) !== combo(billable)) throw new Error('Billable choice differs.');
+    const actualBilling = combo(one('input.cw_billable').value);
+    if (entry.billable === 'AUTO' ? !['billable', 'do not bill', 'no charge'].includes(actualBilling)
+      : actualBilling !== combo(billable)) throw new Error('Billable choice differs or automatic value is unreadable.');
     for (const [selector, expected] of [
       ['input.cw_location', entry.location],
       ['input.cw_department', entry.businessUnit],
@@ -2015,6 +2017,8 @@ function verifyNotes(ticketId, notes) {
   if (actual !== notes.trim()) return { ok: false, error: 'The Notes editor did not retain the exact text.' };
   return { ok: true };
 }
+
+
 
 
 

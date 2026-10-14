@@ -54,18 +54,18 @@
       <legend>Time entry</legend>
       <div class="row">
         <label>Date<input id="ticket-time-date" type="date" required></label>
-        <label>Billable<select id="ticket-time-billable"><option value="B">Billable</option><option value="NB">Do Not Bill</option><option value="NC">No Charge</option></select></label>
+        <input id="ticket-time-billable" type="hidden" value="AUTO"><p>Billing follows the selected Work Type in ConnectWise.</p>
       </div>
       <div class="row">
         <label>Start<input id="ticket-time-start" type="time" required></label>
         <label>End<input id="ticket-time-end" type="time" required></label>
       </div>
       <div class="row">
-        <label>Work type<input id="ticket-time-work-type" value="Onsite Support" required></label>
+        <label>Work type<select id="ticket-time-work-type" required></select></label>
         <label>Work role<input id="ticket-time-work-role" value="Onsite Engineer" required></label>
       </div>
       <label>Notes<textarea id="ticket-time-notes" required></textarea></label>
-      <label><input id="ticket-complete-after-time" type="checkbox" checked> Complete ticket after saving this entry</label>
+      <label>Mark ticket as<select id="ticket-complete-after-time" required><option value="Working Issue Now">Working Issue Now</option></select></label>
     </fieldset>
     <p id="ticket-preview"></p>
     <button type="submit">Find or create ticket</button>
@@ -96,18 +96,18 @@
   <form id="draft-form">
     <div class="row">
       <label>Date<input id="date" type="date" required></label>
-      <label>Billable<select id="billable"><option value="B">Billable</option><option value="NB">Do Not Bill</option><option value="NC">No Charge</option></select></label>
+      <input id="billable" type="hidden" value="AUTO"><p>Billing follows the selected Work Type in ConnectWise.</p>
     </div>
     <div class="row">
       <label>Start<input id="start" type="time" required></label>
       <label>End<input id="end" type="time" required></label>
     </div>
     <div class="row">
-      <label>Work type<input id="work-type" value="Onsite Support" required></label>
+      <label>Work type<select id="work-type" required></select></label>
       <label>Work role<input id="work-role" value="Onsite Engineer" required></label>
     </div>
     <label>Notes<textarea id="notes" required></textarea></label>
-    <label><input id="current-time-complete" type="checkbox"> Complete ticket after saving this entry</label>
+    <label>Mark ticket as<select id="current-time-complete" required><option value="Working Issue Now">Working Issue Now</option></select></label>
     <button id="save-current-time" type="button">Save time on current ticket</button>
     <button type="submit">Prepare Time Draft</button>
     <button id="copy-notes" type="button">Copy Notes</button>
@@ -121,11 +121,14 @@
     <button id="copy" type="button" disabled>Copy result</button>
     <textarea id="result" readonly aria-label="Form inspection result"></textarea>
   </details>
+  <script src="work-types.js"></script>
   <script src="form-functions.js"></script>
   <script src="popup-persistence.js"></script>
   <script src="popup.js"></script>
   <script type="module" src="ticket-popup.mjs"></script>
   <script type="module" src="weekly-upload.mjs"></script>
   <script type="module" src="owner-popup.mjs"></script>
+  <script type="module" src="status-popup.mjs"></script>
 </body>
 </html>
+

@@ -1,5 +1,6 @@
 const clean = (value) => typeof value === 'string' ? value.trim().replace(/\s+/g, ' ') : '';
 const cleanBlock = (value) => typeof value === 'string' ? value.trim() : '';
+import { eodStatuses } from './eod-model.mjs';
 
 function minutes(value, field) {
   if (typeof value !== 'string' || !/^([01]\d|2[0-3]):[0-5]\d$/.test(value)) {
@@ -27,7 +28,7 @@ export function planTimeEntry(entry, workingStatus = 'Working Issue Now') {
   if (!notes) throw new Error('Time entry notes are required.');
   if (!workType) throw new Error('Work type is required.');
   if (!workRole) throw new Error('Work role is required.');
-  if (!['B', 'NB', 'NC'].includes(billable)) throw new Error('Billable must be B, NB, or NC.');
+  if (!['B', 'NB', 'NC', 'AUTO'].includes(billable)) throw new Error('Billable must be B, NB, NC, or AUTO (ConnectWise Work Type default).');
   const addNoteTo = clean(entry.addNoteTo) || 'Discussion';
   if (!['Discussion', 'Internal', 'Resolution'].includes(addNoteTo)) {
     throw new Error('Add notes to must be Discussion, Internal, or Resolution.');
@@ -118,7 +119,7 @@ export function planTicket(input, settings) {
     throw new Error('Ticket input must be an object.');
   }
   const allowed = new Set(['schemaVersion', 'exampleOnly', 'recordId', 'school', 'issue',
-    'description', 'site', 'existingTicketId', 'titleContains', 'timeEntry', 'completeAfterTime']);
+    'description', 'site', 'existingTicketId', 'titleContains', 'timeEntry', 'completeAfterTime', 'finalStatus']);
   const unexpected = Object.keys(input).filter((key) => !allowed.has(key));
   if (unexpected.length) throw new Error(`Ticket-only JSON has unsupported fields: ${unexpected.join(', ')}.`);
   if (input.schemaVersion !== undefined && input.schemaVersion !== '1.0') {
@@ -162,19 +163,22 @@ export function planTicket(input, settings) {
     throw new Error('timeEntry recordId must be a nonempty string.');
   }
   if (recordId && timeRecordId === recordId) throw new Error('Ticket and time recordIds must differ.');
-  const completeAfterTime = Boolean(timeEntry) && input.completeAfterTime !== false;
+  if (input.finalStatus !== undefined && !eodStatuses.includes(input.finalStatus)) throw new Error('Unsupported finalStatus.');
+  if (input.finalStatus && !timeEntry) throw new Error('finalStatus requires a time entry.');
+  const completeAfterTime = Boolean(timeEntry) && (input.finalStatus ? input.finalStatus !== planned.ticket.status : input.completeAfterTime !== false);
+  const finalStatus = input.finalStatus || planned.completedStatus;
   return {
     schemaVersion: '1.0', exampleOnly: input.exampleOnly === true,
     recordId: recordId || null, action: planned.action,
     existingTicketId: planned.existingTicketId, ticket: planned.ticket,
     timeEntry: timeEntry ? { ...timeEntry, recordId: timeRecordId || null } : null,
-    completeAfterTime, completedStatus: planned.completedStatus,
+    completeAfterTime, completedStatus: finalStatus,
     steps: [
       { action: planned.action },
       { action: 'set-ticket-owner-and-verify', owner: planned.ticket.owner },
       { action: 'set-ticket-working-and-verify', status: planned.ticket.status },
       ...(timeEntry ? [{ action: 'check-and-save-time-entry' }] : []),
-      ...(completeAfterTime ? [{ action: 'set-ticket-completed-and-verify', status: planned.completedStatus }] : [])
+      ...(completeAfterTime ? [{ action: 'set-ticket-completed-and-verify', status: finalStatus }] : [])
     ]
   };
 }

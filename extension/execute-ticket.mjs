@@ -70,7 +70,7 @@ export async function executeTicket(plan, driver) {
       }
     }
     return { ...result, ok: true,
-      status: plan.completeAfterTime ? 'completed_verified'
+      status: plan.completeAfterTime ? (plan.completedStatus === 'Completed' ? 'completed_verified' : 'status_changed_verified')
         : plan.timeEntry ? 'working_with_time_verified'
           : created ? 'created_verified' : 'existing_verified',
       owner: plan.ticket.owner, ticketStatus: finalStatus };
@@ -79,4 +79,5 @@ export async function executeTicket(plan, driver) {
     return { ...result, status: 'stopped', error: error.message };
   }
 }
+
 

@@ -1,3 +1,4 @@
+import { eodStatuses } from './eod-model.mjs';
 import { requireTicketOwner } from './owner-settings.mjs';
 import { planTimeEntry } from './plan.mjs';
 import { executeCurrentTime } from './execute-current-time.mjs';
@@ -74,7 +75,9 @@ async function main() {
       return send('verifySavedTime', tabId, { ticketId, entry: timeEntry, baselineTimeCount });
     }
   };
-  const result = await executeCurrentTime(entry, job.completeAfterTime === true, driver);
+  const finalStatus = job.finalStatus || (job.completeAfterTime ? 'Completed' : 'Working Issue Now');
+  if (!eodStatuses.includes(finalStatus)) throw new Error('Unsupported final ticket status.');
+  const result = await executeCurrentTime(entry, Boolean(job.finalStatus) || job.completeAfterTime === true, driver, finalStatus);
   if (result.ok) await chrome.storage.local.remove('popupDraft:time').catch(() => {});
   output.textContent = JSON.stringify(result, null, 2);
   status.textContent = result.ok
@@ -90,4 +93,5 @@ main().catch((error) => {
   status.textContent = 'Time run stopped.';
   output.textContent = JSON.stringify({ ok: false, status: 'stopped', error: error.message }, null, 2);
 });
+
 

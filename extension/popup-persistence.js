@@ -1,11 +1,10 @@
 const popupDraftGroups = {
   ticket: ['ticket-title-contains', 'ticket-school', 'ticket-existing-id', 'ticket-issue', 'ticket-description',
-    'ticket-with-time', 'ticket-time-date', 'ticket-time-billable', 'ticket-time-start',
+    'ticket-with-time', 'ticket-time-date', 'ticket-time-start',
     'ticket-time-end', 'ticket-time-work-type', 'ticket-time-work-role', 'ticket-time-notes',
-    'ticket-complete-after-time', 'ticket-json'],
+    'ticket-json'],
   week: ['week-json'],
-  time: ['date', 'billable', 'start', 'end', 'work-type', 'work-role', 'notes',
-    'current-time-complete']
+  time: ['date', 'start', 'end', 'work-type', 'work-role', 'notes']
 };
 const popupDraftQueue = { ticket: Promise.resolve(), week: Promise.resolve(), time: Promise.resolve() };
 const popupDraftKey = (group) => `popupDraft:${group}`;
@@ -85,4 +84,7 @@ document.addEventListener('DOMContentLoaded', async () => {
   document.dispatchEvent(new Event('popup-drafts-restored'));
   popupDraftMutating = false;
 });
+
+
+
 

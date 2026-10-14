@@ -107,6 +107,7 @@ async function fillTimeDraft(entry) {
       'Work Role': [one('input.cw_workRole', 'Work Role'), entry.workRole],
       Billable: [one('input.cw_billable', 'Billable'), { B: 'Billable', NB: 'Do Not Bill', NC: 'No Charge' }[entry.billable]]
     };
+    if (entry.billable === 'AUTO') delete expected.Billable;
     for (const [label, selector, value] of [
       ['Location', 'input.cw_location', entry.location],
       ['Business Unit', 'input.cw_department', entry.businessUnit],
