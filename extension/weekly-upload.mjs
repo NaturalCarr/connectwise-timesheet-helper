@@ -9,6 +9,20 @@ const status = document.getElementById('week-status');
 const preview = document.getElementById('week-preview');
 let validatedPlan = null;
 
+document.getElementById('download-sample-json').addEventListener('click', async () => {
+  try {
+    const response = await fetch(chrome.runtime.getURL('DAILY-EXAMPLE.json'));
+    if (!response.ok) throw new Error('Sample JSON could not be loaded.');
+    const sample = await response.json();
+    if (sample.exampleOnly !== true) throw new Error('The sample is missing its example-only safeguard.');
+    const url = URL.createObjectURL(new Blob([JSON.stringify(sample, null, 2) + '\n'], { type: 'application/json' }));
+    const link = document.createElement('a');
+    link.href = url; link.download = 'ConnectWise-daily-sample.json'; link.click();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    status.textContent = 'Sample downloaded. Replace example content with actual work; exampleOnly: true prevents submission.';
+  } catch (error) { status.textContent = `Sample download failed: ${error.message}`; }
+});
+
 function clearValidation() {
   validatedPlan = null;
   runButton.disabled = true;
