@@ -2,7 +2,7 @@ if (typeof importScripts === 'function') importScripts('form-functions.js');
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message?.action === 'helperBuild') {
-    sendResponse({ ok: true, version: '0.8.32', ticketSaveMethod: 'exact-element' });
+    sendResponse({ ok: true, version: '0.8.33', ticketSaveMethod: 'exact-element' });
     return false;
   }
   const actions = {
@@ -27,7 +27,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   const action = actions[message?.action];
   if (!action) return false;
   action(message).then(sendResponse, (error) => sendResponse({ ok: false,
-    error: `[Helper 0.8.32; ${message.action}] ${error.message}`,
+    error: `[Helper 0.8.33; ${message.action}] ${error.message}`,
     ticketId: Number.isSafeInteger(error.ticketId) ? error.ticketId : null }));
   return true;
 });
@@ -2031,6 +2031,7 @@ function verifyNotes(ticketId, notes) {
   if (actual !== notes.trim()) return { ok: false, error: 'The Notes editor did not retain the exact text.' };
   return { ok: true };
 }
+
 
 
 
