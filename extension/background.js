@@ -2,7 +2,7 @@ if (typeof importScripts === 'function') importScripts('form-functions.js');
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message?.action === 'helperBuild') {
-    sendResponse({ ok: true, version: '0.8.30', ticketSaveMethod: 'exact-element' });
+    sendResponse({ ok: true, version: '0.8.31', ticketSaveMethod: 'exact-element' });
     return false;
   }
   const actions = {
@@ -27,7 +27,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   const action = actions[message?.action];
   if (!action) return false;
   action(message).then(sendResponse, (error) => sendResponse({ ok: false,
-    error: `[Helper 0.8.30; ${message.action}] ${error.message}`,
+    error: `[Helper 0.8.31; ${message.action}] ${error.message}`,
     ticketId: Number.isSafeInteger(error.ticketId) ? error.ticketId : null }));
   return true;
 });
@@ -562,13 +562,14 @@ async function trustedTicketText(tabId, frameId, selector, value, verifyText = t
 
 async function locateTicketOption(selector, value, searchMode = false) {
   const visible = (el) => el && el.getBoundingClientRect().width > 0 && el.getBoundingClientRect().height > 0;
-  const normalize = (text) => String(text || '').trim().replace(/^\$\s*/, '').replace(/~$/, '').trim().toLowerCase();
+  const normalize = (text) => String(text || '').replace(/\s+/g, ' ').trim().replace(/^\$\s*/, '').replace(/~$/, '').trim().toLowerCase();
+  const optionSelector = selector === 'input.cw_workType' ? '.gwt-dropdown-options .mm_label' : '.gwt-dropdown-options > .mm_label';
   const inputs = [...document.querySelectorAll(selector === 'ticket-status' ? 'input.cw_status' : selector)].filter((input) =>
     visible(input) && (selector !== 'ticket-status'
       || /^Status\s*:/i.test(input.closest('tr')?.innerText.trim() || '')));
   if (inputs.length !== 1) throw new Error(`${selector}: expected one visible input, found ${inputs.length}.`);
   const input = inputs[0];
-  const openChoice = [...document.querySelectorAll('.gwt-dropdown-options > .mm_label')]
+  const openChoice = [...document.querySelectorAll(optionSelector)]
     .some((option) => visible(option) && normalize(option.textContent) === normalize(value));
   if (!searchMode && normalize(input.value) === normalize(value) && !openChoice) return { alreadySelected: true };
   const arrow = input.nextElementSibling?.tagName === 'DIV'
@@ -577,7 +578,7 @@ async function locateTicketOption(selector, value, searchMode = false) {
   if (!searchMode && !openChoice) arrow.click();
   let matches = [];
   for (let attempt = 0; attempt < 60; attempt++) {
-    matches = [...document.querySelectorAll('.gwt-dropdown-options > .mm_label')]
+    matches = [...document.querySelectorAll(optionSelector)]
       .filter((option) => visible(option) && normalize(option.textContent) === normalize(value));
     if (matches.length) break;
     if (searchMode && attempt === 14) arrow.click();
@@ -585,9 +586,13 @@ async function locateTicketOption(selector, value, searchMode = false) {
   }
   if (matches.length === 0) return { found: false, readOnly: Boolean(input.readOnly),
     displayed: input.value,
-    options: [...document.querySelectorAll('.gwt-dropdown-options > .mm_label')]
+    options: [...document.querySelectorAll(optionSelector)]
       .filter(visible).map((option) => option.textContent.trim()).slice(0, 12) };
   if (matches.length !== 1) throw new Error(`${selector}: ${value} matched ${matches.length} visible choices.`);
+  if (selector === 'input.cw_workType') {
+    matches[0].scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'instant' });
+    await new Promise((resolve) => setTimeout(resolve, 150));
+  }
   const rect = matches[0].getBoundingClientRect();
   let x = rect.left + rect.width / 2;
   let y = rect.top + rect.height / 2;
@@ -639,11 +644,11 @@ async function typeTicketStatusSearch(tabId, frameId, value) {
 }
 
 function inspectSelectedTicketOption(selector, value) {
-  const normalize = (text) => String(text || '').trim().replace(/^\$\s*/, '').replace(/~$/, '').trim().toLowerCase();
+  const normalize = (text) => String(text || '').replace(/\s+/g, ' ').trim().replace(/^\$\s*/, '').replace(/~$/, '').trim().toLowerCase();
   const inputs = [...document.querySelectorAll(selector === 'ticket-status' ? 'input.cw_status' : selector)]
     .filter((input) => input.getBoundingClientRect().width > 0 && input.getBoundingClientRect().height > 0
       && (selector !== 'ticket-status' || /^Status\s*:/i.test(input.closest('tr')?.innerText.trim() || '')));
-  const pickerOpen = selector === 'ticket-status' && [...document.querySelectorAll('.gwt-dropdown-options > .mm_label')]
+  const pickerOpen = ['ticket-status', 'input.cw_workType'].includes(selector) && [...document.querySelectorAll(selector === 'ticket-status' ? '.gwt-dropdown-options > .mm_label' : '.gwt-dropdown-options .mm_label')]
     .some((option) => option.getBoundingClientRect().width > 0 && option.getBoundingClientRect().height > 0);
   return { verified: inputs.length === 1 && normalize(inputs[0].value) === normalize(value) && !pickerOpen,
     pickerOpen,
@@ -669,6 +674,8 @@ async function chooseTicketOptionInTab(tabId, frameId, selector, value, ticketId
     if (!choice.result?.found) throw new Error(`${selector}: ${value} choice was not located (field: ${JSON.stringify(choice.result?.displayed)}, visible choices: ${choice.result?.options?.join(', ') || 'none'}).`);
     if (selector === 'ticket-status' && ticketId) {
       await trustedTicketControlClick(tabId, frameId, ticketId, 'status-option', value);
+    } else if (selector === 'input.cw_workType' && ticketId) {
+      await trustedTicketControlClick(tabId, frameId, ticketId, 'time-option', value, selector);
     } else {
       await browserMouse(tabId, choice.result, false);
     }
@@ -1283,10 +1290,14 @@ function activateExactTicketSave(ticketId, expectedStatus) {
 function inspectTicketClickHit(ticketId, role, value) {
   const element = this.nodeType === 1 ? this : this.parentElement;
   const header = element?.ownerDocument?.body?.innerText.match(/Service Ticket #(\d+)\s*-/);
-  if (!header || header[1] !== String(ticketId)) return { verified: false, reason: 'wrong ticket document' };
-  const normalize = (text) => String(text || '').trim().replace(/~$/, '').trim().toLowerCase();
+  const charge = element?.ownerDocument?.querySelector('input.cw_ChargeToTextBox')?.value || '';
+  const correctTicket = role === 'time-option'
+    ? new RegExp(`(?:^|[^0-9])${ticketId}(?![0-9])`).test(charge)
+    : header && header[1] === String(ticketId);
+  if (!correctTicket) return { verified: false, reason: 'wrong ticket document' };
+  const normalize = (text) => String(text || '').replace(/\s+/g, ' ').trim().replace(/^\$\s*/, '').replace(/~$/, '').trim().toLowerCase();
   const target = role === 'save' ? element.closest('.cw_ToolbarButton_Save')
-    : element.closest('.gwt-dropdown-options > .mm_label');
+    : element.closest('.gwt-dropdown-options .mm_label');
   return { verified: Boolean(target && (role === 'save' || normalize(target.textContent) === normalize(value))),
     reason: target ? 'target found' : 'another control covers the click point' };
 }
@@ -1334,7 +1345,7 @@ function armTicketSaveObservation(ticketId) {
   return { armed: true };
 }
 
-async function trustedTicketControlClick(tabId, frameId, ticketId, role, value = '') {
+async function trustedTicketControlClick(tabId, frameId, ticketId, role, value = '', selector = 'ticket-status') {
   await chrome.tabs.update(tabId, { active: true });
   const target = { tabId };
   const scriptTarget = { tabId, frameIds: [frameId] };
@@ -1348,7 +1359,7 @@ async function trustedTicketControlClick(tabId, frameId, ticketId, role, value =
     const locate = async (reveal = false) => {
       const [result] = await executeConnectWiseScript({ target: scriptTarget,
         func: role === 'save' ? locateTicketSaveButton : locateTicketOption,
-        args: role === 'save' ? [String(ticketId), reveal] : ['ticket-status', value, true] });
+        args: role === 'save' ? [String(ticketId), reveal] : [selector, value, true] });
       const point = result?.result;
       if (!point || !Number.isFinite(point.x) || !Number.isFinite(point.y)) {
         throw new Error(`Ticket ${role} did not have a valid click position.`);
@@ -1773,6 +1784,9 @@ async function prepareTimeDraftInTab({ tabId, ticketId, entry }) {
   const matches = frames.filter((frame) => frame.result?.matches);
   if (matches.length !== 1) throw new Error(`Expected one blank time form for ticket #${ticketId}; found ${matches.length}.`);
   const frameId = matches[0].frameId;
+  // Select Work Type with trusted browser input before filling times. A page
+  // .click() can leave GWT's selection unchanged, especially for payroll types.
+  await chooseTicketOptionInTab(tabId, frameId, 'input.cw_workType', entry.workType, ticketId);
   const [fill] = await executeConnectWiseScript({
     target: { tabId, frameIds: [frameId] }, func: fillTimeDraft,
     args: [{ ...entry, ticketId: String(ticketId) }]
@@ -2017,6 +2031,8 @@ function verifyNotes(ticketId, notes) {
   if (actual !== notes.trim()) return { ok: false, error: 'The Notes editor did not retain the exact text.' };
   return { ok: true };
 }
+
+
 
 
 
