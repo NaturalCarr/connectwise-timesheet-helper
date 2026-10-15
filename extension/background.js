@@ -2,7 +2,7 @@ if (typeof importScripts === 'function') importScripts('form-functions.js');
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message?.action === 'helperBuild') {
-    sendResponse({ ok: true, version: '0.8.46', ticketSaveMethod: 'exact-element' });
+    sendResponse({ ok: true, version: '0.8.47', ticketSaveMethod: 'exact-element' });
     return false;
   }
   const actions = {
@@ -27,7 +27,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   const action = actions[message?.action];
   if (!action) return false;
   action(message).then(sendResponse, (error) => sendResponse({ ok: false,
-    error: `[Helper 0.8.46; ${message.action}] ${error.message}`,
+    error: `[Helper 0.8.47; ${message.action}] ${error.message}`,
     ticketId: Number.isSafeInteger(error.ticketId) ? error.ticketId : null }));
   return true;
 });
@@ -99,13 +99,13 @@ function foreignExtensionAccessError(error) {
   return /Cannot access a chrome-extension:\/\/ URL of different extension/i.test(error?.message || '');
 }
 
-async function temporarilyPauseForeignExtensionFrames(tabId) {
+async function temporarilyPauseForeignExtensionFrames(tabId, allowEmpty = false) {
   await connectwiseTab(tabId);
   const leaseId = `${Date.now()}-${Math.random().toString(36).slice(2)}`;
   const [result] = await chrome.scripting.executeScript({ target: { tabId, frameIds: [0] },
     func: pauseForeignExtensionFrames, args: [leaseId, chrome.runtime.id || ''] });
   if (!result?.result?.leaseId) throw new Error('The ConnectWise extension-popup pause could not be prepared.');
-  if (!result.result.parked) {
+  if (!result.result.parked && !allowEmpty) {
     await restoreForeignExtensionFrames(tabId, leaseId);
     throw new Error('Browser input was blocked by another extension, but no removable extension popup frame was found. No click was sent.');
   }
@@ -564,6 +564,7 @@ async function trustedTicketText(tabId, frameId, selector, value, verifyText = t
     await executeConnectWiseScript({
       target: { tabId, frameIds: [frameId] }, func: focusTicketText, args: [selector]
     });
+    await new Promise((resolve) => setTimeout(resolve, 250));
     await chrome.debugger.sendCommand(target, 'Input.insertText', { text: value });
     if (verifyText) {
       const [check] = await executeConnectWiseScript({
@@ -1186,7 +1187,15 @@ async function addSignedInTicketResource(tabId, frameId, ticketId) {
   await trustedTicketControlClick(tabId, frameId, ticketId, 'assign-me');
 }
 
-async function ensureTicketOwnerInTab({ tabId, ticketId, owner }) {
+async function ensureTicketOwnerInTab(message) {
+  // Keep popup monitoring active across focus, dropdown selection and Save.
+  // A password-manager iframe may appear only after debugger attachment.
+  const lease = await temporarilyPauseForeignExtensionFrames(message.tabId, true);
+  try { return await ensureTicketOwnerWithFrameProtection(message); }
+  finally { await restoreForeignExtensionFrames(message.tabId, lease); }
+}
+
+async function ensureTicketOwnerWithFrameProtection({ tabId, ticketId, owner }) {
   if (typeof owner !== 'string' || !owner.trim()) throw new Error('Ticket owner is required.');
   const found = await matchingFrame(tabId, ticketId, inspectTicketFrame);
   const target = { tabId, frameIds: [found.frameId] };
@@ -2102,6 +2111,8 @@ function verifyNotes(ticketId, notes) {
   if (actual !== notes.trim()) return { ok: false, error: 'The Notes editor did not retain the exact text.' };
   return { ok: true };
 }
+
+
 
 
 
