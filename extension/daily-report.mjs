@@ -1,4 +1,4 @@
-import { renderEod } from './eod-model.mjs';
+import { renderEod, isDitlTitle } from './eod-model.mjs';
 export function dailyReport(plan, execution) {
   if (plan.mode !== 'daily') return null;
   if (!execution.ok || execution.results?.length !== plan.tickets.length) throw new Error('Daily report requires every ticket to finish successfully.');
@@ -11,7 +11,7 @@ export function dailyReport(plan, execution) {
   const record = { date: plan.date, subject: plan.endOfDay.subject, tickets };
   const html = renderEod(record, execution.results.map((result) => ({ ticketId: result.ticketId,
     summary: result.summary, status: result.ticketStatus, verified: true })));
-  return { ...record, html };
+  return { ...record, tickets: record.tickets.filter((ticket, index) => !isDitlTitle(execution.results[index].summary)), html };
 }
 
 export function reportsByDay(plan, execution) {
@@ -36,6 +36,7 @@ export function reportsByDay(plan, execution) {
   });
   return [...days].sort(([a], [b]) => a.localeCompare(b)).map(([date, rows]) => {
     const record = { date, subject: `End of day update - ${date}`, tickets: rows.map((row) => row.ticket) };
-    return { ...record, html: renderEod(record, rows.map((row) => row.verified)) };
+    return { ...record, tickets: record.tickets.filter((ticket, index) => !isDitlTitle(rows[index].verified.summary)), html: renderEod(record, rows.map((row) => row.verified)) };
   });
 }
+

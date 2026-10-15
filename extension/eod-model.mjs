@@ -1,3 +1,4 @@
+export const isDitlTitle = (title) => /(^|\s)ditl(?=\s|$)/i.test(String(title || ''));
 export const eodStatuses = ['Scheduled Remote', 'Scheduled Onsite', 'Working Issue Now',
   'Scheduling Required', 'Waiting Parts/Repair', 'Waiting Client Response', 'Waiting on 3rd Party',
   'Waiting for next onsite visit', 'Pending Closure', 'Completed', 'Closed', 'Closed/Client Unresponsive'];
@@ -33,7 +34,8 @@ export function renderEod(record, verified) {
     throw new Error('Every ticket status must be saved and verified before generating the email.');
   }
   const lines = (text) => text.split(/\r?\n/).filter(Boolean).map((line) => `<li>${escape(line)}</li>`).join('');
-  return `<h2>${escape(plan.subject)}</h2><p>${escape(plan.date)}</p><table style="border-collapse:collapse;border:1px solid #444;color:#111;background-color:#fff" border="1" cellspacing="0" cellpadding="8"><thead><tr><th style="border:1px solid #444;padding:8px;text-align:left;background-color:#eee">Ticket</th><th style="border:1px solid #444;padding:8px;text-align:left;background-color:#eee">Status</th><th style="border:1px solid #444;padding:8px;text-align:left;background-color:#eee">Notes</th><th style="border:1px solid #444;padding:8px;text-align:left;background-color:#eee">Next Step</th></tr></thead><tbody>${plan.tickets.map((ticket, index) =>
+  return `<h2>${escape(plan.subject)}</h2><p>${escape(plan.date)}</p><table style="border-collapse:collapse;border:1px solid #444;color:#111;background-color:#fff" border="1" cellspacing="0" cellpadding="8"><thead><tr><th style="border:1px solid #444;padding:8px;text-align:left;background-color:#eee">Ticket</th><th style="border:1px solid #444;padding:8px;text-align:left;background-color:#eee">Status</th><th style="border:1px solid #444;padding:8px;text-align:left;background-color:#eee">Notes</th><th style="border:1px solid #444;padding:8px;text-align:left;background-color:#eee">Next Step</th></tr></thead><tbody>${plan.tickets.map((ticket, index) => isDitlTitle(verified[index].summary || ticket.titleContains) ? '' :
     `<tr><td style="border:1px solid #444;padding:8px;vertical-align:top">${escape(verified[index].summary || ticket.titleContains || 'Ticket')}</td><td style="border:1px solid #444;padding:8px;vertical-align:top">${escape(ticket.status)}</td><td style="border:1px solid #444;padding:8px;vertical-align:top"><ul>${lines(ticket.notes)}</ul></td><td style="border:1px solid #444;padding:8px;vertical-align:top">${ticket.nextStep ? `<ul>${lines(ticket.nextStep)}</ul>` : 'N/A'}</td></tr>`).join('')}</tbody></table>`;
 }
+
 
