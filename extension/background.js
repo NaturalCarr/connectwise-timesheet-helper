@@ -2,7 +2,7 @@ if (typeof importScripts === 'function') importScripts('form-functions.js');
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message?.action === 'helperBuild') {
-    sendResponse({ ok: true, version: '0.8.48', ticketSaveMethod: 'exact-element' });
+    sendResponse({ ok: true, version: '0.8.49', ticketSaveMethod: 'exact-element' });
     return false;
   }
   const actions = {
@@ -27,7 +27,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   const action = actions[message?.action];
   if (!action) return false;
   action(message).then(sendResponse, (error) => sendResponse({ ok: false,
-    error: `[Helper 0.8.48; ${message.action}] ${error.message}`,
+    error: `[Helper 0.8.49; ${message.action}] ${error.message}`,
     ticketId: Number.isSafeInteger(error.ticketId) ? error.ticketId : null }));
   return true;
 });
@@ -1746,7 +1746,7 @@ async function openNewTimeEntryInTab({ tabId, ticketId }) {
   await executeConnectWiseScript({
     target: { tabId, frameIds: [frameId] }, func: clickNewTimeEntry, args: [String(ticketId)]
   });
-  for (let attempt = 0; attempt < 30; attempt++) {
+  for (let attempt = 0; attempt < 240; attempt++) {
     await new Promise((resolve) => setTimeout(resolve, 250));
     const frames = await executeConnectWiseScript({
       target: { tabId, allFrames: true }, func: detectTimeFrame, args: [String(ticketId)]
@@ -1873,7 +1873,19 @@ async function prepareTimeDraftInTab({ tabId, ticketId, entry }) {
   });
   const matches = frames.filter((frame) => frame.result?.matches);
   if (matches.length !== 1) throw new Error(`Expected one blank time form for ticket #${ticketId}; found ${matches.length}.`);
-  const frameId = matches[0].frameId;
+  let frameId = matches[0].frameId;
+  let notesReady = matches[0].result.signals?.notes === true;
+  for (let attempt = 0; !notesReady && attempt < 120; attempt++) {
+    await new Promise((resolve) => setTimeout(resolve, 500));
+    const states = await executeConnectWiseScript({ target: {tabId, allFrames:true}, func: detectTimeFrame, args:[String(ticketId)] });
+    const current = states.filter((frame) => frame.result?.matches);
+    if (current.length > 1) throw new Error('More than one matching Time Entry form appeared while waiting for Notes.');
+    if (current.length === 1) {
+      frameId = current[0].frameId;
+      notesReady = current[0].result.signals?.notes === true;
+    }
+  }
+  if (!notesReady) throw new Error('The time-entry form opened, but its Notes editor did not become ready within 60 seconds. Nothing was saved.');
   // Select Work Type with trusted browser input before filling times. A page
   // .click() can leave GWT's selection unchanged, especially for payroll types.
   await chooseTicketOptionInTab(tabId, frameId, 'input.cw_workType', entry.workType, ticketId);
@@ -2121,6 +2133,8 @@ function verifyNotes(ticketId, notes) {
   if (actual !== notes.trim()) return { ok: false, error: 'The Notes editor did not retain the exact text.' };
   return { ok: true };
 }
+
+
 
 
 

@@ -5,6 +5,14 @@ import { chooseConnectWiseTab, mainWorkspaceTab } from './navigation.mjs';
 
 const status = document.getElementById('status');
 const output = document.getElementById('result');
+const copyRunResult = document.getElementById('copy-run-result');
+new MutationObserver(() => { copyRunResult.disabled = !output.textContent.trim(); }).observe(output, {childList:true,subtree:true,characterData:true});
+copyRunResult.onclick = async () => {
+  try {
+    await navigator.clipboard.writeText(output.textContent);
+    document.getElementById('copy-run-status').textContent = 'Run results copied to clipboard.';
+  } catch(error) { document.getElementById('copy-run-status').textContent = `Copy failed: ${error.message}`; }
+};
 const params = new URLSearchParams(location.hash.slice(1));
 history.replaceState(null, '', location.pathname);
 
@@ -141,5 +149,6 @@ main().catch(async (error) => {
     }).catch(() => {});
   }
 });
+
 
 

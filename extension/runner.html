@@ -11,6 +11,7 @@
 <body>
   <h1>ConnectWise daily / weekly run</h1>
   <p id="status" role="status">Loading the weekly work record…</p>
+  <button id="copy-run-result" type="button" disabled>Copy run results</button><p id="copy-run-status" role="status"></p>
   <pre id="result"></pre>
   <section id="daily-report" hidden><h2>End-of-day email update</h2>
     <label>Report date <select id="email-date"></select></label>
@@ -22,4 +23,5 @@
   <script type="module" src="runner.mjs"></script>
 </body>
 </html>
+
 

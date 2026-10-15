@@ -10,7 +10,7 @@ function detectTimeFrame(ticketId) {
     end: Boolean(document.querySelector('input.cw_endTime')),
     notes: Boolean(document.querySelector('.public-DraftEditor-content[contenteditable="true"]'))
   };
-  const isTimeForm = Object.values(signals).every(Boolean);
+  const isTimeForm = signals.charge && signals.start && signals.end;
   const ids = isTimeForm
     ? [...String(chargeTo[0].value || '').matchAll(/(?:^|\/)\s*(\d+)\s*-/g)].map((match) => match[1]) : [];
   const detectedTicketId = ids.length === 1 ? ids[0] : null;
@@ -175,4 +175,5 @@ async function fillTimeDraft(entry) {
     return { ok: false, error: `Stopped while preparing the draft: ${error.message}. Review the form; it may be partly filled.` };
   }
 }
+
 
