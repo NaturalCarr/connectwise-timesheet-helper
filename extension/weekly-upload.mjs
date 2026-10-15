@@ -63,7 +63,8 @@ validateButton.addEventListener('click', async () => {
       `${ticket.summary}\n${timeEntries.map((entry) =>
         `  ${entry.date} ${entry.start}–${entry.end} ${entry.billable}: ${entry.notes}`).join('\n')}`
     ).join('\n\n');
-    status.textContent = `Validated ${plan.tickets.length} ticket(s) and ${plan.totalEntries} time entry/entries for ${plan.mode === 'daily' ? plan.date : `${plan.weekStart}–${plan.weekEnd}`}. Nothing has been saved.`;
+    const reportCount = new Set(plan.tickets.flatMap((item) => item.timeEntries.map((entry) => entry.date))).size;
+    status.textContent = `Validated ${plan.tickets.length} ticket(s) and ${plan.totalEntries} time entry/entries for ${plan.mode === 'daily' ? plan.date : `${plan.weekStart}–${plan.weekEnd}`}. After verified saves, ${reportCount} EoD email update(s) will be generated, one per date. Nothing has been saved or emailed.`;
     runButton.disabled = false;
   } catch (error) {
     status.textContent = `Validation failed: ${error.message}`;
@@ -82,7 +83,7 @@ runButton.addEventListener('click', async () => {
     }
     await chrome.storage.session.set({ [`weeklyJob:${jobId}`]: validatedPlan });
     await chrome.tabs.create({ url: chrome.runtime.getURL(`runner.html#${params}`), active: true });
-    status.textContent = 'Weekly runner opened. Its tab will report each saved or stopped step.';
+    status.textContent = 'Runner opened. It will save and verify tickets/time, then generate one EoD email update per date with preview, copy, and download controls. Nothing is emailed automatically.';
   } catch (error) {
     status.textContent = `Could not open the runner: ${error.message}`;
     runButton.disabled = false;

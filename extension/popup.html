@@ -75,12 +75,13 @@
   <p id="ticket-status" role="status"></p>
   <details class="workflow" id="weekly-section">
   <summary>Daily/ Weekly TimeSheets and EoD</summary>
-  <p>Choose any signed-in ConnectWise tab. Paste a daily or weekly JSON record or select a file, then validate it. The runner opens Service Board when needed.</p>
+  <p>Upload or paste daily or weekly JSON to find or create tickets, save their time entries, and apply their selected statuses. After every save is verified, the tool automatically generates an <strong>EoD email update for each date in the JSON</strong>.</p>
+  <p>The runner provides a date selector, email preview, <strong>Copy email table</strong>, and <strong>Download HTML</strong>. Reports use that day's notes and next steps. You review and send the email yourself.</p>
   <button id="select-tab" type="button">Use this ConnectWise tab for runs</button>
   <label>Daily / weekly JSON file<input id="week-file" type="file" accept=".json,application/json"></label>
   <label>Or paste daily / weekly JSON<textarea id="week-json" spellcheck="false" placeholder="Paste the complete daily or weekly JSON here"></textarea></label>
   <button id="validate-week" type="button">Validate JSON</button>
-  <button id="run-week" type="button" disabled>Run validated tickets in ConnectWise</button>
+  <button id="run-week" type="button" disabled>Save tickets &amp; time + generate EoD updates</button>
   <details>
     <summary>Download Sample JSON</summary>
     <button id="download-daily-sample" type="button">Daily JSON</button>
@@ -88,7 +89,7 @@
   </details>
   <p id="week-status" role="status"></p>
   <pre id="week-preview"></pre>
-  <p>Browser submission has not yet passed a saved end-to-end ConnectWise run. Watch the runner tab for the actual saved-record result.</p>
+  <p>If a run stops, it shows what was verified and does not generate a complete EoD report. Batch execution and EoD generation still need live verification; watch the runner for saved-record results.</p>
   </details>
   <button id="open-eod" type="button">EoD - Manual Entry</button>
   <details>
