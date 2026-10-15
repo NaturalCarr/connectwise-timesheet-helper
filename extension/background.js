@@ -2,7 +2,7 @@ if (typeof importScripts === 'function') importScripts('form-functions.js');
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message?.action === 'helperBuild') {
-    sendResponse({ ok: true, version: '0.8.51', ticketSaveMethod: 'exact-element' });
+    sendResponse({ ok: true, version: '0.8.52', ticketSaveMethod: 'exact-element' });
     return false;
   }
   const actions = {
@@ -27,7 +27,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   const action = actions[message?.action];
   if (!action) return false;
   action(message).then(sendResponse, (error) => sendResponse({ ok: false,
-    error: `[Helper 0.8.51; ${message.action}] ${error.message}`,
+    error: `[Helper 0.8.52; ${message.action}] ${error.message}`,
     ticketId: Number.isSafeInteger(error.ticketId) ? error.ticketId : null }));
   return true;
 });
@@ -1684,7 +1684,7 @@ async function findTimeEntriesInTab({ tabId, ticketId, entry }) {
     await executeConnectWiseScript({
       target: { tabId, frameIds: [frameId] }, func: clickTicketTimeTab, args: [String(ticketId)]
     });
-    for (let attempt = 0; attempt < 20; attempt++) {
+    for (let attempt = 0; attempt < 240; attempt++) {
       await new Promise((resolve) => setTimeout(resolve, 250));
       try { time = await readTimeRowsInTab({ tabId, ticketId }); break; }
       catch { /* Wait for Time list. */ }
@@ -2138,6 +2138,7 @@ function verifyNotes(ticketId, notes) {
   if (actual !== notes.trim()) return { ok: false, error: 'The Notes editor did not retain the exact text.' };
   return { ok: true };
 }
+
 
 
 
