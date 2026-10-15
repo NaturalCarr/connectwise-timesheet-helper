@@ -2,7 +2,7 @@ if (typeof importScripts === 'function') importScripts('form-functions.js');
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message?.action === 'helperBuild') {
-    sendResponse({ ok: true, version: '0.8.49', ticketSaveMethod: 'exact-element' });
+    sendResponse({ ok: true, version: '0.8.50', ticketSaveMethod: 'exact-element' });
     return false;
   }
   const actions = {
@@ -27,7 +27,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   const action = actions[message?.action];
   if (!action) return false;
   action(message).then(sendResponse, (error) => sendResponse({ ok: false,
-    error: `[Helper 0.8.49; ${message.action}] ${error.message}`,
+    error: `[Helper 0.8.50; ${message.action}] ${error.message}`,
     ticketId: Number.isSafeInteger(error.ticketId) ? error.ticketId : null }));
   return true;
 });
@@ -168,7 +168,7 @@ function inspectTicketFrame(ticketId) {
     return Boolean(label) || /^Status\s*:?\s*\*?/i.test(row?.innerText.trim() || '');
   });
   const knownTicketStatuses = statuses.filter((input) =>
-    /^(pre-process|working issue now|completed)\s*~?$/i.test(input.value.trim()));
+    /^(pre-process|scheduled remote|scheduled onsite|working issue now|scheduling required|waiting parts\/repair|waiting client response|waiting on 3rd party|waiting for next onsite visit|pending closure|completed|closed|closed\/client unresponsive)\s*~?$/i.test(input.value.trim()));
   const selectedStatus = ticketStatuses.length === 1 ? ticketStatuses[0]
     : knownTicketStatuses.length === 1 ? knownTicketStatuses[0]
       : statuses.length === 1 ? statuses[0] : null;
@@ -594,7 +594,7 @@ async function locateTicketOption(selector, value, searchMode = false) {
   const optionSelector = ['input.cw_workType', 'input.cw_ticketOwner'].includes(selector) ? '.gwt-dropdown-options .mm_label' : '.gwt-dropdown-options > .mm_label';
   const inputs = [...document.querySelectorAll(selector === 'ticket-status' ? 'input.cw_status' : selector)].filter((input) =>
     visible(input) && (selector !== 'ticket-status'
-      || /^Status\s*:/i.test(input.closest('tr')?.innerText.trim() || '')));
+      || (/^Status\s*:/i.test(input.closest('tr')?.innerText.trim() || '') || /^(pre-process|scheduled remote|scheduled onsite|working issue now|scheduling required|waiting parts\/repair|waiting client response|waiting on 3rd party|waiting for next onsite visit|pending closure|completed|closed|closed\/client unresponsive)\s*~?$/i.test((input.value || '').trim()))));
   if (inputs.length !== 1) throw new Error(`${selector}: expected one visible input, found ${inputs.length}.`);
   const input = inputs[0];
   const openChoice = [...document.querySelectorAll(optionSelector)]
@@ -644,7 +644,7 @@ async function locateTicketOption(selector, value, searchMode = false) {
 function focusTicketStatusSearch() {
   const visible = (el) => el.getBoundingClientRect().width > 0 && el.getBoundingClientRect().height > 0;
   const inputs = [...document.querySelectorAll('input.cw_status')].filter((input) =>
-    visible(input) && /^Status\s*:/i.test(input.closest('tr')?.innerText.trim() || ''));
+    visible(input) && (/^Status\s*:/i.test(input.closest('tr')?.innerText.trim() || '') || /^(pre-process|scheduled remote|scheduled onsite|working issue now|scheduling required|waiting parts\/repair|waiting client response|waiting on 3rd party|waiting for next onsite visit|pending closure|completed|closed|closed\/client unresponsive)\s*~?$/i.test((input.value || '').trim())));
   if (inputs.length !== 1 || inputs[0].disabled || inputs[0].readOnly) {
     throw new Error('Saved ticket Status is not a unique editable search field.');
   }
@@ -675,7 +675,7 @@ function inspectSelectedTicketOption(selector, value) {
   const normalize = (text) => String(text || '').replace(/\s+/g, ' ').trim().replace(/^\$\s*/, '').replace(/~$/, '').trim().toLowerCase();
   const inputs = [...document.querySelectorAll(selector === 'ticket-status' ? 'input.cw_status' : selector)]
     .filter((input) => input.getBoundingClientRect().width > 0 && input.getBoundingClientRect().height > 0
-      && (selector !== 'ticket-status' || /^Status\s*:/i.test(input.closest('tr')?.innerText.trim() || '')));
+      && (selector !== 'ticket-status' || (/^Status\s*:/i.test(input.closest('tr')?.innerText.trim() || '') || /^(pre-process|scheduled remote|scheduled onsite|working issue now|scheduling required|waiting parts\/repair|waiting client response|waiting on 3rd party|waiting for next onsite visit|pending closure|completed|closed|closed\/client unresponsive)\s*~?$/i.test((input.value || '').trim()))));
   const pickerOpen = ['ticket-status', 'input.cw_workType', 'input.cw_ticketOwner'].includes(selector) && [...document.querySelectorAll(selector === 'ticket-status' ? '.gwt-dropdown-options > .mm_label' : '.gwt-dropdown-options .mm_label')]
     .some((option) => option.getBoundingClientRect().width > 0 && option.getBoundingClientRect().height > 0);
   return { verified: inputs.length === 1 && normalize(inputs[0].value) === normalize(value) && !pickerOpen,
@@ -808,7 +808,7 @@ function inspectNewTicketDraft(ticket) {
       }
     }
     const statuses = [...document.querySelectorAll('input.cw_status')].filter((input) =>
-      visible(input) && /^Status\s*:/i.test(input.closest('tr')?.innerText.trim() || ''));
+      visible(input) && (/^Status\s*:/i.test(input.closest('tr')?.innerText.trim() || '') || /^(pre-process|scheduled remote|scheduled onsite|working issue now|scheduling required|waiting parts\/repair|waiting client response|waiting on 3rd party|waiting for next onsite visit|pending closure|completed|closed|closed\/client unresponsive)\s*~?$/i.test((input.value || '').trim())));
     if (statuses.length !== 1 || normalize(statuses[0].value) !== normalize(ticket.status)) {
       throw new Error('Ticket Status differs.');
     }
@@ -877,7 +877,7 @@ function inspectSavedTicketAttributes(ticketId, ticket) {
       if (values.length !== 1 || normalize(values[0]) !== normalize(value)) throw new Error(`${selector} was not saved as requested.`);
     }
     const statuses = [...document.querySelectorAll('input.cw_status')].filter((input) =>
-      visible(input) && /^Status\s*:/i.test(input.closest('tr')?.innerText.trim() || ''));
+      visible(input) && (/^Status\s*:/i.test(input.closest('tr')?.innerText.trim() || '') || /^(pre-process|scheduled remote|scheduled onsite|working issue now|scheduling required|waiting parts\/repair|waiting client response|waiting on 3rd party|waiting for next onsite visit|pending closure|completed|closed|closed\/client unresponsive)\s*~?$/i.test((input.value || '').trim())));
     if (statuses.length !== 1 || normalize(statuses[0].value) !== normalize(ticket.status)) {
       throw new Error('Saved ticket Status differs.');
     }
@@ -1506,7 +1506,7 @@ function verifyTicketStatus(ticketId, status) {
   const labeled = candidates.filter((input) =>
     /^Status\s*:?(?:\s|$)/i.test(input.closest('tr')?.innerText.trim() || ''));
   const known = candidates.filter((input) =>
-    /^(pre-process|working issue now|completed)\s*~?$/i.test(input.value.trim()));
+    /^(pre-process|scheduled remote|scheduled onsite|working issue now|scheduling required|waiting parts\/repair|waiting client response|waiting on 3rd party|waiting for next onsite visit|pending closure|completed|closed|closed\/client unresponsive)\s*~?$/i.test(input.value.trim()));
   const statuses = labeled.length === 1 ? labeled : known.length === 1 ? known
     : candidates.length === 1 ? candidates : [];
   const header = document.body?.innerText.match(/Service Ticket #(\d+)\s*-\s*([^\n]+)/)?.[0] || '';
@@ -2133,6 +2133,8 @@ function verifyNotes(ticketId, notes) {
   if (actual !== notes.trim()) return { ok: false, error: 'The Notes editor did not retain the exact text.' };
   return { ok: true };
 }
+
+
 
 
 
