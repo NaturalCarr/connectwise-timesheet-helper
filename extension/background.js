@@ -2,7 +2,7 @@ if (typeof importScripts === 'function') importScripts('form-functions.js');
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message?.action === 'helperBuild') {
-    sendResponse({ ok: true, version: '0.8.52', ticketSaveMethod: 'exact-element' });
+    sendResponse({ ok: true, version: '0.8.53', ticketSaveMethod: 'exact-element' });
     return false;
   }
   const actions = {
@@ -27,7 +27,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   const action = actions[message?.action];
   if (!action) return false;
   action(message).then(sendResponse, (error) => sendResponse({ ok: false,
-    error: `[Helper 0.8.52; ${message.action}] ${error.message}`,
+    error: `[Helper 0.8.53; ${message.action}] ${error.message}`,
     ticketId: Number.isSafeInteger(error.ticketId) ? error.ticketId : null }));
   return true;
 });
@@ -688,7 +688,7 @@ function inspectSelectedTicketOption(selector, value) {
     displayed: inputs.length === 1 ? inputs[0].value : null, count: inputs.length };
 }
 
-async function chooseTicketOptionInTab(tabId, frameId, selector, value, ticketId = null) {
+async function chooseTicketOptionInTab(tabId, frameId, selector, value, ticketId = null, retryStatus = true) {
   await chrome.tabs.update(tabId, { active: true });
   const target = { tabId, frameIds: [frameId] };
   let [choice] = await executeConnectWiseScript({
@@ -729,6 +729,10 @@ async function chooseTicketOptionInTab(tabId, frameId, selector, value, ticketId
     stable = last?.verified ? stable + 1 : 0;
     if (stable >= 4) return { selected: last.displayed };
     await new Promise((resolve) => setTimeout(resolve, 250));
+  }
+  if (selector === 'ticket-status' && !ticketId && retryStatus && last?.count === 1 && !last.pickerOpen) {
+    // Board defaults can reset Status after its first selection. Retry only the unsaved field once.
+    return chooseTicketOptionInTab(tabId, frameId, selector, value, ticketId, false);
   }
   throw new Error(`${selector} did not retain ${value}: displayed ${JSON.stringify(last?.displayed)}, visible controls ${last?.count ?? 0}, picker open ${Boolean(last?.pickerOpen)}.`);
 }
@@ -2138,6 +2142,7 @@ function verifyNotes(ticketId, notes) {
   if (actual !== notes.trim()) return { ok: false, error: 'The Notes editor did not retain the exact text.' };
   return { ok: true };
 }
+
 
 
 
