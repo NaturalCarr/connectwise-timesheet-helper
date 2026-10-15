@@ -2,7 +2,7 @@ if (typeof importScripts === 'function') importScripts('form-functions.js');
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message?.action === 'helperBuild') {
-    sendResponse({ ok: true, version: '0.8.43', ticketSaveMethod: 'exact-element' });
+    sendResponse({ ok: true, version: '0.8.44', ticketSaveMethod: 'exact-element' });
     return false;
   }
   const actions = {
@@ -27,7 +27,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   const action = actions[message?.action];
   if (!action) return false;
   action(message).then(sendResponse, (error) => sendResponse({ ok: false,
-    error: `[Helper 0.8.43; ${message.action}] ${error.message}`,
+    error: `[Helper 0.8.44; ${message.action}] ${error.message}`,
     ticketId: Number.isSafeInteger(error.ticketId) ? error.ticketId : null }));
   return true;
 });
@@ -1153,8 +1153,10 @@ function locateTicketAction(ticketId, action) {
     const frame = view.frameElement;
     if (!frame) throw new Error(`${action} frame position could not be mapped.`);
     const bounds = frame.getBoundingClientRect();
-    x += bounds.left + frame.clientLeft;
-    y += bounds.top + frame.clientTop;
+    const scaleX = frame.offsetWidth ? bounds.width / frame.offsetWidth : 1;
+    const scaleY = frame.offsetHeight ? bounds.height / frame.offsetHeight : 1;
+    x = bounds.left + (x + frame.clientLeft) * scaleX;
+    y = bounds.top + (y + frame.clientTop) * scaleY;
     view = view.parent;
   }
   if (x < 0 || y < 0 || x >= view.innerWidth || y >= view.innerHeight) {
@@ -1179,7 +1181,7 @@ async function ensureTicketOwnerInTab({ tabId, ticketId, owner }) {
       target, func: locateTicketAction, args: [String(ticketId), 'resources-and-meetings']
     });
     if (!section.result?.found) throw new Error('Resources & Meetings section was not uniquely found.');
-    await browserMouse(tabId, section.result, false);
+    await trustedTicketControlClick(tabId, found.frameId, ticketId, 'resources-and-meetings');
     for (let attempt = 0; attempt < 30; attempt++) {
       await new Promise((resolve) => setTimeout(resolve, 250));
       [action] = await executeConnectWiseScript({
@@ -1189,7 +1191,7 @@ async function ensureTicketOwnerInTab({ tabId, ticketId, owner }) {
     }
   }
   if (!action.result?.found) throw new Error('Assign Me was not found in Resources & Meetings.');
-  await browserMouse(tabId, action.result, false);
+  await trustedTicketControlClick(tabId, found.frameId, ticketId, 'assign-me');
   let savedFrame;
   for (let attempt = 0; attempt < 60; attempt++) {
     await new Promise((resolve) => setTimeout(resolve, 500));
@@ -1198,17 +1200,19 @@ async function ensureTicketOwnerInTab({ tabId, ticketId, owner }) {
   }
   if (!savedFrame) throw new Error(`Assign Me was clicked, but ticket #${ticketId} did not return.`);
   // Give ConnectWise time to apply the assignment before saving the ticket form.
-  for (let attempt = 0; attempt < 20; attempt++) {
+  let assignmentObserved = false;
+  for (let attempt = 0; attempt < 60; attempt++) {
     try {
       savedFrame = await matchingFrame(tabId, ticketId, inspectTicketFrame);
       const [check] = await executeConnectWiseScript({
         target: { tabId, frameIds: [savedFrame.frameId] }, func: inspectTicketOwner,
         args: [String(ticketId), owner]
       });
-      if (check.result?.verified) break;
+      if (check.result?.verified) { assignmentObserved = true; break; }
     } catch { /* The assignment may still be rerendering the ticket. */ }
     await new Promise((resolve) => setTimeout(resolve, 500));
   }
+  if (!assignmentObserved) throw new Error(`Assign Me did not set Ticket Owner to ${owner} on #${ticketId}. No ticket Save or time entry was attempted.`);
   await trustedTicketSave(tabId, savedFrame.frameId, ticketId);
   let confirmed = false;
   for (let attempt = 0; attempt < 60; attempt++) {
@@ -1317,6 +1321,15 @@ function inspectTicketClickHit(ticketId, role, value) {
     ? new RegExp(`(?:^|[^0-9])${ticketId}(?![0-9])`).test(charge)
     : header && header[1] === String(ticketId);
   if (!correctTicket) return { verified: false, reason: 'wrong ticket document' };
+  if (['assign-me', 'resources-and-meetings'].includes(role)) {
+    const pattern = role === 'assign-me' ? /^ASSIGN ME$/i : /^Resources\s*&\s*Meetings(?:\s*\d+)?$/i;
+    let control = element;
+    while (control && control !== element.ownerDocument.body) {
+      if (pattern.test(control.textContent.trim().replace(/\s+/g, ' '))) return { verified: true };
+      control = control.parentElement;
+    }
+    return { verified: false, reason: 'another control covers the assignment action' };
+  }
   const normalize = (text) => String(text || '').replace(/\s+/g, ' ').trim().replace(/^\$\s*/, '').replace(/~$/, '').trim().toLowerCase();
   const target = role === 'save' ? element.closest('.cw_ToolbarButton_Save')
     : element.closest('.gwt-dropdown-options .mm_label');
@@ -1380,8 +1393,10 @@ async function trustedTicketControlClick(tabId, frameId, ticketId, role, value =
     await new Promise((resolve) => setTimeout(resolve, 150));
     const locate = async (reveal = false) => {
       const [result] = await executeConnectWiseScript({ target: scriptTarget,
-        func: role === 'save' ? locateTicketSaveButton : locateTicketOption,
-        args: role === 'save' ? [String(ticketId), reveal] : [selector, value, true] });
+        func: role === 'save' ? locateTicketSaveButton
+          : ['assign-me', 'resources-and-meetings'].includes(role) ? locateTicketAction : locateTicketOption,
+        args: role === 'save' ? [String(ticketId), reveal]
+          : ['assign-me', 'resources-and-meetings'].includes(role) ? [String(ticketId), role] : [selector, value, true] });
       const point = result?.result;
       if (!point || !Number.isFinite(point.x) || !Number.isFinite(point.y)) {
         throw new Error(`Ticket ${role} did not have a valid click position.`);
@@ -2053,6 +2068,8 @@ function verifyNotes(ticketId, notes) {
   if (actual !== notes.trim()) return { ok: false, error: 'The Notes editor did not retain the exact text.' };
   return { ok: true };
 }
+
+
 
 
 
