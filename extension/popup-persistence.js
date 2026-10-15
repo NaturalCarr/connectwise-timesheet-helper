@@ -12,6 +12,7 @@ let popupDraftMutating = false;
 
 function savePopupDraft(group) {
   const values = {};
+  if (group === 'ticket' && window.ticketEntries) values.timeEntries = window.ticketEntries.read();
   for (const id of popupDraftGroups[group]) {
     const input = document.getElementById(id);
     if (!input) continue;
@@ -31,7 +32,7 @@ async function clearPopupDrafts() {
   for (const id of ['ticket-json', 'week-json', 'ticket-file', 'week-file']) {
     document.getElementById(id).value = '';
   }
-  document.getElementById('ticket-with-time').dispatchEvent(new Event('change', { bubbles: true }));
+  document.getElementById('ticket-with-time')?.dispatchEvent(new Event('change', { bubbles: true }));
   document.dispatchEvent(new Event('popup-drafts-cleared'));
   popupDraftMutating = false;
 }
@@ -82,10 +83,16 @@ document.addEventListener('DOMContentLoaded', async () => {
       else if (typeof values[id] === 'string') input.value = values[id];
     }
   }
-  document.getElementById('ticket-with-time').dispatchEvent(new Event('change', { bubbles: true }));
+  document.getElementById('ticket-with-time')?.dispatchEvent(new Event('change', { bubbles: true }));
+  const ticketValues = saved[popupDraftKey('ticket')];
+  if (ticketValues && window.ticketEntries) {
+    const entries = ticketValues.timeEntries || (ticketValues['ticket-with-time'] ? [{ date: ticketValues['ticket-time-date'], start: ticketValues['ticket-time-start'], end: ticketValues['ticket-time-end'], notes: ticketValues['ticket-time-notes'], workType: ticketValues['ticket-time-work-type'], workRole: ticketValues['ticket-time-work-role'] }] : []);
+    window.ticketEntries.restore(entries);
+  }
   document.dispatchEvent(new Event('popup-drafts-restored'));
   popupDraftMutating = false;
 });
+
 
 
 

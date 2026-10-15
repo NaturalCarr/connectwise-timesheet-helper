@@ -45,8 +45,8 @@
     
     <label>Issue / new ticket title<input id="ticket-issue" placeholder="Short issue title"></label>
     <label>Initial description<textarea id="ticket-description" placeholder="Details you actually know about this issue"></textarea></label>
-    <label><input id="ticket-with-time" type="checkbox"> Also enter one time entry</label>
-    <fieldset id="ticket-time-fields" hidden disabled>
+    <button id="ticket-add-time" type="button">+ Add a Time Entry</button><div id="ticket-time-entries">
+    <fieldset id="ticket-time-fields" data-time-entry hidden disabled>
       <legend>Time entry</legend>
       <div class="row">
         <label>Date<input id="ticket-time-date" type="date" required></label>
@@ -61,8 +61,9 @@
         <label>Work role<input id="ticket-time-work-role" value="Onsite Engineer" required></label>
       </div>
       <label>Notes<textarea id="ticket-time-notes" required></textarea></label>
-      <label>Mark ticket as<select id="ticket-complete-after-time" required><option value="Working Issue Now">Working Issue Now</option></select></label>
+
     </fieldset>
+    </div><label id="ticket-final-status-label" hidden>Mark ticket as<select id="ticket-complete-after-time"><option value="Working Issue Now">Working Issue Now</option></select></label>
     <p id="ticket-preview"></p>
     <button type="submit">Find or create ticket</button>
   <details>
@@ -111,6 +112,7 @@
   <script src="popup-layout.js"></script>
 </body>
 </html>
+
 
 
 

@@ -1,5 +1,19 @@
 // One daily ticket may include one time entry; every save is checked before continuing.
 export async function executeTicket(plan, driver, checkpoint = null) {
+  if (plan?.timeEntries) {
+    const { timeEntries, ...base } = plan;
+    let ticketId = checkpoint?.ticketId || plan.existingTicketId;
+    const entries = [];
+    let last;
+    for (let index = 0; index < timeEntries.length; index++) {
+      last = await executeTicket({ ...base, existingTicketId: ticketId,
+        timeEntry: timeEntries[index], completeAfterTime: index === timeEntries.length - 1 && plan.completeAfterTime }, driver);
+      if (last.ticketId) ticketId = last.ticketId;
+      if (last.entry) entries.push(last.entry);
+      if (!last.ok) return { ...last, entries, entryIndex: index };
+    }
+    return { ...last, entries };
+  }
   if (!plan?.ticket || plan.exampleOnly) throw new Error('A validated, non-example ticket plan is required.');
   if (plan.completeAfterTime && (!plan.timeEntry || !plan.completedStatus)) {
     throw new Error('Completion requires a time entry and completed ticket status.');

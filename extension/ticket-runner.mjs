@@ -110,7 +110,7 @@ async function main() {
   if (result.ok) await chrome.storage.local.remove('popupDraft:ticket').catch(() => {});
   output.textContent = JSON.stringify(result, null, 2);
   status.textContent = result.ok
-    ? `Ticket #${result.ticketId}${result.entry ? ' and its time entry' : ''} verified; status ${result.ticketStatus}.`
+    ? `Ticket #${result.ticketId}${result.entries ? ` and ${result.entries.length} time entries` : result.entry ? ' and its time entry' : ''} verified; status ${result.ticketStatus}.`
     : 'Ticket run stopped. Review the result below; a ticket or time entry may already have been saved.';
   if (result.ticketId) {
     showTicket.hidden = false;

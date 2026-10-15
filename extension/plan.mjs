@@ -114,6 +114,18 @@ export function planWorkItem(item, settings) {
 }
 
 export function planTicket(input, settings) {
+  if (input?.timeEntries !== undefined) {
+    if (input.timeEntry !== undefined) throw new Error('Choose timeEntry or timeEntries, not both.');
+    if (!Array.isArray(input.timeEntries) || !input.timeEntries.length) throw new Error('timeEntries must contain at least one entry.');
+    const { timeEntries, ...base } = input;
+    const plans = timeEntries.map((timeEntry) => planTicket({ ...base, timeEntry }, settings));
+    const entries = plans.map((plan) => plan.timeEntry);
+    for (let i = 0; i < entries.length; i++) for (let j = 0; j < i; j++) {
+      if (entries[i].date === entries[j].date && entries[i].start < entries[j].end && entries[j].start < entries[i].end) throw new Error('Ticket time entries overlap.');
+      if (entries[i].recordId && entries[i].recordId === entries[j].recordId) throw new Error('Duplicate time recordId.');
+    }
+    return { ...plans[0], timeEntries: entries };
+  }
   if (!input || typeof input !== 'object' || Array.isArray(input)) {
     throw new Error('Ticket input must be an object.');
   }
