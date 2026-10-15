@@ -2,7 +2,7 @@ if (typeof importScripts === 'function') importScripts('form-functions.js');
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message?.action === 'helperBuild') {
-    sendResponse({ ok: true, version: '0.8.53', ticketSaveMethod: 'exact-element' });
+    sendResponse({ ok: true, version: '0.8.54', ticketSaveMethod: 'exact-element' });
     return false;
   }
   const actions = {
@@ -27,7 +27,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   const action = actions[message?.action];
   if (!action) return false;
   action(message).then(sendResponse, (error) => sendResponse({ ok: false,
-    error: `[Helper 0.8.53; ${message.action}] ${error.message}`,
+    error: `[Helper 0.8.54; ${message.action}] ${error.message}`,
     ticketId: Number.isSafeInteger(error.ticketId) ? error.ticketId : null }));
   return true;
 });
@@ -715,6 +715,8 @@ async function chooseTicketOptionInTab(tabId, frameId, selector, value, ticketId
       await trustedTicketControlClick(tabId, frameId, ticketId, 'time-option', value, selector);
     } else if (selector === 'input.cw_ticketOwner' && ticketId) {
       await trustedTicketControlClick(tabId, frameId, ticketId, 'owner-option', value, selector);
+    } else if (!ticketId) {
+      await trustedTicketControlClick(tabId, frameId, null, 'new-ticket-option', value, selector);
     } else {
       await browserMouse(tabId, choice.result, false);
     }
@@ -1379,7 +1381,10 @@ function inspectTicketClickHit(ticketId, role, value) {
   const element = this.nodeType === 1 ? this : this.parentElement;
   const header = element?.ownerDocument?.body?.innerText.match(/Service Ticket #(\d+)\s*-/);
   const charge = element?.ownerDocument?.querySelector('input.cw_ChargeToTextBox')?.value || '';
-  const correctTicket = role === 'time-option'
+  const correctTicket = role === 'new-ticket-option'
+    ? /New Ticket/.test(element?.ownerDocument?.body?.innerText || '') && !header
+      && Boolean(element?.ownerDocument?.querySelector('input.cw_PsaSummaryHeader'))
+    : role === 'time-option'
     ? new RegExp(`(?:^|[^0-9])${ticketId}(?![0-9])`).test(charge)
     : header && header[1] === String(ticketId);
   if (!correctTicket) return { verified: false, reason: 'wrong ticket document' };
@@ -2142,6 +2147,7 @@ function verifyNotes(ticketId, notes) {
   if (actual !== notes.trim()) return { ok: false, error: 'The Notes editor did not retain the exact text.' };
   return { ok: true };
 }
+
 
 
 
