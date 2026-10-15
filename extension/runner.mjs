@@ -1,5 +1,5 @@
 import { applyTicketOwner } from './owner-settings.mjs';
-import { dailyReport } from './daily-report.mjs';
+import { reportsByDay } from './daily-report.mjs';
 import { executePlan } from './execute-plan.mjs';
 import { chooseConnectWiseTab, mainWorkspaceTab } from './navigation.mjs';
 
@@ -103,28 +103,34 @@ async function main() {
     }
   };
   const result = await executePlan(plan, driver);
-  if (result.ok && plan.mode === 'daily') {
-    result.endOfDay = dailyReport(plan, result);
-    const html = result.endOfDay.html;
+  if (result.ok) {
+    result.endOfDays = reportsByDay(plan, result);
+    if (plan.mode === 'daily') result.endOfDay = result.endOfDays[0];
     const preview = document.getElementById('email-preview');
-    preview.innerHTML = html;
+    const selector = document.getElementById('email-date');
+    for (const report of result.endOfDays) selector.add(new Option(report.date, report.date));
+    const selected = () => result.endOfDays.find((report) => report.date === selector.value);
+    const showReport = () => { preview.innerHTML = selected().html; };
+    selector.onchange = showReport;
+    showReport();
     document.getElementById('daily-report').hidden = false;
     document.getElementById('copy-daily-email').onclick = async () => {
       try {
-        await navigator.clipboard.write([new ClipboardItem({ 'text/html': new Blob([html], { type: 'text/html' }),
+        await navigator.clipboard.write([new ClipboardItem({ 'text/html': new Blob([selected().html], { type: 'text/html' }),
           'text/plain': new Blob([preview.innerText], { type: 'text/plain' }) })]);
         document.getElementById('email-status').textContent = 'Copied. Review in your email composer before sending. Nothing was sent.';
       } catch (error) { document.getElementById('email-status').textContent = `Copy failed: ${error.message}. Use Download HTML.`; }
     };
     document.getElementById('download-daily-email').onclick = () => {
-      const url = URL.createObjectURL(new Blob([html], { type: 'text/html' }));
-      const link = document.createElement('a'); link.href = url; link.download = `end-of-day-${plan.date}.html`; link.click();
+      const report = selected();
+      const url = URL.createObjectURL(new Blob([report.html], { type: 'text/html' }));
+      const link = document.createElement('a'); link.href = url; link.download = `end-of-day-${report.date}.html`; link.click();
       setTimeout(() => URL.revokeObjectURL(url), 1000);
     };
   }
   if (result.ok) await chrome.storage.local.remove('popupDraft:week').catch(() => {});
   output.textContent = JSON.stringify(result, null, 2);
-  status.textContent = result.ok ? 'Run saved and verified. Daily runs include the end-of-day email table below.' : 'Run stopped. Review the result below; no complete end-of-day email was generated.';
+  status.textContent = result.ok ? `Run saved and verified. ${result.endOfDays.length} EoD update(s) generated below; nothing was emailed.` : 'Run stopped. Review the result below; no complete end-of-day email was generated.';
   if (reportResult) await reportResult(result);
 }
 
