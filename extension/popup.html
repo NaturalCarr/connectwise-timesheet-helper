@@ -65,15 +65,14 @@
     </fieldset>
     <p id="ticket-preview"></p>
     <button type="submit">Find or create ticket</button>
-  </form>
   <details>
     <summary>Load ticket JSON instead</summary>
     <label>Ticket JSON file<input id="ticket-file" type="file" accept=".json,application/json"></label>
     <label>Or paste ticket JSON<textarea id="ticket-json" spellcheck="false" placeholder='{"school":"SCHC","issue":"Issue title","description":"Known details"}'></textarea></label>
     <button id="load-ticket-json" type="button">Load ticket JSON into form</button>
   </details>
+  </form>
   <p id="ticket-status" role="status"></p>
-  <button id="open-eod" type="button">EoD - Manual Entry</button>
   <details class="workflow" id="weekly-section">
   <summary>Daily/ Weekly TimeSheets and EoD</summary>
   <p>Choose any signed-in ConnectWise tab. Paste a daily or weekly JSON record or select a file, then validate it. The runner opens Service Board when needed.</p>
@@ -82,12 +81,16 @@
   <label>Or paste daily / weekly JSON<textarea id="week-json" spellcheck="false" placeholder="Paste the complete daily or weekly JSON here"></textarea></label>
   <button id="validate-week" type="button">Validate JSON</button>
   <button id="run-week" type="button" disabled>Run validated tickets in ConnectWise</button>
-  <div><button id="download-weekly-sample" type="button">Weekly Sample ↓</button>
-    <button id="download-daily-sample" type="button">Daily Sample ↓</button></div>
+  <details>
+    <summary>Download Sample JSON</summary>
+    <button id="download-daily-sample" type="button">Daily JSON</button>
+    <button id="download-weekly-sample" type="button">Weekly JSON</button>
+  </details>
   <p id="week-status" role="status"></p>
   <pre id="week-preview"></pre>
   <p>Browser submission has not yet passed a saved end-to-end ConnectWise run. Watch the runner tab for the actual saved-record result.</p>
   </details>
+  <button id="open-eod" type="button">EoD - Manual Entry</button>
   <details>
     <summary>Inspect form controls</summary>
     <p>This reads control identifiers only and does not submit anything.</p>
