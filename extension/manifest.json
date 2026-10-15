@@ -1,13 +1,14 @@
 {
   "manifest_version": 3,
   "name": "ConnectWise Timesheet Helper",
-  "version": "0.8.44",
+  "version": "0.8.45",
   "description": "Local ConnectWise ticket and timesheet browser workflow.",
   "permissions": ["activeTab", "scripting", "debugger", "storage", "clipboardWrite"],
   "host_permissions": ["https://na.myconnectwise.net/*", "http://127.0.0.1/*"],
   "background": { "service_worker": "background.js" },
   "action": { "default_popup": "popup.html" }
 }
+
 
 
 

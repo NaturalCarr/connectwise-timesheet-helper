@@ -2,7 +2,7 @@ if (typeof importScripts === 'function') importScripts('form-functions.js');
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message?.action === 'helperBuild') {
-    sendResponse({ ok: true, version: '0.8.44', ticketSaveMethod: 'exact-element' });
+    sendResponse({ ok: true, version: '0.8.45', ticketSaveMethod: 'exact-element' });
     return false;
   }
   const actions = {
@@ -27,7 +27,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   const action = actions[message?.action];
   if (!action) return false;
   action(message).then(sendResponse, (error) => sendResponse({ ok: false,
-    error: `[Helper 0.8.44; ${message.action}] ${error.message}`,
+    error: `[Helper 0.8.45; ${message.action}] ${error.message}`,
     ticketId: Number.isSafeInteger(error.ticketId) ? error.ticketId : null }));
   return true;
 });
@@ -580,7 +580,7 @@ async function trustedTicketText(tabId, frameId, selector, value, verifyText = t
 async function locateTicketOption(selector, value, searchMode = false) {
   const visible = (el) => el && el.getBoundingClientRect().width > 0 && el.getBoundingClientRect().height > 0;
   const normalize = (text) => String(text || '').replace(/\s+/g, ' ').trim().replace(/^\$\s*/, '').replace(/~$/, '').trim().toLowerCase();
-  const optionSelector = selector === 'input.cw_workType' ? '.gwt-dropdown-options .mm_label' : '.gwt-dropdown-options > .mm_label';
+  const optionSelector = ['input.cw_workType', 'input.cw_ticketOwner'].includes(selector) ? '.gwt-dropdown-options .mm_label' : '.gwt-dropdown-options > .mm_label';
   const inputs = [...document.querySelectorAll(selector === 'ticket-status' ? 'input.cw_status' : selector)].filter((input) =>
     visible(input) && (selector !== 'ticket-status'
       || /^Status\s*:/i.test(input.closest('tr')?.innerText.trim() || '')));
@@ -606,7 +606,7 @@ async function locateTicketOption(selector, value, searchMode = false) {
     options: [...document.querySelectorAll(optionSelector)]
       .filter(visible).map((option) => option.textContent.trim()).slice(0, 12) };
   if (matches.length !== 1) throw new Error(`${selector}: ${value} matched ${matches.length} visible choices.`);
-  if (selector === 'input.cw_workType') {
+  if (['input.cw_workType', 'input.cw_ticketOwner'].includes(selector)) {
     matches[0].scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'instant' });
     await new Promise((resolve) => setTimeout(resolve, 150));
   }
@@ -665,7 +665,7 @@ function inspectSelectedTicketOption(selector, value) {
   const inputs = [...document.querySelectorAll(selector === 'ticket-status' ? 'input.cw_status' : selector)]
     .filter((input) => input.getBoundingClientRect().width > 0 && input.getBoundingClientRect().height > 0
       && (selector !== 'ticket-status' || /^Status\s*:/i.test(input.closest('tr')?.innerText.trim() || '')));
-  const pickerOpen = ['ticket-status', 'input.cw_workType'].includes(selector) && [...document.querySelectorAll(selector === 'ticket-status' ? '.gwt-dropdown-options > .mm_label' : '.gwt-dropdown-options .mm_label')]
+  const pickerOpen = ['ticket-status', 'input.cw_workType', 'input.cw_ticketOwner'].includes(selector) && [...document.querySelectorAll(selector === 'ticket-status' ? '.gwt-dropdown-options > .mm_label' : '.gwt-dropdown-options .mm_label')]
     .some((option) => option.getBoundingClientRect().width > 0 && option.getBoundingClientRect().height > 0);
   return { verified: inputs.length === 1 && normalize(inputs[0].value) === normalize(value) && !pickerOpen,
     pickerOpen,
@@ -687,12 +687,18 @@ async function chooseTicketOptionInTab(tabId, frameId, selector, value, ticketId
       target, func: locateTicketOption, args: [selector, value, true]
     });
   }
+  if (selector === 'input.cw_ticketOwner' && !choice.result?.alreadySelected && !choice.result?.found && !choice.result?.readOnly) {
+    await trustedTicketText(tabId, frameId, selector, value, false);
+    [choice] = await executeConnectWiseScript({ target, func: locateTicketOption, args: [selector, value, true] });
+  }
   if (!choice.result?.alreadySelected) {
     if (!choice.result?.found) throw new Error(`${selector}: ${value} choice was not located (field: ${JSON.stringify(choice.result?.displayed)}, visible choices: ${choice.result?.options?.join(', ') || 'none'}).`);
     if (selector === 'ticket-status' && ticketId) {
       await trustedTicketControlClick(tabId, frameId, ticketId, 'status-option', value);
     } else if (selector === 'input.cw_workType' && ticketId) {
       await trustedTicketControlClick(tabId, frameId, ticketId, 'time-option', value, selector);
+    } else if (selector === 'input.cw_ticketOwner' && ticketId) {
+      await trustedTicketControlClick(tabId, frameId, ticketId, 'owner-option', value, selector);
     } else {
       await browserMouse(tabId, choice.result, false);
     }
@@ -1173,6 +1179,10 @@ async function ensureTicketOwnerInTab({ tabId, ticketId, owner }) {
     args: [String(ticketId), owner] });
   if (!before.result?.matches) throw new Error('Saved Ticket Owner field was not uniquely found.');
   if (before.result.verified) return { ok: true, verified: true, owner, alreadySet: true };
+  const reassignment = Boolean(before.result.owner && !/^\(?unassigned\)?\s*~?$/i.test(before.result.owner));
+  if (reassignment) {
+    await chooseTicketOptionInTab(tabId, found.frameId, 'input.cw_ticketOwner', owner, ticketId);
+  } else {
   let [action] = await executeConnectWiseScript({
     target, func: locateTicketAction, args: [String(ticketId), 'assign-me']
   });
@@ -1192,6 +1202,7 @@ async function ensureTicketOwnerInTab({ tabId, ticketId, owner }) {
   }
   if (!action.result?.found) throw new Error('Assign Me was not found in Resources & Meetings.');
   await trustedTicketControlClick(tabId, found.frameId, ticketId, 'assign-me');
+  }
   let savedFrame;
   for (let attempt = 0; attempt < 60; attempt++) {
     await new Promise((resolve) => setTimeout(resolve, 500));
@@ -1212,7 +1223,7 @@ async function ensureTicketOwnerInTab({ tabId, ticketId, owner }) {
     } catch { /* The assignment may still be rerendering the ticket. */ }
     await new Promise((resolve) => setTimeout(resolve, 500));
   }
-  if (!assignmentObserved) throw new Error(`Assign Me did not set Ticket Owner to ${owner} on #${ticketId}. No ticket Save or time entry was attempted.`);
+  if (!assignmentObserved) throw new Error(`Owner assignment did not set Ticket Owner to ${owner} on #${ticketId}. No ticket Save or time entry was attempted.`);
   await trustedTicketSave(tabId, savedFrame.frameId, ticketId);
   let confirmed = false;
   for (let attempt = 0; attempt < 60; attempt++) {
@@ -1237,7 +1248,7 @@ async function ensureTicketOwnerInTab({ tabId, ticketId, owner }) {
         args: [String(ticketId), owner]
       });
       if (check.result?.verified) return { ok: true, verified: true, owner, saved: true,
-        method: 'assign-me' };
+        method: reassignment ? 'owner-dropdown' : 'assign-me' };
     } catch { /* Wait for the saved ticket to reload. */ }
   }
   throw new Error(`Assign Me was clicked on ticket #${ticketId}, but Ticket Owner ${owner} was not verified after reload.`);
@@ -2068,6 +2079,7 @@ function verifyNotes(ticketId, notes) {
   if (actual !== notes.trim()) return { ok: false, error: 'The Notes editor did not retain the exact text.' };
   return { ok: true };
 }
+
 
 
 
