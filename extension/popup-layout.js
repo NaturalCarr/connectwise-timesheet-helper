@@ -1,6 +1,12 @@
 (() => {
   function fit(field) {
     if (!field.getClientRects().length) return;
+    if (['ticket-json', 'week-json'].includes(field.id)) {
+      field.rows = 2;
+      field.style.height = '52px';
+      field.style.overflowY = 'auto';
+      return;
+    }
     field.rows = 1;
     if (!field.value) { field.style.height = '34px'; return; }
     field.style.height = '0px';

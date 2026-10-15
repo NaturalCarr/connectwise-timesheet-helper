@@ -30,6 +30,7 @@ function clearValidation() {
   validatedPlan = null;
   runButton.disabled = true;
   status.textContent = '';
+  delete status.dataset.state;
   preview.textContent = '';
 }
 
@@ -47,6 +48,9 @@ textInput.addEventListener('input', () => {
 
 validateButton.addEventListener('click', async () => {
   clearValidation();
+  status.dataset.state = 'checking';
+  status.textContent = 'Checking JSON…';
+  validateButton.disabled = true;
   try {
     const file = fileInput.files?.[0];
     if (file && file.size > 1024 * 1024) throw new Error('The JSON file must be under 1 MB.');
@@ -66,8 +70,15 @@ validateButton.addEventListener('click', async () => {
     const reportCount = new Set(plan.tickets.flatMap((item) => item.timeEntries.map((entry) => entry.date))).size;
     status.textContent = `Validated ${plan.tickets.length} ticket(s) and ${plan.totalEntries} time entry/entries for ${plan.mode === 'daily' ? plan.date : `${plan.weekStart}–${plan.weekEnd}`}. After verified saves, ${reportCount} EoD email update(s) will be generated, one per date. Nothing has been saved or emailed.`;
     runButton.disabled = false;
+    status.dataset.state = 'valid';
+    status.textContent = `✓ JSON valid — ${status.textContent}`;
+    status.scrollIntoView({ block: 'nearest' });
   } catch (error) {
-    status.textContent = `Validation failed: ${error.message}`;
+    status.dataset.state = 'error';
+    status.textContent = `✕ JSON invalid — ${error.message}`;
+    status.scrollIntoView({ block: 'nearest' });
+  } finally {
+    validateButton.disabled = false;
   }
 });
 

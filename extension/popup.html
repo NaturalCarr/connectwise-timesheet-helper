@@ -20,6 +20,10 @@
     input[type=checkbox] { width: auto; margin-right: 6px; } input:focus,select:focus,textarea:focus { outline: 2px solid #b6d2ff; border-color: #2563bf; }
     textarea { height: 34px; min-height: 34px; resize: none; overflow-y: hidden; line-height: 18px; }
     #ticket-json, #week-json, #result { font: 12px/18px Consolas, monospace; }
+    #ticket-json, #week-json { height: 52px; max-height: 52px; overflow-y: auto; }
+    #week-status:not(:empty) { padding: 10px; border-radius: 6px; border: 1px solid #bfcada; background: #eef3fa; color: #17365d; }
+    #week-status[data-state="valid"] { background: #e8f6ec; border-color: #398752; color: #19582e; }
+    #week-status[data-state="error"] { background: #fff0ef; border-color: #bd4540; color: #8b2420; }
     fieldset { border: 1px solid #d9e1eb; border-radius: 7px; margin: 12px 0; padding: 10px; } [hidden] { display: none !important; }
     .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     summary { cursor: pointer; font-weight: 600; } details[open] > summary { margin-bottom: 10px; }
@@ -82,13 +86,13 @@
   <label>Daily / weekly JSON file<input id="week-file" type="file" accept=".json,application/json"></label>
   <label>Or paste daily / weekly JSON<textarea id="week-json" spellcheck="false" placeholder="Paste the complete daily or weekly JSON here"></textarea></label>
   <button id="validate-week" type="button">Validate JSON</button>
+  <p id="week-status" role="status" aria-live="polite"></p>
   <button id="run-week" type="button" disabled>Save tickets &amp; time + generate EoD updates</button>
   <details>
     <summary>Download Sample JSON</summary>
     <button id="download-daily-sample" type="button">Daily JSON</button>
     <button id="download-weekly-sample" type="button">Weekly JSON</button>
   </details>
-  <p id="week-status" role="status"></p>
   <pre id="week-preview"></pre>
   <p>If a run stops, it shows what was verified and does not generate a complete EoD report. Batch execution and EoD generation still need live verification; watch the runner for saved-record results.</p>
   </details>
