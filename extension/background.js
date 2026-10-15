@@ -2,7 +2,7 @@ if (typeof importScripts === 'function') importScripts('form-functions.js');
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message?.action === 'helperBuild') {
-    sendResponse({ ok: true, version: '0.8.47', ticketSaveMethod: 'exact-element' });
+    sendResponse({ ok: true, version: '0.8.48', ticketSaveMethod: 'exact-element' });
     return false;
   }
   const actions = {
@@ -27,7 +27,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   const action = actions[message?.action];
   if (!action) return false;
   action(message).then(sendResponse, (error) => sendResponse({ ok: false,
-    error: `[Helper 0.8.47; ${message.action}] ${error.message}`,
+    error: `[Helper 0.8.48; ${message.action}] ${error.message}`,
     ticketId: Number.isSafeInteger(error.ticketId) ? error.ticketId : null }));
   return true;
 });
@@ -427,8 +427,18 @@ function searchBoardForTicket(ticket) {
     if (input.value !== value) throw new Error(`${selector} did not retain the search value.`);
   };
   set('#Summary-input', `*${ticket.titleContains || ticket.summary}*`);
-  set('#Company_Name-input', ticket.company);
-  set('#Site_name-input', ticket.site);
+  if (ticket.titleContains) {
+    // Imported references search Summary only; remove every other grid filter.
+    for (const input of document.querySelectorAll('input[id$="-input"]')) {
+      if (input.id !== 'Summary-input' && input.getBoundingClientRect().width > 0
+        && input.getBoundingClientRect().height > 0 && input.value) set(`#${input.id}`, '');
+    }
+    set('#Company_Name-input', '');
+    set('#Site_name-input', '');
+  } else {
+    set('#Company_Name-input', ticket.company);
+    set('#Site_name-input', ticket.site);
+  }
   one('.cw-toolbar-search').click();
   return { searched: true };
 }
@@ -436,7 +446,7 @@ function searchBoardForTicket(ticket) {
 function inspectBoardSearch(ticket) {
   const inputs = ['#Summary-input', '#Company_Name-input', '#Site_name-input']
     .map((selector) => document.querySelector(selector)?.value || '');
-  if (inputs[0] !== `*${ticket.titleContains || ticket.summary}*` || inputs[1] !== ticket.company || inputs[2] !== ticket.site) {
+  if (inputs[0] !== `*${ticket.titleContains || ticket.summary}*` || inputs[1] !== (ticket.titleContains ? '' : ticket.company) || inputs[2] !== (ticket.titleContains ? '' : ticket.site)) {
     return { ready: false, reason: 'Search filters changed.' };
   }
   const count = document.body?.innerText.match(/View\s+(\d+)\s*-\s*(\d+)\s+of\s+(\d+)/i);
@@ -448,16 +458,16 @@ function inspectBoardSearch(ticket) {
     .filter((cells) => cells.length > 9 && /^\d+$/.test(cells[1] || ''));
   const term = normalize(ticket.titleContains || ticket.summary);
   if (rows.some((cells) => !normalize(cells[6]).includes(term)
-    || normalize(cells[8]) !== normalize(ticket.company)
-    || normalize(cells[9]) !== normalize(ticket.site))) {
+    || (!ticket.titleContains && (normalize(cells[8]) !== normalize(ticket.company)
+    || normalize(cells[9]) !== normalize(ticket.site))))) {
     return { ready: false, reason: 'Waiting for filtered search results.' };
   }
   if (count && Number(count[2]) < Number(count[3])) {
     return { ready: false, reason: 'Search has additional pages; duplicate check is incomplete.', paginated: true };
   }
   const matches = rows.filter((cells) => (ticket.titleContains ? normalize(cells[6]).includes(normalize(ticket.titleContains)) : normalize(cells[6]) === normalize(ticket.summary))
-    && normalize(cells[8]) === normalize(ticket.company)
-    && normalize(cells[9]) === normalize(ticket.site))
+    && (ticket.titleContains || (normalize(cells[8]) === normalize(ticket.company)
+    && normalize(cells[9]) === normalize(ticket.site))))
     .map((cells) => ({ ticketId: Number(cells[1]), summary: cells[6], company: cells[8], site: cells[9] }));
   return { ready: true, matches, visibleRows: rows.length, total: count ? Number(count[3]) : 0 };
 }
@@ -471,7 +481,7 @@ function inspectSearchedTicket(ticket) {
   const company = visible('input.cw_company')[0]?.value;
   const site = visible('input.cw_companyViewCompanyAddress')[0]?.value;
   return { matches: Boolean(header && (ticket.titleContains ? normalize(summary).includes(normalize(ticket.titleContains)) : normalize(summary) === normalize(ticket.summary))
-    && normalize(company) === normalize(ticket.company) && normalize(site) === normalize(ticket.site)),
+    && (ticket.titleContains || (normalize(company) === normalize(ticket.company) && normalize(site) === normalize(ticket.site)))),
     ticketId: header ? Number(header[1]) : null };
 }
 
@@ -2111,6 +2121,8 @@ function verifyNotes(ticketId, notes) {
   if (actual !== notes.trim()) return { ok: false, error: 'The Notes editor did not retain the exact text.' };
   return { ok: true };
 }
+
+
 
 
 

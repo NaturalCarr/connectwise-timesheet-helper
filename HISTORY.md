@@ -28,3 +28,4 @@ Available archives begin at v0.8.25. Missing versions were not invented. Histori
 | 0.8.45 | 2026-10-15T18:12:48.770Z | ConnectWise-Helper-0.8.45.zip |
 | 0.8.46 | 2026-10-15T18:17:41.114Z | ConnectWise-Helper-0.8.46.zip |
 | 0.8.47 | 2026-10-15T18:25:35.183Z | ConnectWise-Helper-0.8.47.zip |
+| 0.8.48 | 2026-10-15T19:41:49.770Z | ConnectWise-Helper-0.8.48.zip |

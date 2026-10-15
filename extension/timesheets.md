@@ -23,7 +23,7 @@ Use workType Payroll Wrap, notes Lunch break., billable AUTO, and the actual lun
 - An imported reference such as T-90442 belongs in titleContains as a string. It is not a ConnectWise numeric ticket ID.
 - A confirmed ConnectWise ID belongs in existingTicketId as an integer.
 - Both may be supplied. The numeric ID wins. A confirmed missing ID can fall back to title text; permission/loading/verification failures must stop, not trigger creation.
-- Title text searches the fixed company/site. The helper prefers open matches. If none are open, it considers closed matches to avoid duplicate tickets. One match is reused; multiple matches stop for a choice.
+- Title text searches the Summary/title field only, with Company, Site, Location, and all other grid filters cleared. The helper prefers open matches. If none are open, it considers closed matches to avoid duplicate tickets. One match is reused; multiple matches stop for a choice.
 - With no match, the current helper can create a ticket after repeat duplicate checks. For title references, it retains the reference in the new title.
 - With neither reference, use issue and optional school. The helper searches the exact title before creation.
 - school is optional. If supplied, it prefixes the new title as ACRONYM - issue. Do not infer a school from the weekday or confuse similar acronyms.
@@ -146,3 +146,4 @@ When the user requests a continuation JSON, exclude fully verified tickets. Reta
 Keep dates and notes unchanged for entries being retried. A Save may have succeeded even if verification stopped; inspect or recheck the exact saved row before another Save. Do not automatically retry a save based only on an error message. Do not remove another person's time, resource, or record.
 
 For multiple matches, unverifiable status, missing owner selection, or a page/permission failure, stop and preserve the results. Report what actually saved, what remains, and the exact error. When providing JSON in chat, use one complete copyable JSON block with no comments or trailing commas.
+
