@@ -89,6 +89,7 @@ $('run').onclick = async () => {
 };
 $('copy-email').onclick = async () => {
   try { await navigator.clipboard.write([new ClipboardItem({ 'text/html': new Blob([html], { type: 'text/html' }), 'text/plain': new Blob([$('preview').innerText], { type: 'text/plain' }) })]); $('status').textContent = 'Copied. Paste into your email composer and review before sending.'; }
-  catch (error) { $('status').textContent = `Copy failed: ${error.message}. Use Download HTML.`; }
+  catch (error) { $('status').textContent = `Copy failed: ${error.message}. Select the generated table and copy it manually.`; }
 };
 $('download').onclick = () => { const url = URL.createObjectURL(new Blob([html], { type: 'text/html' })); const link = document.createElement('a'); link.href = url; link.download = `end-of-day-${$('eod-date').value}.html`; link.click(); setTimeout(() => URL.revokeObjectURL(url), 1000); };
+

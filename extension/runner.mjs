@@ -118,15 +118,10 @@ async function main() {
       try {
         await navigator.clipboard.write([new ClipboardItem({ 'text/html': new Blob([selected().html], { type: 'text/html' }),
           'text/plain': new Blob([preview.innerText], { type: 'text/plain' }) })]);
-        document.getElementById('email-status').textContent = 'Copied. Review in your email composer before sending. Nothing was sent.';
-      } catch (error) { document.getElementById('email-status').textContent = `Copy failed: ${error.message}. Use Download HTML.`; }
+        document.getElementById('email-status').textContent = 'EoD table copied with formatting. Paste into the email body and review before sending. Nothing was sent.';
+      } catch (error) { document.getElementById('email-status').textContent = `Copy failed: ${error.message}. Select the generated table and copy it manually.`; }
     };
-    document.getElementById('download-daily-email').onclick = () => {
-      const report = selected();
-      const url = URL.createObjectURL(new Blob([report.html], { type: 'text/html' }));
-      const link = document.createElement('a'); link.href = url; link.download = `end-of-day-${report.date}.html`; link.click();
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
-    };
+
   }
   if (result.ok) await chrome.storage.local.remove('popupDraft:week').catch(() => {});
   output.textContent = JSON.stringify(result, null, 2);
@@ -146,4 +141,5 @@ main().catch(async (error) => {
     }).catch(() => {});
   }
 });
+
 

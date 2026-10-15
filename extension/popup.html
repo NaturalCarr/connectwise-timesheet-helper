@@ -77,7 +77,7 @@
   <details class="workflow" id="weekly-section">
   <summary>Daily/ Weekly TimeSheets and EoD</summary>
   <p>Upload or paste daily or weekly JSON to find or create tickets, save their time entries, and apply their selected statuses. After every save is verified, the tool automatically generates an <strong>EoD email update for each date in the JSON</strong>.</p>
-  <p>The runner provides a date selector, email preview, <strong>Copy email table</strong>, and <strong>Download HTML</strong>. Reports use that day's notes and next steps. You review and send the email yourself.</p>
+  <p>The runner provides a date selector, email preview, <strong>Copy EoD to Clipboard</strong> button to paste the formatted table directly into your email. Reports use that day's notes and next steps. You review and send the email yourself.</p>
   <button id="select-tab" type="button">Use this ConnectWise tab for runs</button>
   <label>Daily / weekly JSON file<input id="week-file" type="file" accept=".json,application/json"></label>
   <label>Or paste daily / weekly JSON<textarea id="week-json" spellcheck="false" placeholder="Paste the complete daily or weekly JSON here"></textarea></label>
@@ -112,6 +112,7 @@
   <script src="popup-layout.js"></script>
 </body>
 </html>
+
 
 
 
