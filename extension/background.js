@@ -2,7 +2,7 @@ if (typeof importScripts === 'function') importScripts('form-functions.js');
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message?.action === 'helperBuild') {
-    sendResponse({ ok: true, version: '0.8.36', ticketSaveMethod: 'exact-element' });
+    sendResponse({ ok: true, version: '0.8.37', ticketSaveMethod: 'exact-element' });
     return false;
   }
   const actions = {
@@ -10,7 +10,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     inspectTicket: inspectTicketInTab,
     identifyCurrentTicket: identifyCurrentTicketInTab,
     verifyCurrentTicketCompanySite: verifyCurrentTicketCompanySiteInTab,
-    findTickets: findTicketsInTab,
+    findTickets: findOpenTitleTicketsInTab,
     createTicket: createTicketInTab,
     openTicket: openTicketInTab,
     ensureTicketOwner: ensureTicketOwnerInTab,
@@ -27,7 +27,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   const action = actions[message?.action];
   if (!action) return false;
   action(message).then(sendResponse, (error) => sendResponse({ ok: false,
-    error: `[Helper 0.8.36; ${message.action}] ${error.message}`,
+    error: `[Helper 0.8.37; ${message.action}] ${error.message}`,
     ticketId: Number.isSafeInteger(error.ticketId) ? error.ticketId : null }));
   return true;
 });
@@ -501,6 +501,20 @@ async function findTicketsInTab({ tabId, ticket }) {
     } else emptySince = null;
   }
   throw new Error('Ticket search was not verified. Stop before creating a ticket.');
+}
+
+async function findOpenTitleTicketsInTab(message) {
+  const result = await findTicketsInTab(message);
+  if (!message.ticket?.titleContains) return result;
+  const matches = [];
+  const closed = /^(completed|closed|closed\/client unresponsive)\s*~?$/i;
+  for (const candidate of result.matches) {
+    await openTicketInTab({ tabId: message.tabId, ticketId: candidate.ticketId, numberOnly: true });
+    const actual = await inspectTicketInTab({ tabId: message.tabId, ticketId: candidate.ticketId });
+    if (!actual.status) throw new Error('Title match status could not be read. Open-ticket lookup was not verified.');
+    if (!closed.test(actual.status.trim())) matches.push({ ...candidate, summary: actual.summary, status: actual.status });
+  }
+  return { ...result, matches };
 }
 
 function clickBoardNewTicket() {
@@ -2031,6 +2045,7 @@ function verifyNotes(ticketId, notes) {
   if (actual !== notes.trim()) return { ok: false, error: 'The Notes editor did not retain the exact text.' };
   return { ok: true };
 }
+
 
 
 

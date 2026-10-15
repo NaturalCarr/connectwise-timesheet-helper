@@ -5,29 +5,25 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>ConnectWise Timesheet Helper</title>
   <style>
-    body { font: 14px system-ui, sans-serif; width: 400px; margin: 16px; color: #18212b; }
-    h1 { font-size: 17px; margin: 0 0 10px; }
-    h2 { font-size: 14px; margin: 16px 0 6px; }
-    p { line-height: 1.4; }
-    button { padding: 8px 12px; cursor: pointer; }
-    textarea { box-sizing: border-box; width: 100%; height: 220px; margin-top: 10px; font: 11px Consolas, monospace; }
-    #notes { height: 75px; font: 14px system-ui, sans-serif; }
-    #week-json { height: 110px; }
-    #ticket-json { height: 100px; }
-    #ticket-description { height: 90px; font: 14px system-ui, sans-serif; }
-    #ticket-preview { white-space: pre-line; }
-    #week-preview { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 125px; overflow: auto; }
-    label { display: block; margin: 8px 0; }
-    label input, label select { box-sizing: border-box; display: block; width: 100%; padding: 5px; }
-    label input[type="checkbox"] { display: inline; width: auto; }
-    fieldset { margin: 10px 0; border: 1px solid #ccd3da; }
-    fieldset[hidden] { display: none; }
+    * { box-sizing: border-box; }
+    body { font: 13px/1.45 system-ui, sans-serif; width: 440px; margin: 0; padding: 18px; color: #17283c; background: #f4f7fb; }
+    h1 { font-size: 18px; margin: 0; } h2 { font-size: 15px; margin: 22px 0 8px; }
+    p { margin: 8px 0; color: #526277; } p:empty, pre:empty { display: none; }
+    #helper-build { font-size: 11px; margin-bottom: 14px; }
+    form, details { background: white; padding: 12px; border: 1px solid #d9e1eb; border-radius: 10px; margin: 10px 0; }
+    #ticket-form { margin-top: 8px; } #owner-settings-form { padding: 10px 12px; }
+    button { padding: 8px 11px; margin: 4px 3px 4px 0; border-radius: 6px; border: 1px solid #c4cedb; background: white; color: #17365d; cursor: pointer; font: inherit; }
+    button:hover { background: #eaf1fa; } button:disabled { opacity: .55; cursor: default; }
+    #ticket-form > button[type=submit], #run-week { background: #205dc6; border-color: #205dc6; color: white; }
+    label { display: block; margin: 9px 0; font-weight: 500; }
+    input, select, textarea { font: inherit; width: 100%; padding: 7px 9px; border: 1px solid #bfcada; border-radius: 5px; background: white; margin-top: 4px; }
+    input[type=checkbox] { width: auto; margin-right: 6px; } input:focus,select:focus,textarea:focus { outline: 2px solid #b6d2ff; border-color: #2563bf; }
+    textarea { height: 34px; min-height: 34px; resize: none; overflow-y: hidden; line-height: 18px; }
+    #ticket-json, #week-json, #result { font: 12px/18px Consolas, monospace; }
+    fieldset { border: 1px solid #d9e1eb; border-radius: 7px; margin: 12px 0; padding: 10px; } [hidden] { display: none !important; }
     .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-    details { border-top: 1px solid #ccd3da; margin-top: 14px; padding-top: 10px; }
-    summary { cursor: pointer; }
-    .workflow > summary { font-size: 14px; font-weight: 600; }
-    #status { min-height: 20px; }
-  </style>
+    summary { cursor: pointer; font-weight: 600; } details[open] > summary { margin-bottom: 10px; }
+    #ticket-preview { white-space: pre-line; } #week-preview { white-space: pre-wrap; max-height: 160px; overflow: auto; }  </style>
 </head>
 <body>
   <h1>ConnectWise Timesheet Helper</h1>
@@ -39,15 +35,15 @@
   </form>
   <button id="clear-saved-inputs" type="button">Clear saved inputs</button>
   <h2>Open a service ticket</h2>
-  <p>Enter the school and issue. The title becomes <strong>ACRONYM - issue</strong>. Company, Site, Board, Contact, Owner, and ticket category use the configured defaults.</p>
+  <p>Enter a ticket number, title text, or an issue for a new ticket. Number takes priority; title text is the fallback. Add a school acronym when needed.</p>
   <form id="ticket-form">
     <div class="row">
-      <label>School acronym<input id="ticket-school" required pattern="[A-Za-z0-9]{2,16}" placeholder="SCHC"></label>
+      <label>School acronym (optional)<input id="ticket-school" pattern="[A-Za-z0-9]{2,16}" placeholder="SCHC"></label>
       <label>Existing ticket number (optional)<input id="ticket-existing-id" type="number" min="1" step="1"></label>
     </div>
     <label>Existing ticket title contains (optional)<input id="ticket-title-contains" placeholder="For example T-90463"></label>
-    <button id="open-title-match" type="button">Find and open by title text</button>
-    <label>Issue<input id="ticket-issue" required placeholder="Short issue title"></label>
+    
+    <label>Issue / new ticket title<input id="ticket-issue" placeholder="Short issue title"></label>
     <label>Initial description<textarea id="ticket-description" placeholder="Details you actually know about this issue"></textarea></label>
     <label><input id="ticket-with-time" type="checkbox"> Also enter one time entry</label>
     <fieldset id="ticket-time-fields" hidden disabled>
@@ -92,30 +88,6 @@
   <pre id="week-preview"></pre>
   <p>Browser submission has not yet passed a saved end-to-end ConnectWise run. Watch the runner tab for the actual saved-record result.</p>
   </details>
-  <details class="workflow" id="current-time-section">
-  <summary>Time on the current ticket</summary>
-  <p>Open a saved ticket's Ticket or Time tab, enter one time record here, and save it through ConnectWise. The helper checks for a duplicate and verifies the saved Time row. If a blank New Time Entry is already open, Prepare Time Draft still fills it without saving.</p>
-  <form id="draft-form">
-    <div class="row">
-      <label>Date<input id="date" type="date" required></label>
-      <input id="billable" type="hidden" value="AUTO"><p>Billing follows the selected Work Type in ConnectWise.</p>
-    </div>
-    <div class="row">
-      <label>Start<input id="start" type="time" required></label>
-      <label>End<input id="end" type="time" required></label>
-    </div>
-    <div class="row">
-      <label>Work type<select id="work-type" required></select></label>
-      <label>Work role<input id="work-role" value="Onsite Engineer" required></label>
-    </div>
-    <label>Notes<textarea id="notes" required></textarea></label>
-    <label>Mark ticket as<select id="current-time-complete" required><option value="Working Issue Now">Working Issue Now</option></select></label>
-    <button id="save-current-time" type="button">Save time on current ticket</button>
-    <button type="submit">Prepare Time Draft</button>
-    <button id="copy-notes" type="button">Copy Notes</button>
-  </form>
-  <p id="status" role="status"></p>
-  </details>
   <details>
     <summary>Inspect form controls</summary>
     <p>This reads control identifiers only and does not submit anything.</p>
@@ -123,6 +95,7 @@
     <button id="copy" type="button" disabled>Copy result</button>
     <textarea id="result" readonly aria-label="Form inspection result"></textarea>
   </details>
+  <p id="status" role="status"></p>
   <script src="work-types.js"></script>
   <script src="form-functions.js"></script>
   <script src="popup-persistence.js"></script>
@@ -131,7 +104,9 @@
   <script type="module" src="weekly-upload.mjs"></script>
   <script type="module" src="owner-popup.mjs"></script>
   <script type="module" src="status-popup.mjs"></script>
+  <script src="popup-layout.js"></script>
 </body>
 </html>
+
 
 

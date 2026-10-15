@@ -14,47 +14,6 @@ chrome.runtime.sendMessage({ action: 'helperBuild' }).then((build) => {
 
 document.addEventListener('popup-drafts-cleared', () => { status.textContent = ''; });
 
-function readTimeEntry() {
-  return {
-    date: document.getElementById('date').value,
-    start: document.getElementById('start').value,
-    end: document.getElementById('end').value,
-    workType: document.getElementById('work-type').value.trim(),
-    workRole: document.getElementById('work-role').value.trim(),
-    billable: document.getElementById('billable').value,
-    notes: document.getElementById('notes').value.trim()
-  };
-}
-
-document.getElementById('save-current-time').addEventListener('click', async () => {
-  const form = document.getElementById('draft-form');
-  if (!form.reportValidity()) return;
-  const button = document.getElementById('save-current-time');
-  button.disabled = true;
-  try {
-    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-    if (!tab?.id || !tab.url?.startsWith('https://na.myconnectwise.net/')) {
-      throw new Error('Open the intended ConnectWise ticket in this Brave window first.');
-    }
-    const jobId = crypto.randomUUID();
-    const key = `currentTimeJob:${jobId}`;
-    await chrome.storage.session.set({ [key]: {
-      tabId: tab.id, entry: readTimeEntry(),
-      finalStatus: document.getElementById('current-time-complete').value
-    } });
-    try {
-      await chrome.tabs.create({ url: chrome.runtime.getURL(`current-time-runner.html#${jobId}`), active: true });
-    } catch (error) {
-      await chrome.storage.session.remove(key);
-      throw error;
-    }
-    status.textContent = 'Time runner opened. It will report the saved Time row or why it stopped.';
-  } catch (error) {
-    status.textContent = error.message;
-    button.disabled = false;
-  }
-});
-
 document.getElementById('select-tab').addEventListener('click', async () => {
   try {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
@@ -64,71 +23,6 @@ document.getElementById('select-tab').addEventListener('click', async () => {
     await chrome.storage.local.set({ connectwiseTabId: tab.id });
     status.textContent = `Browser runs will use ConnectWise tab ${tab.id}.`;
   } catch (error) { status.textContent = error.message; }
-});
-
-document.getElementById('draft-form').addEventListener('submit', async (event) => {
-  event.preventDefault();
-  const form = event.currentTarget;
-  if (!form.reportValidity()) return;
-  const entry = readTimeEntry();
-  const [startHour, startMinute] = entry.start.split(':').map(Number);
-  const [endHour, endMinute] = entry.end.split(':').map(Number);
-  if (endHour * 60 + endMinute <= startHour * 60 + startMinute) {
-    status.textContent = 'End must be after start on the same date.';
-    return;
-  }
-  status.textContent = 'Preparing the unsaved time form...';
-  try {
-    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
-    if (!tab?.id || !tab.url?.startsWith('https://na.myconnectwise.net/')) {
-      throw new Error('Open a blank ConnectWise New Time Entry in this Brave window.');
-    }
-    const frames = await chrome.scripting.executeScript({
-      target: { tabId: tab.id, allFrames: true },
-      func: detectTimeFrame
-    });
-    const matchingFrames = frames.filter((frame) => frame.result?.matches);
-    if (matchingFrames.length !== 1) {
-      const forms = frames.filter((frame) => frame.result?.isTimeForm).length;
-      const signals = ['charge', 'start', 'end', 'notes'].map((name) =>
-        `${name} ${frames.filter((frame) => frame.result?.signals?.[name]).length}`).join(', ');
-      throw new Error(forms === 0
-        ? `No New Time Entry form was found in ${frames.length} frames (${signals}). Use Save time on current ticket from the saved ticket's Ticket or Time tab.`
-        : forms === 1 && matchingFrames.length === 0
-          ? 'The ticket number could not be read from the open Time Entry Charge To field.'
-          : 'More than one matching Time Entry form is open; close the extras and retry.');
-    }
-    entry.ticketId = matchingFrames[0].result.ticketId;
-    const [execution] = await chrome.scripting.executeScript({
-      target: { tabId: tab.id, frameIds: [matchingFrames[0].frameId] },
-      func: fillTimeDraft,
-      args: [entry]
-    });
-    const outcome = execution.result;
-    if (!outcome?.ok) throw new Error(outcome?.error || 'Draft preparation failed.');
-    const noteResult = await chrome.runtime.sendMessage({
-      action: 'enterNotes',
-      tabId: tab.id,
-      frameId: matchingFrames[0].frameId,
-      ticketId: entry.ticketId,
-      notes: entry.notes
-    });
-    if (!noteResult?.ok) throw new Error(`Time fields were prepared, but Notes failed: ${noteResult?.error || 'unknown error'}. Leave this form unsaved until the Notes field is correct.`);
-    const warnings = outcome.warnings.length ? ` Check manually: ${outcome.warnings.join(', ')}.` : '';
-    status.textContent = `Draft prepared on ticket #${entry.ticketId}, including verified Notes. Review the ConnectWise form before Save & Return.${warnings}`;
-  } catch (error) {
-    status.textContent = error.message;
-  }
-});
-
-document.getElementById('copy-notes').addEventListener('click', async () => {
-  const notes = document.getElementById('notes').value;
-  if (!notes.trim()) {
-    status.textContent = 'Enter notes in the popup first.';
-    return;
-  }
-  await navigator.clipboard.writeText(notes);
-  status.textContent = 'Notes copied. Expand Notes in ConnectWise and press Ctrl+V.';
 });
 
 document.getElementById('inspect').addEventListener('click', async () => {
@@ -232,6 +126,7 @@ function inspectForm() {
     editableBody: document.body ? { designMode: document.designMode, contentEditable: document.body.contentEditable, className: document.body.className } : null
   };
 }
+
 
 
 

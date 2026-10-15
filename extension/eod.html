@@ -1,9 +1,10 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><title>End-of-day email update</title>
-<style>body{font:15px system-ui;max-width:1000px;margin:24px auto;padding:16px}label{display:block;margin:12px 0}input,textarea,select{font:inherit;padding:6px;box-sizing:border-box}input,textarea{width:100%}textarea{min-height:80px}fieldset{margin:16px 0;border:1px solid #ccc}button{padding:8px;margin:4px}table{width:100%}#result{white-space:pre-wrap}</style></head>
+<style>body{font:15px system-ui;max-width:1000px;margin:24px auto;padding:16px}label{display:block;margin:12px 0}input,textarea,select{font:inherit;padding:6px;box-sizing:border-box}input,textarea{width:100%}textarea{min-height:34px;height:34px;line-height:18px;resize:none;overflow-y:hidden}fieldset{margin:16px 0;border:1px solid #ccc}button{padding:8px;margin:4px}table{width:100%}#result{white-space:pre-wrap}</style></head>
 <body><h1>End-of-day email update</h1><p>Enter actual work notes and next steps. This saves the selected status on each ticket before generating the email. It does not send email or add time records.</p>
 <label>Date<input id="eod-date" type="date" required></label><label>Email subject<input id="eod-subject" required placeholder="End of day update"></label>
 <div id="tickets"></div><button id="add">Add ticket</button><button id="run">Update statuses and generate email</button>
 <button id="copy-email" disabled>Copy email table</button><button id="download" disabled>Download HTML</button>
 <p id="status" role="status"></p><pre id="result"></pre><div id="preview"></div>
-<script type="module" src="eod-page.mjs"></script></body></html>
+<script type="module" src="eod-page.mjs"></script><script src="popup-layout.js"></script></body></html>
+

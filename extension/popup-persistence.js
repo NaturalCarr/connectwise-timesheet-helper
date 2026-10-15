@@ -14,6 +14,7 @@ function savePopupDraft(group) {
   const values = {};
   for (const id of popupDraftGroups[group]) {
     const input = document.getElementById(id);
+    if (!input) continue;
     values[id] = input.type === 'checkbox' ? input.checked : input.value;
   }
   popupDraftQueue[group] = popupDraftQueue[group].catch(() => {}).then(() =>
@@ -26,7 +27,7 @@ async function clearPopupDrafts() {
   popupDraftMutating = true;
   await chrome.storage.local.remove(Object.keys(popupDraftGroups).map(popupDraftKey));
   document.getElementById('ticket-form').reset();
-  document.getElementById('draft-form').reset();
+  document.getElementById('draft-form')?.reset();
   for (const id of ['ticket-json', 'week-json', 'ticket-file', 'week-file']) {
     document.getElementById(id).value = '';
   }
@@ -76,6 +77,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     if (!values || typeof values !== 'object') continue;
     for (const id of ids) {
       const input = document.getElementById(id);
+      if (!input) continue;
       if (input.type === 'checkbox') input.checked = values[id] === true;
       else if (typeof values[id] === 'string') input.value = values[id];
     }

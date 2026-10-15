@@ -16,6 +16,18 @@ export async function executeTicket(plan, driver, checkpoint = null) {
   try {
     let ticketId = checkpoint?.ticketId || plan.existingTicketId;
     let created = false;
+    let openedByNumber = false;
+    if (ticketId && !checkpoint) {
+      try {
+        openedByNumber = await driver.openTicket(ticketId, plan.ticket, { numberOnly: true }) === true;
+        if (!openedByNumber) throw new Error(`Ticket #${ticketId} was not found by number.`);
+      } catch (error) {
+        if (!plan.ticket.titleContains || !/not found by number/i.test(error.message)) throw error;
+        const matches = await driver.findTickets(plan.ticket);
+        if (!Array.isArray(matches) || matches.length !== 1) throw new Error('Ticket number was not found, and title text did not identify exactly one open ticket. No replacement was created.');
+        ticketId = matches[0].ticketId;
+      }
+    }
     if (!ticketId) {
       const matches = await driver.findTickets(plan.ticket);
       if (!Array.isArray(matches)) throw new Error('Ticket search was not verified.');
@@ -26,7 +38,7 @@ export async function executeTicket(plan, driver, checkpoint = null) {
     }
     if (!Number.isSafeInteger(ticketId) || ticketId <= 0) throw new Error('A saved ticket ID was not verified.');
     result.ticketId = ticketId;
-    if (await driver.openTicket(ticketId, plan.ticket, { numberOnly: Boolean(checkpoint?.ticketId || plan.existingTicketId || plan.ticket.titleContains) }) !== true) {
+    if (!openedByNumber && await driver.openTicket(ticketId, plan.ticket, { numberOnly: Boolean(checkpoint?.ticketId || plan.existingTicketId || plan.ticket.titleContains) }) !== true) {
       throw new Error(`Ticket #${ticketId} identity was not verified.`);
     }
     // Re-read saved time before resuming final status; a checkpoint is not proof.

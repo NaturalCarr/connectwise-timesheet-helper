@@ -30,3 +30,5 @@ extension page. Keep the same folder to preserve its extension identity.
 
 Daily runs: upload or paste daily JSON in Daily/ Weekly TimeSheets and EoD. DAILY-EXAMPLE.json is non-submittable example data. Use actual records. After all saves verify, the runner provides Copy email table and Download HTML. Email is never sent automatically.
 
+
+Unified ticket form: School is optional. Enter a ticket number and/or title text; the number is tried first. A missing number can fall back to one open title match. Use Also enter one time entry for time. Text boxes grow automatically.

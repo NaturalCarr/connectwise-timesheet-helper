@@ -51,7 +51,7 @@ export function planTimeEntry(entry, workingStatus = 'Working Issue Now') {
 }
 
 function resolveSchoolSite(school, requestedSite, settings) {
-  if (!/^[A-Z0-9]{2,16}$/.test(school)) {
+  if (school && !/^[A-Z0-9]{2,16}$/.test(school)) {
     throw new Error(`School acronym must be 2-16 letters or digits: ${school || '(empty)'}.`);
   }
   const site = clean(settings.site);
@@ -69,7 +69,7 @@ export function planWorkItem(item, settings) {
   const school = clean(item.school).toUpperCase();
   const issue = clean(item.issue);
   const site = resolveSchoolSite(school, item.site, settings);
-  if (!issue) throw new Error('Issue is required.');
+  if (!issue && !item.existingTicketId && !clean(item.titleContains)) throw new Error('Issue is required when no ticket number or title text is supplied.');
 
   const existingTicketId = item.existingTicketId ?? null;
   if (existingTicketId !== null && (!Number.isSafeInteger(existingTicketId) || existingTicketId <= 0)) {
@@ -78,8 +78,7 @@ export function planWorkItem(item, settings) {
 
   const titleContains = clean(item.titleContains);
   if (item.titleContains !== undefined && (!titleContains || /[*?]/.test(titleContains))) throw new Error('titleContains must be nonempty literal text without search wildcards.');
-  if (titleContains && existingTicketId) throw new Error('Choose ticket ID or titleContains, not both.');
-  const summary = `${school} - ${issue}`;
+  const summary = issue ? (school ? `${school} - ${issue}` : issue) : titleContains || `Ticket #${existingTicketId}`;
   const ticket = {
     company: clean(settings.company),
     contact: clean(settings.contact),

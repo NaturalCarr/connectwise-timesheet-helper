@@ -4,6 +4,7 @@ const helperWorkTypes = ['Admin', 'Client Meeting', 'Communications', 'Holiday',
   'Onsite [DO NOT USE]', 'Procurement'];
 for (const id of ['ticket-time-work-type', 'work-type']) {
   const select = document.getElementById(id);
+  if (!select) continue;
   for (const type of helperWorkTypes) {
     const option = new Option(type, type, type === 'Onsite Support', type === 'Onsite Support');
     if (type === 'Onsite [DO NOT USE]') option.disabled = true;

@@ -2,7 +2,7 @@ import { eodStatuses } from './eod-model.mjs';
 const key = 'helperSettings:lastTicketStatus';
 const saved = (await chrome.storage.local.get(key))[key];
 const initial = eodStatuses.includes(saved) ? saved : 'Working Issue Now';
-const fields = ['ticket-complete-after-time', 'current-time-complete'].map((id) => document.getElementById(id));
+const fields = ['ticket-complete-after-time', 'current-time-complete'].map((id) => document.getElementById(id)).filter(Boolean);
 function select(status) {
   for (const field of fields) {
     for (const option of field.options) option.defaultSelected = option.value === status;
