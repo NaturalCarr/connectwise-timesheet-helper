@@ -2,7 +2,7 @@ if (typeof importScripts === 'function') importScripts('form-functions.js');
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message?.action === 'helperBuild') {
-    sendResponse({ ok: true, version: '0.8.42', ticketSaveMethod: 'exact-element' });
+    sendResponse({ ok: true, version: '0.8.43', ticketSaveMethod: 'exact-element' });
     return false;
   }
   const actions = {
@@ -27,7 +27,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   const action = actions[message?.action];
   if (!action) return false;
   action(message).then(sendResponse, (error) => sendResponse({ ok: false,
-    error: `[Helper 0.8.42; ${message.action}] ${error.message}`,
+    error: `[Helper 0.8.43; ${message.action}] ${error.message}`,
     ticketId: Number.isSafeInteger(error.ticketId) ? error.ticketId : null }));
   return true;
 });
@@ -507,14 +507,17 @@ async function findOpenTitleTicketsInTab(message) {
   const result = await findTicketsInTab(message);
   if (!message.ticket?.titleContains) return result;
   const matches = [];
+  const closedMatches = [];
   const closed = /^(completed|closed|closed\/client unresponsive)\s*~?$/i;
   for (const candidate of result.matches) {
     await openTicketInTab({ tabId: message.tabId, ticketId: candidate.ticketId, numberOnly: true });
     const actual = await inspectTicketInTab({ tabId: message.tabId, ticketId: candidate.ticketId });
     if (!actual.status) throw new Error('Title match status could not be read. Open-ticket lookup was not verified.');
-    if (!closed.test(actual.status.trim())) matches.push({ ...candidate, summary: actual.summary, status: actual.status });
+    const match = { ...candidate, summary: actual.summary, status: actual.status };
+    if (!closed.test(actual.status.trim())) matches.push(match);
+    else closedMatches.push(match);
   }
-  return { ...result, matches };
+  return { ...result, matches: matches.length ? matches : closedMatches };
 }
 
 function clickBoardNewTicket() {
@@ -905,6 +908,11 @@ async function verifyCreatedTicketAfterReload(tabId, ticketId, ticket) {
 async function createTicketInTab({ tabId, ticket }) {
   const search = await findTicketsInTab({ tabId, ticket });
   if (search.matches.length) throw new Error('A matching ticket exists. Stop before creating a duplicate.');
+  if (ticket.titleContains) {
+    const { titleContains, ...exactTicket } = ticket;
+    const exact = await findTicketsInTab({ tabId, ticket: exactTicket });
+    if (exact.matches.length) throw new Error('A ticket with this exact title exists. Stop before creating a duplicate.');
+  }
   const frames = await executeConnectWiseScript({ target: { tabId, allFrames: true }, func: inspectBoardFrame });
   const boards = frames.filter((frame) => frame.result?.matches);
   if (boards.length !== 1) throw new Error('Service Board List changed before New Ticket.');
@@ -2045,6 +2053,7 @@ function verifyNotes(ticketId, notes) {
   if (actual !== notes.trim()) return { ok: false, error: 'The Notes editor did not retain the exact text.' };
   return { ok: true };
 }
+
 
 
 

@@ -78,7 +78,9 @@ export function planWorkItem(item, settings) {
 
   const titleContains = clean(item.titleContains);
   if (item.titleContains !== undefined && (!titleContains || /[*?]/.test(titleContains))) throw new Error('titleContains must be nonempty literal text without search wildcards.');
-  const summary = issue ? (school ? `${school} - ${issue}` : issue) : titleContains || `Ticket #${existingTicketId}`;
+  const baseSummary = issue ? (school ? `${school} - ${issue}` : issue) : titleContains || `Ticket #${existingTicketId}`;
+  const summary = titleContains && !baseSummary.toLowerCase().includes(titleContains.toLowerCase())
+    ? `${baseSummary} - ${titleContains}` : baseSummary;
   const ticket = {
     company: clean(settings.company),
     contact: clean(settings.contact),

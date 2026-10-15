@@ -26,14 +26,13 @@ export async function executePlan(plan, driver) {
         } catch (error) {
           if (!item.ticket.titleContains || !/not found by number/i.test(error.message)) throw error;
           const matches = await driver.findTickets(item.ticket);
-          if (!Array.isArray(matches) || matches.length !== 1) throw new Error('Ticket number was not found, and title text did not identify exactly one open ticket. No replacement was created.');
-          ticketId = matches[0].ticketId;
+          if (!Array.isArray(matches) || matches.length > 1) throw new Error('Ticket number was not found, and title lookup was ambiguous or unverified.');
+          ticketId = matches.length ? matches[0].ticketId : await driver.createTicket(item.ticket);
         }
       } else {
         const matches = await driver.findTickets(item.ticket);
         if (!Array.isArray(matches)) throw new Error('Ticket search was not verified.');
         if (matches.length > 1) throw new Error('Multiple matching tickets; choose one before continuing.');
-        if (!matches.length && item.ticket.titleContains) throw new Error('No ticket contains the requested title text. No replacement ticket was created.');
         ticketId = matches.length === 1 ? matches[0].ticketId : await driver.createTicket(item.ticket);
       }
       if (!Number.isSafeInteger(ticketId) || ticketId <= 0) throw new Error('A saved ticket ID was not verified.');

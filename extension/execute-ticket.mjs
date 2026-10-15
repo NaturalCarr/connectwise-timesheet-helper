@@ -38,15 +38,15 @@ export async function executeTicket(plan, driver, checkpoint = null) {
       } catch (error) {
         if (!plan.ticket.titleContains || !/not found by number/i.test(error.message)) throw error;
         const matches = await driver.findTickets(plan.ticket);
-        if (!Array.isArray(matches) || matches.length !== 1) throw new Error('Ticket number was not found, and title text did not identify exactly one open ticket. No replacement was created.');
-        ticketId = matches[0].ticketId;
+        if (!Array.isArray(matches) || matches.length > 1) throw new Error('Ticket number was not found, and title lookup was ambiguous or unverified.');
+        created = matches.length === 0;
+        ticketId = created ? await driver.createTicket(plan.ticket) : matches[0].ticketId;
       }
     }
     if (!ticketId) {
       const matches = await driver.findTickets(plan.ticket);
       if (!Array.isArray(matches)) throw new Error('Ticket search was not verified.');
       if (matches.length > 1) throw new Error('Multiple matching tickets; choose one before continuing.');
-      if (!matches.length && plan.ticket.titleContains) throw new Error('No ticket contains the requested title text. No replacement ticket was created.');
       created = matches.length === 0;
       ticketId = created ? await driver.createTicket(plan.ticket) : matches[0].ticketId;
     }
