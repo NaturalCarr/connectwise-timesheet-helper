@@ -2,7 +2,7 @@ if (typeof importScripts === 'function') importScripts('form-functions.js');
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message?.action === 'helperBuild') {
-    sendResponse({ ok: true, version: '0.8.45', ticketSaveMethod: 'exact-element' });
+    sendResponse({ ok: true, version: '0.8.46', ticketSaveMethod: 'exact-element' });
     return false;
   }
   const actions = {
@@ -27,7 +27,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   const action = actions[message?.action];
   if (!action) return false;
   action(message).then(sendResponse, (error) => sendResponse({ ok: false,
-    error: `[Helper 0.8.45; ${message.action}] ${error.message}`,
+    error: `[Helper 0.8.46; ${message.action}] ${error.message}`,
     ticketId: Number.isSafeInteger(error.ticketId) ? error.ticketId : null }));
   return true;
 });
@@ -1171,6 +1171,21 @@ function locateTicketAction(ticketId, action) {
   return { found: true, x, y };
 }
 
+async function addSignedInTicketResource(tabId, frameId, ticketId) {
+  const target = { tabId, frameIds: [frameId] };
+  let [action] = await executeConnectWiseScript({ target, func: locateTicketAction, args: [String(ticketId), 'assign-me'] });
+  if (!action.result?.found) {
+    await trustedTicketControlClick(tabId, frameId, ticketId, 'resources-and-meetings');
+    for (let attempt = 0; attempt < 30; attempt++) {
+      await new Promise((resolve) => setTimeout(resolve, 250));
+      [action] = await executeConnectWiseScript({ target, func: locateTicketAction, args: [String(ticketId), 'assign-me'] });
+      if (action.result?.found) break;
+    }
+  }
+  if (!action.result?.found) throw new Error('Assign Me was not found while adding the signed-in resource.');
+  await trustedTicketControlClick(tabId, frameId, ticketId, 'assign-me');
+}
+
 async function ensureTicketOwnerInTab({ tabId, ticketId, owner }) {
   if (typeof owner !== 'string' || !owner.trim()) throw new Error('Ticket owner is required.');
   const found = await matchingFrame(tabId, ticketId, inspectTicketFrame);
@@ -1181,7 +1196,15 @@ async function ensureTicketOwnerInTab({ tabId, ticketId, owner }) {
   if (before.result.verified) return { ok: true, verified: true, owner, alreadySet: true };
   const reassignment = Boolean(before.result.owner && !/^\(?unassigned\)?\s*~?$/i.test(before.result.owner));
   if (reassignment) {
-    await chooseTicketOptionInTab(tabId, found.frameId, 'input.cw_ticketOwner', owner, ticketId);
+    try {
+      await chooseTicketOptionInTab(tabId, found.frameId, 'input.cw_ticketOwner', owner, ticketId);
+    } catch (error) {
+      if (!/input\.cw_ticketOwner: .*choice was not located/.test(error.message)) throw error;
+      await addSignedInTicketResource(tabId, found.frameId, ticketId);
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      const refreshed = await matchingFrame(tabId, ticketId, inspectTicketFrame);
+      await chooseTicketOptionInTab(tabId, refreshed.frameId, 'input.cw_ticketOwner', owner, ticketId);
+    }
   } else {
   let [action] = await executeConnectWiseScript({
     target, func: locateTicketAction, args: [String(ticketId), 'assign-me']
@@ -2079,6 +2102,8 @@ function verifyNotes(ticketId, notes) {
   if (actual !== notes.trim()) return { ok: false, error: 'The Notes editor did not retain the exact text.' };
   return { ok: true };
 }
+
+
 
 
 
