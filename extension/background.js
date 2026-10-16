@@ -4,7 +4,7 @@ var connectwiseActionQueue = Promise.resolve();
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message?.action === 'helperBuild') {
-    sendResponse({ ok: true, version: '0.9.3', ticketSaveMethod: 'exact-element' });
+    sendResponse({ ok: true, version: '0.9.4', ticketSaveMethod: 'exact-element' });
     return false;
   }
   const actions = {
@@ -32,7 +32,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   const pending = connectwiseActionQueue.then(() => action(message));
   connectwiseActionQueue = pending.catch(() => {});
   pending.then(sendResponse, (error) => sendResponse({ ok: false,
-    error: `[Helper 0.9.3; ${message.action}] ${error.message}`,
+    error: `[Helper 0.9.4; ${message.action}] ${error.message}`,
     ticketId: Number.isSafeInteger(error.ticketId) ? error.ticketId : null }));
   return true;
 });
@@ -910,7 +910,7 @@ function inspectSavedTicketAttributes(ticketId, ticket) {
 }
 
 async function verifyCreatedTicketAfterReload(tabId, ticketId, ticket) {
-  await chrome.tabs.reload(tabId);
+  await reloadConnectWiseSafely(tabId);
   let lastError = 'the saved ticket form did not finish loading';
   let stableChecks = 0;
   for (let attempt = 0; attempt < 120; attempt++) {
@@ -1161,7 +1161,7 @@ function inspectTicketOwner(ticketId, owner) {
     el.getBoundingClientRect().width > 0 && el.getBoundingClientRect().height > 0);
   const actual = inputs.length === 1 ? inputs[0].value.trim().replace(/^\$\s*/, '') : null;
   return { matches: new RegExp(`Service Ticket #${ticketId}(?!\\d)`).test(header) && inputs.length === 1,
-    owner: actual, verified: actual?.toLowerCase() === owner.toLowerCase() };
+    owner: actual, saveConfirmed: globalThis.__cwTicketSaveObservation?.ticketId === String(ticketId) && globalThis.__cwTicketSaveObservation?.fresh === true, verified: actual?.toLowerCase() === owner.toLowerCase() };
 }
 
 function locateTicketAction(ticketId, action) {
@@ -1292,11 +1292,11 @@ async function ensureTicketOwnerWithFrameProtection({ tabId, ticketId, owner }) 
         target: { tabId, frameIds: [current.frameId] }, func: inspectTicketOwner,
         args: [String(ticketId), owner]
       });
-      if (check.result?.verified) { confirmed = true; break; }
+      if (check.result?.verified && check.result?.saveConfirmed) { confirmed = true; break; }
     } catch { /* Wait for the saved ticket view. */ }
   }
-  if (!confirmed) throw new Error(`Assign Me was clicked on ticket #${ticketId}, but Ticket Owner ${owner} did not appear after Save.`);
-  await chrome.tabs.reload(tabId);
+  if (!confirmed) throw new Error(`Assign Me was clicked on ticket #${ticketId}, but fresh save confirmation for Ticket Owner ${owner} was not verified. Reload was not attempted.`);
+  await reloadConnectWiseSafely(tabId);
   for (let attempt = 0; attempt < 120; attempt++) {
     await new Promise((resolve) => setTimeout(resolve, 500));
     try {
@@ -1583,7 +1583,7 @@ async function setTicketStatusInTab({ tabId, ticketId, status, forceSave = false
       target, func: verifyTicketStatus, args: [String(ticketId), status]
     });
     if (check.result?.verified) {
-      await chrome.tabs.reload(tabId);
+      await reloadConnectWiseSafely(tabId);
       for (let reloadAttempt = 0; reloadAttempt < 120; reloadAttempt++) {
         await new Promise((resolve) => setTimeout(resolve, 500));
         try {
@@ -1611,24 +1611,19 @@ function clearStatusEmailRecipients() {
   }
 }
 
-async function verifyTicketStatusInTab({ tabId, ticketId, status }) {
-  await connectwiseTab(tabId);
-  const normalize = (value) => String(value || '').trim().replace(/~$/, '').trim().toLowerCase();
-  try {
-    const current = await matchingFrame(tabId, ticketId, inspectTicketFrame);
-    if (normalize(current.state.status) === normalize(status)) {
-      return { ok: true, verified: true, status: current.state.status };
-    }
-  } catch { /* The ticket view may still be loading. */ }
-  await chrome.tabs.reload(tabId);
-  for (let attempt = 0; attempt < 30; attempt++) {
-    await new Promise((resolve) => setTimeout(resolve, 250));
-    try {
-      const { state } = await matchingFrame(tabId, ticketId, inspectTicketFrame);
-      return { ok: true, verified: normalize(state.status) === normalize(status), status: state.status };
-    } catch { /* Wait for the ticket detail to reload. */ }
-  }
-  throw new Error('Ticket status could not be read after reload.');
+async function verifyTicketStatusInTab({tabId,ticketId,status}) {
+ await connectwiseTab(tabId);
+ const normalize=value=>String(value||'').trim().replace(/~$/,'').trim().toLowerCase();
+ let last='',stable=0;
+ for(let attempt=0;attempt<120;attempt++){
+  try{const current=await matchingFrame(tabId,ticketId,inspectTicketFrame);const actual=current.state.status;
+    if(actual){stable=normalize(actual)===normalize(last)?stable+1:1;last=actual;
+      if(stable>=4)return {ok:true,verified:normalize(actual)===normalize(status),status:actual};}
+    else stable=0;
+  }catch{stable=0;}
+  await new Promise(resolve=>setTimeout(resolve,500));
+ }
+ throw new Error('Ticket status remained unreadable. Verification did not reload or discard the current page.');
 }
 
 function clickTicketTab(ticketId) {
@@ -1842,7 +1837,7 @@ async function verifySavedTimeInTab({ tabId, ticketId, entry, baselineTimeCount 
           throw new Error('The matching saved Time row fields differ from the work record.');
         }
         if (!refreshed) {
-          await chrome.tabs.reload(tabId);
+          await reloadConnectWiseSafely(tabId);
           refreshed = true;
           clickedTimeTab = false;
           continue;
@@ -1850,6 +1845,7 @@ async function verifySavedTimeInTab({ tabId, ticketId, entry, baselineTimeCount 
         return { ok: true, verified: true, ticketId: Number(ticketId), row };
       }
     } catch (error) {
+      if(error.code==='RELOAD_BLOCKED')throw error;
       if (/Multiple matching|saved Time row fields differ|duplicate check is incomplete/.test(error.message)) throw error;
       if (!clickedTimeTab) {
         try {
@@ -2212,3 +2208,33 @@ async function inspectRunDiagnosticsInTab({tabId}) {
   return {ok:true,frames:frames.map(frame=>({frameId:frame.frameId,...frame.result}))};
 }
 
+
+async function reloadConnectWiseSafely(tabId) {
+  await connectwiseTab(tabId);
+  const target={tabId};let attached=false,lease=null,timer,listener;
+  try{
+    lease=await attachConnectWiseDebugger(target);attached=true;
+    const navigated=new Promise((resolve,reject)=>{
+      timer=setTimeout(()=>reject(new Error('Reload did not complete within 30 seconds. No retry was sent; inspect the ConnectWise page before Resume.')),30000);
+      listener=(source,method,params)=>{
+        if(source.tabId!==tabId)return;
+        if(method==='Page.javascriptDialogOpening'){
+          if(params.type==='beforeunload'){
+            chrome.debugger.sendCommand(target,'Page.handleJavaScriptDialog',{accept:false}).then(
+              ()=>reject(new Error('ConnectWise warned of unsaved changes. Reload was cancelled to preserve the form. Review it before Resume.')),
+              ()=>reject(new Error('An unsaved-changes prompt blocked reload. Review the form before Resume.')));
+          }else reject(new Error('A page dialog blocked reload. Review the ConnectWise prompt before Resume.'));
+        }
+        if(method==='Page.frameNavigated'&&!params.frame?.parentId)resolve();
+      };
+      chrome.debugger.onEvent.addListener(listener);
+    });
+    await chrome.debugger.sendCommand(target,'Page.enable');
+    const reload=chrome.debugger.sendCommand(target,'Page.reload');
+    await Promise.all([reload,navigated]);
+  }catch(error){error.code='RELOAD_BLOCKED';throw error;}finally{
+    clearTimeout(timer);if(listener)chrome.debugger.onEvent.removeListener(listener);
+    if(attached)await chrome.debugger.detach(target).catch(()=>{});
+    if(lease)await restoreForeignExtensionFrames(tabId,lease);
+  }
+}

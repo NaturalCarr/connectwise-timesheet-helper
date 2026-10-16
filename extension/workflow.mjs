@@ -71,7 +71,7 @@ export function renderReport(record) {return renderEod(record,record.tickets.map
 export async function allRuns() { const data=await chrome.storage.local.get(null);return Object.entries(data).filter(([key])=>key.startsWith('runHistory:')).map(([,value])=>value).sort((a,b)=>b.updatedAt.localeCompare(a.updatedAt)); }
 export async function saveRun(run) {run.updatedAt=new Date().toISOString();await chrome.storage.local.set({[`runHistory:${run.id}`]:run});}
 export const defaultPresets=[{id:'huddle',name:'Morning huddle',workType:'Onsite Support',workRole:'Onsite Engineer',notes:'Attended the morning huddle.',billable:'B'},{id:'ops',name:'Ops check-in',workType:'Onsite Support',workRole:'Onsite Engineer',notes:'Checked in with the Ops team.',billable:'AUTO'},{id:'lunch',name:'Lunch',workType:'Payroll Wrap',workRole:'Onsite Engineer',notes:'Lunch break.',billable:'AUTO'}];
-export function diagnostic(action,error,ticketId=null) {return {time:new Date().toISOString(),action,ticketId,message:String(error.message||error).replace(/https?:\/\/\S+/g,'[URL removed]').replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi,'[email removed]').replace(/(token|password|cookie|authorization)\s*[:=]\s*\S+/gi,'$1=[redacted]').slice(0,1500),helperVersion:'0.9.3'};}
+export function diagnostic(action,error,ticketId=null) {return {time:new Date().toISOString(),action,ticketId,message:String(error.message||error).replace(/https?:\/\/\S+/g,'[URL removed]').replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi,'[email removed]').replace(/(token|password|cookie|authorization)\s*[:=]\s*\S+/gi,'$1=[redacted]').slice(0,1500),helperVersion:'0.9.4'};}
 
 export function mergeEvidence(previous, snapshot) {
   const results=(previous?.results||[]).map(row=>structuredClone(row));

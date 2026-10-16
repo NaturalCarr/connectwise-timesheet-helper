@@ -17,7 +17,15 @@ $('copy-run-result').onclick=async()=>{try{await navigator.clipboard.writeText(o
 $('copy-diagnostics').innerHTML=copyIcon;
 $('copy-diagnostics').onclick=async()=>{try{await navigator.clipboard.writeText(JSON.stringify(run?.diagnostics||[],null,2));$('copy-run-status').textContent='Redacted diagnostics copied.';}catch(e){$('copy-run-status').textContent=e.message;}};
 async function send(action,tabId,fields={}) {
-  const result=await chrome.runtime.sendMessage({action,tabId,...fields});
+  let result;
+  try{result=await chrome.runtime.sendMessage({action,tabId,...fields});}
+  catch(error){
+    if(/message channel closed|Extension context invalidated|Receiving end does not exist/i.test(error.message)){
+      const stopped=new Error('The helper background connection was interrupted during '+action+'. The action may have taken effect. Reopen this saved run after reloading the extension; Resume must recheck the ticket before any further save.');
+      run.diagnostics=(run.diagnostics||[]).concat(diagnostic(action,stopped,fields.ticketId));await saveRun(run);throw stopped;
+    }
+    throw error;
+  }
   if(!result?.ok){const error=new Error(result?.error||action+' failed.');if(Number.isSafeInteger(result?.ticketId))error.ticketId=result.ticketId;
     const info=diagnostic(action,error,fields.ticketId||error.ticketId); 
     if(fields.entry)info.entry={date:fields.entry.date,start:fields.entry.start,end:fields.entry.end};
@@ -72,7 +80,9 @@ async function execute(){
       await send('setTicketStatus', tabId, { ticketId, status: ticketStatus });
     },
     async verifyTicketStatus(ticketId, ticketStatus) {
-      return (await send('verifyTicketStatus', tabId, { ticketId, status: ticketStatus })).verified;
+      const result=await send('verifyTicketStatus',tabId,{ticketId,status:ticketStatus});
+      if(!result.verified)throw new Error('Status recheck expected '+ticketStatus+' but read '+JSON.stringify(result.status)+'. No status change was sent by this check.');
+      return true;
     },
     async findTimeEntries(ticketId, entry) {
       const result = await send('findTimeEntries', tabId, { ticketId, entry });
