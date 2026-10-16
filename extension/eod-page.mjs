@@ -1,3 +1,4 @@
+import { attachReportEditor } from './report-editor.mjs';
 import { eodStatuses, validateEod, renderEod } from './eod-model.mjs';
 import { withTicketOwner } from './owner-settings.mjs';
 import { mainWorkspaceTab } from './navigation.mjs';
@@ -26,7 +27,7 @@ function record() {
 }
 let queue = Promise.resolve();
 function changed() {
-  html = ''; $('preview').replaceChildren(); $('copy-email').disabled = true; $('download').disabled = true;
+  html = ''; $('preview').replaceChildren(); $('copy-email').disabled = true;
   const draft = record();
   queue = queue.catch(() => {}).then(() => chrome.storage.local.set({ [storageKey]: draft }));
   queue.catch((error) => { $('status').textContent = `Draft storage failed: ${error.message}`; });
@@ -43,9 +44,10 @@ async function send(action, tabId, fields) {
   if (!response?.ok) throw new Error(response?.error || `${action} failed`);
   return response;
 }
-$('run').onclick = async () => {
+$('run').onclick = async () => navigator.locks.request('connectwise-helper-browser-run',{ifAvailable:true},async lock => {
+  if(!lock){$('status').textContent='Another helper run is active. Wait for it to finish before changing ticket statuses.';return;}
   if (busy) return;
-  html = ''; $('preview').replaceChildren(); $('copy-email').disabled = true; $('download').disabled = true;
+  html = ''; $('preview').replaceChildren(); $('copy-email').disabled = true;
   const results = [];
   busy = true;
   document.querySelectorAll('input,textarea,select,button').forEach((el) => { el.disabled = true; });
@@ -83,13 +85,16 @@ $('run').onclick = async () => {
       $('result').textContent = JSON.stringify(results, null, 2);
     }
     html = renderEod(plan, results); $('preview').innerHTML = html;
+    const report={date:plan.date,subject:plan.subject,tickets:plan.tickets.map((ticket,index)=>({...ticket,summary:results[index].summary,ticketId:results[index].ticketId})),html};
+    attachReportEditor([report],{select:$('report-date'),preview:$('preview'),editor:$('email-editor'),copy:$('copy-email'),status:$('status')});
     $('status').textContent = 'All ticket statuses saved and verified. Email ready to copy; nothing was sent.';
   } catch (error) { $('status').textContent = `Stopped: ${error.message}`; $('result').textContent = JSON.stringify(results, null, 2); }
-  finally { busy = false; document.querySelectorAll('input,textarea,select,button').forEach((el) => { el.disabled = false; }); $('copy-email').disabled = !html; $('download').disabled = !html; }
-};
+  finally { busy = false; document.querySelectorAll('input,textarea,select,button').forEach((el) => { el.disabled = false; }); $('copy-email').disabled = !html; }
+});
 $('copy-email').onclick = async () => {
   try { await navigator.clipboard.write([new ClipboardItem({ 'text/html': new Blob([html], { type: 'text/html' }), 'text/plain': new Blob([$('preview').innerText], { type: 'text/plain' }) })]); $('status').textContent = 'Copied. Paste into your email composer and review before sending.'; }
   catch (error) { $('status').textContent = `Copy failed: ${error.message}. Select the generated table and copy it manually.`; }
 };
-$('download').onclick = () => { const url = URL.createObjectURL(new Blob([html], { type: 'text/html' })); const link = document.createElement('a'); link.href = url; link.download = `end-of-day-${$('eod-date').value}.html`; link.click(); setTimeout(() => URL.revokeObjectURL(url), 1000); };
+
+
 

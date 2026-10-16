@@ -1,3 +1,4 @@
+import { reviewText } from './workflow.mjs';
 import { exampleEodHtml, exampleEodFile } from './eod-example.mjs';
 import { withTicketOwner } from './owner-settings.mjs';
 import { planWeek, planDay } from './plan.mjs';
@@ -64,10 +65,7 @@ validateButton.addEventListener('click', async () => {
     const plan = (record.date ? planDay : planWeek)(record, await withTicketOwner(await response.json()));
     if (plan.exampleOnly) throw new Error('Example-only JSON cannot be run in ConnectWise.');
     validatedPlan = plan;
-    preview.textContent = plan.tickets.map(({ ticket, timeEntries }) =>
-      `${ticket.summary}\n${timeEntries.map((entry) =>
-        `  ${entry.date} ${entry.start}–${entry.end} ${entry.billable}: ${entry.notes}`).join('\n')}`
-    ).join('\n\n');
+    preview.textContent = reviewText(plan);
     const reportCount = new Set(plan.tickets.flatMap((item) => item.timeEntries.map((entry) => entry.date))).size;
     status.textContent = `Validated ${plan.tickets.length} ticket(s) and ${plan.totalEntries} time entry/entries for ${plan.mode === 'daily' ? plan.date : `${plan.weekStart}–${plan.weekEnd}`}. After verified saves, ${reportCount} EoD email update(s) will be generated, one per date. Nothing has been saved or emailed.`;
     runButton.disabled = false;
@@ -93,7 +91,7 @@ runButton.addEventListener('click', async () => {
     if (active?.id && active.url?.startsWith('https://na.myconnectwise.net/')) {
       params.set('tabId', String(active.id));
     }
-    await chrome.storage.session.set({ [`weeklyJob:${jobId}`]: validatedPlan });
+    await chrome.storage.local.set({ [`weeklyJob:${jobId}`]: validatedPlan });
     await chrome.tabs.create({ url: chrome.runtime.getURL(`runner.html#${params}`), active: true });
     status.textContent = 'Runner opened. It will save and verify tickets/time, then generate one EoD email update per date with preview, copy, and download controls. Nothing is emailed automatically.';
   } catch (error) {
@@ -119,4 +117,5 @@ document.getElementById('copy-eod-sample').addEventListener('click', async () =>
     status.textContent='Example EoD copied with table formatting. Paste into your email composer.';
   } catch(error) { status.textContent=`Example EoD copy failed: ${error.message}`; }
 });
+
 

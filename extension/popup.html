@@ -49,7 +49,7 @@
     
     <label>Issue / new ticket title<input id="ticket-issue" placeholder="Short issue title"></label>
     <label>Initial description<textarea id="ticket-description" placeholder="Details you actually know about this issue"></textarea></label>
-    <button id="ticket-add-time" type="button">+ Add a Time Entry</button><div id="ticket-time-entries">
+    <button id="ticket-add-time" type="button">+ Add a Time Entry</button><details><summary>Time-entry presets</summary><label>Time-entry preset<select id="time-preset"><option value="">Choose a preset</option></select></label><button id="add-preset" type="button">Add preset entry</button><button id="save-preset" type="button">Save last entry as preset</button><button id="delete-preset" type="button">Remove selected custom preset</button><p>Presets supply notes and work fields only. Enter the actual date and times. Morning huddle is billable.</p></details><div id="ticket-time-entries">
     <fieldset id="ticket-time-fields" data-time-entry hidden disabled>
       <legend>Time entry</legend>
       <div class="row">
@@ -94,9 +94,10 @@
     <button id="download-weekly-sample" type="button">Weekly JSON</button>
     <div style="display:flex;align-items:center;gap:4px"><button id="download-eod-sample" type="button">EoD HTML ↓</button><button id="copy-eod-sample" type="button" title="Copy example EoD to clipboard" aria-label="Copy example EoD to clipboard"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 5H6a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-3"/><rect x="9" y="2" width="6" height="6" rx="1"/></svg></button></div>
   </details>
-  <pre id="week-preview"></pre>
+  <pre id="week-preview"></pre><p>Review lookups, requested statuses, time totals and gaps before starting in the runner. AUTO billing is confirmed from ConnectWise after saves.</p>
   <p>If a run stops, it shows what was verified and does not generate a complete EoD report. Batch execution and EoD generation still need live verification; watch the runner for saved-record results.</p>
   </details>
+  <button id="open-run-history" type="button">Run history, Resume &amp; combined EoD</button>
   <button id="open-eod" type="button">EoD - Manual Entry</button>
   <details>
     <summary>Inspect form controls</summary>

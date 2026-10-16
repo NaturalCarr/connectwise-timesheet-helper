@@ -1,3 +1,4 @@
+import { defaultPresets } from './workflow.mjs';
 import { withTicketOwner } from './owner-settings.mjs';
 import { planTicket } from './plan.mjs';
 const $ = (id) => document.getElementById(id);
@@ -14,7 +15,7 @@ const input = (row, key) => row.querySelector(`[data-field="${key}"]`);
 function readEntries() {
   return fields().map((row) => ({ ...row.entryMetadata, date: input(row,'date').value,
     start: input(row,'start').value, end: input(row,'end').value, notes: input(row,'notes').value.trim(),
-    workType: input(row,'work-type').value, workRole: input(row,'work-role').value.trim(), billable: 'AUTO' }));
+    workType: input(row,'work-type').value, workRole: input(row,'work-role').value.trim(), billable: row.entryMetadata?.billable || 'AUTO' }));
 }
 function summary() {
   $('ticket-final-status-label').hidden = !fields().length;
@@ -81,12 +82,21 @@ form.addEventListener('submit', async (event) => {
     const [active] = await chrome.tabs.query({active:true,currentWindow:true});
     const jobId = crypto.randomUUID(); const params = new URLSearchParams({source:'upload',jobId});
     if (active?.url?.startsWith('https://na.myconnectwise.net/')) params.set('tabId',String(active.id));
-    const key = `ticketJob:${jobId}`;
-    await chrome.storage.session.set({[key]:plan});
-    try { await chrome.tabs.create({url:chrome.runtime.getURL(`ticket-runner.html#${params}`),active:true}); }
-    catch(error) { await chrome.storage.session.remove(key); throw error; }
+    const key = `weeklyJob:${jobId}`;
+    const batch={mode:'ticket',exampleOnly:false,tickets:[{...plan,timeEntries:plan.timeEntries || (plan.timeEntry?[plan.timeEntry]:[]),completedStatus:entries.length && plan.completeAfterTime ? plan.completedStatus : plan.ticket.status}],totalEntries:entries.length};
+    await chrome.storage.local.set({[key]:batch});
+    try { await chrome.tabs.create({url:chrome.runtime.getURL(`runner.html#${params}`),active:true}); }
+    catch(error) { await chrome.storage.local.remove(key); throw error; }
     status.textContent = 'Runner opened. Each time entry is saved and verified separately.';
   } catch(error) { status.textContent = error.message; }
   finally { button.disabled = false; }
 });
 summary();
+
+let customPresets=[];
+async function loadPresets(){customPresets=(await chrome.storage.local.get('timePresets')).timePresets||[];const select=$('time-preset');select.replaceChildren(new Option('Choose a preset',''));for(const preset of [...defaultPresets,...customPresets])select.add(new Option(preset.name,preset.id));}
+$('add-preset').onclick=()=>{const preset=[...defaultPresets,...customPresets].find(p=>p.id===$('time-preset').value);if(preset)addEntry({...preset,date:'',start:'',end:''});};
+$('save-preset').onclick=async()=>{const entry=readEntries().at(-1);if(!entry){status.textContent='Add a time entry first.';return;}const name=prompt('Name for this preset');if(!name?.trim())return;customPresets.push({id:crypto.randomUUID(),name:name.trim(),notes:entry.notes,workType:entry.workType,workRole:entry.workRole,billable:entry.billable});await chrome.storage.local.set({timePresets:customPresets});await loadPresets();status.textContent='Preset saved without dates or times.';};
+$('delete-preset').onclick=async()=>{const id=$('time-preset').value;if(!customPresets.some(p=>p.id===id)){status.textContent='Choose a custom preset to remove.';return;}customPresets=customPresets.filter(p=>p.id!==id);await chrome.storage.local.set({timePresets:customPresets});await loadPresets();};
+$('open-run-history').onclick=()=>chrome.tabs.create({url:chrome.runtime.getURL('history.html'),active:true});
+loadPresets().catch(error=>status.textContent=error.message);

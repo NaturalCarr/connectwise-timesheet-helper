@@ -1,13 +1,16 @@
 if (typeof importScripts === 'function') importScripts('form-functions.js');
 
+var connectwiseActionQueue = Promise.resolve();
+
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message?.action === 'helperBuild') {
-    sendResponse({ ok: true, version: '0.8.57', ticketSaveMethod: 'exact-element' });
+    sendResponse({ ok: true, version: '0.9.0', ticketSaveMethod: 'exact-element' });
     return false;
   }
   const actions = {
     enterNotes,
     inspectTicket: inspectTicketInTab,
+    inspectRunDiagnostics: inspectRunDiagnosticsInTab,
     identifyCurrentTicket: identifyCurrentTicketInTab,
     verifyCurrentTicketCompanySite: verifyCurrentTicketCompanySiteInTab,
     findTickets: findOpenTitleTicketsInTab,
@@ -26,8 +29,10 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   };
   const action = actions[message?.action];
   if (!action) return false;
-  action(message).then(sendResponse, (error) => sendResponse({ ok: false,
-    error: `[Helper 0.8.57; ${message.action}] ${error.message}`,
+  const pending = connectwiseActionQueue.then(() => action(message));
+  connectwiseActionQueue = pending.catch(() => {});
+  pending.then(sendResponse, (error) => sendResponse({ ok: false,
+    error: `[Helper 0.9.0; ${message.action}] ${error.message}`,
     ticketId: Number.isSafeInteger(error.ticketId) ? error.ticketId : null }));
   return true;
 });
@@ -2190,4 +2195,15 @@ function verifyNotes(ticketId, notes) {
 
 
 
+
+
+async function inspectRunDiagnosticsInTab({tabId}) {
+  await connectwiseTab(tabId);
+  const frames=await executeConnectWiseScript({target:{tabId,allFrames:true},func:()=>{
+    const visible=el=>el.getBoundingClientRect().width>0&&el.getBoundingClientRect().height>0;
+    const count=selector=>[...document.querySelectorAll(selector)].filter(visible).length;
+    return {summaryInputs:count('input.cw_PsaSummaryHeader'),statusInputs:count('input.cw_status'),timeChargeInputs:count('input.cw_ChargeToTextBox'),timeStartInputs:count('input.cw_StartTime'),openOptions:count('.gwt-dropdown-options .mm_label'),saveControls:count('.cw_ToolbarButton_Save'),timeRows:count('tr.cw-ml-row')};
+  }});
+  return {ok:true,frames:frames.map(frame=>({frameId:frame.frameId,...frame.result}))};
+}
 

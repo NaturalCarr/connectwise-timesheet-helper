@@ -147,3 +147,6 @@ Keep dates and notes unchanged for entries being retried. A Save may have succee
 
 For multiple matches, unverifiable status, missing owner selection, or a page/permission failure, stop and preserve the results. Report what actually saved, what remains, and the exact error. When providing JSON in chat, use one complete copyable JSON block with no comments or trailing commas.
 
+
+### Saved runs, presets and EoD (0.9.0)
+Use the helper's history/Resume for a stopped run rather than regenerating already saved entries. Resume pins observed ConnectWise IDs and duplicate-checks exact saved records. The combined EoD uses locally retained verified runs; do not submit duplicate time to populate a report. AUTO billing is unknown until ConnectWise readback confirms it. Morning huddle is explicitly billable; its built-in preset uses Staff Meeting with billable B. Presets never supply dates or times. Email-only edits affect the copied report, not ticket records. DITL tickets remain excluded from EoD.
