@@ -1,3 +1,4 @@
+import { createRunMascot } from './run-mascot.mjs';
 import { renderRunReview } from './run-review.mjs';
 import { applyTicketOwner } from './owner-settings.mjs';
 import { executePlan } from './execute-plan.mjs';
@@ -5,6 +6,7 @@ import { chooseConnectWiseTab, mainWorkspaceTab } from './navigation.mjs';
 import { allRuns, saveRun, resumePlan, reviewPlan, combinedReports, diagnostic, mergeEvidence, reviewText, correctPendingHuddles } from './workflow.mjs';
 import { attachReportEditor } from './report-editor.mjs';
 const $=id=>document.getElementById(id),status=$('status'),output=$('result');
+const mascot=createRunMascot($('run-mascot'));
 const primaryRunButton=$('start-run'),topRunButton=$('start-run-top');
 const syncRunButtons=()=>{topRunButton.hidden=primaryRunButton.hidden;topRunButton.disabled=primaryRunButton.disabled;topRunButton.textContent=primaryRunButton.textContent;};
 new MutationObserver(syncRunButtons).observe(primaryRunButton,{attributes:true,childList:true,subtree:true,characterData:true});
@@ -18,6 +20,7 @@ $('copy-run-result').onclick=async()=>{try{await navigator.clipboard.writeText(o
 $('copy-diagnostics').innerHTML=copyIcon;
 $('copy-diagnostics').onclick=async()=>{try{await navigator.clipboard.writeText(JSON.stringify(run?.diagnostics||[],null,2));$('copy-run-status').textContent='Redacted diagnostics copied.';}catch(e){$('copy-run-status').textContent=e.message;}};
 async function send(action,tabId,fields={}) {
+  mascot.heartbeat();
   let result;
   try{result=await chrome.runtime.sendMessage({action,tabId,...fields});}
   catch(error){
@@ -52,8 +55,8 @@ async function showReports(){
 async function execute(){
  if(busy)return;
  await navigator.locks.request('connectwise-helper-browser-run',{ifAvailable:true},async lock=>{
- if(!lock){status.textContent='Another helper run is active. Finish or stop it before starting this run.';return;}
- busy=true;$('start-run').disabled=true;
+ if(!lock){mascot.set('stopped');status.textContent='Another helper run is active. Finish or stop it before starting this run.';return;}
+ busy=true;mascot.set('working');$('start-run').disabled=true;
  try{
   const plan=resumePlan(run.plan,run.evidence||run.result);run.state='running';await saveRun(run);
   tabId=await mainWorkspaceTab(await chooseConnectWiseTab(params),message=>status.textContent=message);
@@ -116,18 +119,18 @@ async function execute(){
 
   const previous=run.evidence||run.result;
   const result=await executePlan(plan,driver,{previous,onCheckpoint:async snapshot=>{run.evidence=mergeEvidence(run.evidence||run.result,snapshot);run.result=snapshot;await saveRun(run);},onProgress:async progress=>{
-    run.progress=progress;await saveRun(run);
+    mascot.heartbeat();run.progress=progress;await saveRun(run);
     const list=$('progress');while(list.children.length<plan.tickets.length)list.append(document.createElement('li'));
     list.children[progress.ticketIndex].textContent=plan.tickets[progress.ticketIndex].ticket.summary+' — '+progress.action+' ('+progress.state+')';
   }});
-  run.evidence=mergeEvidence(run.evidence,result);run.result=result;if(!result.ok){const stopped=result.results.at(-1);run.diagnostics=(run.diagnostics||[]).concat(diagnostic(stopped.step,stopped.error,stopped.ticketId)).slice(-100);}run.state=result.ok?'completed':'stopped';await saveRun(run);
+  run.evidence=mergeEvidence(run.evidence,result);run.result=result;if(!result.ok){const stopped=result.results.at(-1);run.diagnostics=(run.diagnostics||[]).concat(diagnostic(stopped.step,stopped.error,stopped.ticketId)).slice(-100);}run.state=result.ok?'completed':'stopped';await saveRun(run);if(!result.ok)mascot.set('stopped');
   output.textContent=JSON.stringify(result,null,2);$('copy-run-result').disabled=false;
   status.textContent=result.ok?'Run saved and verified. Combined EoD reports are below.':'Run stopped. Review results and diagnostics; Resume rechecks saved records.';
   $('start-run').textContent=result.ok?'Recheck saved run':'Resume stopped run';
   if(result.ok)await chrome.storage.local.remove('popupDraft:week');
-  await showReports();
+  await showReports();mascot.set(result.ok?'completed':'stopped');
   if(reportResult){const reply={...result};if(result.ok){reply.endOfDays=combinedReports([run]);if(plan.mode==='daily')reply.endOfDay=reply.endOfDays[0];}await reportResult(legacyTicket?{...reply.results?.[0],entry:reply.results?.[0]?.entries?.length===1?reply.results[0].entries[0]:undefined,ok:reply.ok}:reply);}
- }catch(error){run.state='stopped';run.diagnostics=(run.diagnostics||[]).concat(diagnostic('runner',error));await saveRun(run);status.textContent=error.message;output.textContent=JSON.stringify(run.result||{ok:false,error:error.message},null,2);$('copy-run-result').disabled=false;}
+ }catch(error){mascot.set('stopped');run.state='stopped';run.diagnostics=(run.diagnostics||[]).concat(diagnostic('runner',error));await saveRun(run);status.textContent=error.message;output.textContent=JSON.stringify(run.result||{ok:false,error:error.message},null,2);$('copy-run-result').disabled=false;}
  finally{busy=false;$('start-run').disabled=false;}
  });
 }
@@ -150,11 +153,12 @@ async function main(){
  if(!run){await applyTicketOwner(plan);run={id:crypto.randomUUID(),createdAt:new Date().toISOString(),plan,state:'ready',diagnostics:[]};await saveRun(run);if(params.get('source')==='upload'){const stagedKey=(params.get('kind')==='ticket'?'ticketJob:':'weeklyJob:')+params.get('jobId');await chrome.storage.local.remove(stagedKey);await chrome.storage.session.remove(stagedKey);}}
  history.replaceState(null,'',location.pathname+'#source=history&runId='+run.id);
  if(correctPendingHuddles(run.plan,run.evidence||run.result))await saveRun(run);
+ mascot.set(run.state==='completed'?'completed':run.state==='ready'?'ready':'stopped');
  showReview(plan);$('start-run').hidden=false;$('start-run').textContent=run.result?'Resume / recheck saved run':'Start reviewed run';
  status.textContent='Review planned lookups, statuses, time totals, gaps and billing below. AUTO billing remains unknown until read from ConnectWise.';
  if(run.result){output.textContent=JSON.stringify(run.result,null,2);$('copy-run-result').disabled=false;}
  await showReports();$('start-run').onclick=execute;
  if(reportResult)await execute();
 }
-main().catch(async error=>{status.textContent='Run stopped: '+error.message;output.textContent=JSON.stringify({ok:false,error:error.message},null,2);$('copy-run-result').disabled=false;});
+main().catch(async error=>{mascot.set('stopped');status.textContent='Run stopped: '+error.message;output.textContent=JSON.stringify({ok:false,error:error.message},null,2);$('copy-run-result').disabled=false;});
 

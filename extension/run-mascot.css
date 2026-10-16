@@ -1,0 +1,12 @@
+.run-mascot{text-align:center;margin:12px auto 20px;--shirt-main:#7090b6;--shirt-shadow:#47658a}
+.run-mascot[data-state=working]{--shirt-main:#f6ce34;--shirt-shadow:#bf8f18}
+.run-mascot[data-state=completed]{--shirt-main:#39b65d;--shirt-shadow:#207d3a}
+.run-mascot[data-state=stopped]{--shirt-main:#e14344;--shirt-shadow:#ac3539}
+.run-mascot [data-mascot-label]{font-size:34px;line-height:1.15;font-weight:850;margin:0 0 8px;color:#17283c}
+.run-mascot[data-state=working] [data-mascot-label]{color:#806000}
+.run-mascot[data-state=completed] [data-mascot-label]{color:#176b32}
+.run-mascot[data-state=stopped] [data-mascot-label]{color:#ab2529}
+.run-mascot [data-mascot-dancer]{width:108px;height:148px;margin:auto;pointer-events:none}
+.run-mascot svg{display:block;width:100%;height:100%;image-rendering:pixelated}
+.run-mascot [data-mascot-note]{font-size:12px;max-width:420px;margin:6px auto;color:#8d3034}
+.run-mascot [data-mascot-note]:empty{display:none}
