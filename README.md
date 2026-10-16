@@ -1,6 +1,6 @@
 # ConnectWise Timesheet Helper
 
-Recovered extension release 0.8.56. Browser-based ticket and time-entry workflows for ConnectWise PSA.
+Recovered extension release 0.8.57. Browser-based ticket and time-entry workflows for ConnectWise PSA.
 
 This is a reconstructed, sanitized release snapshot. See [HISTORY.md](HISTORY.md) for timestamp provenance and limitations.
 

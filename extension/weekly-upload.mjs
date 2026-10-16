@@ -1,3 +1,4 @@
+import { exampleEodHtml, exampleEodFile } from './eod-example.mjs';
 import { withTicketOwner } from './owner-settings.mjs';
 import { planWeek, planDay } from './plan.mjs';
 
@@ -99,5 +100,23 @@ runButton.addEventListener('click', async () => {
     status.textContent = `Could not open the runner: ${error.message}`;
     runButton.disabled = false;
   }
+});
+
+
+document.getElementById('download-eod-sample').addEventListener('click', () => {
+  const url = URL.createObjectURL(new Blob([exampleEodFile], { type: 'text/html' }));
+  const link = document.createElement('a'); link.href=url; link.download='ConnectWise-EoD-example.html'; link.click();
+  setTimeout(()=>URL.revokeObjectURL(url),1000);
+  status.textContent='Example EoD downloaded as HTML. Open it to view the bordered email table.';
+});
+document.getElementById('copy-eod-sample').addEventListener('click', async () => {
+  try {
+    const preview=document.createElement('div'); preview.innerHTML=exampleEodHtml;
+    await navigator.clipboard.write([new ClipboardItem({
+      'text/html':new Blob([exampleEodHtml],{type:'text/html'}),
+      'text/plain':new Blob([[...preview.querySelectorAll('tr')].map(row=>[...row.children].map(cell=>cell.textContent).join('\t')).join('\n')],{type:'text/plain'})
+    })]);
+    status.textContent='Example EoD copied with table formatting. Paste into your email composer.';
+  } catch(error) { status.textContent=`Example EoD copy failed: ${error.message}`; }
 });
 
