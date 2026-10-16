@@ -5,16 +5,16 @@ export function renderRunReview(container,plan){
  const review=reviewPlan(plan);
  const hours=minutes=>(minutes/60).toFixed(2)+' h';
  for(const [index,ticket] of review.tickets.entries()){
-  const item=plan.tickets[index],card=element('article',undefined,'review-ticket');
-  const header=element('header');header.append(element('span',`Ticket ${index+1} of ${review.tickets.length}`,'review-number'),element('h3',ticket.summary));card.append(header);
-  const meta=element('div',undefined,'review-meta');meta.append(element('span',ticket.lookup),element('span',`Final status: ${ticket.status}`,'review-status'));card.append(meta,element('p',ticket.action,'review-action'));
-  if(item.ticket.description)card.append(element('p',item.ticket.description,'review-description'));
-  card.append(element('h4',`${ticket.entries} time ${ticket.entries===1?'entry':'entries'}`));
+  const item=plan.tickets[index],card=element('details',undefined,'review-ticket');
+  const header=element('summary',undefined,'review-ticket-heading');header.append(element('span',`Ticket ${index+1} of ${review.tickets.length}`,'review-number'),element('h3',ticket.summary),element('span',`${ticket.entries} time ${ticket.entries===1?'entry':'entries'} · ${ticket.status}`,'review-compact-meta'));const body=element('div',undefined,'review-ticket-body');card.append(header,body);
+  const meta=element('div',undefined,'review-meta');meta.append(element('span',ticket.lookup),element('span',`Final status: ${ticket.status}`,'review-status'));body.append(meta,element('p',ticket.action,'review-action'));
+  if(item.ticket.description)body.append(element('p',item.ticket.description,'review-description'));
+  body.append(element('h4',`${ticket.entries} time ${ticket.entries===1?'entry':'entries'}`));
   for(const entry of item.timeEntries){
     const row=element('section',undefined,'review-entry');
     const start=entry.start.split(':').map(Number),end=entry.end.split(':').map(Number);
     row.append(element('strong',`${entry.date} · ${entry.start}–${entry.end} · ${hours(end[0]*60+end[1]-start[0]*60-start[1])}`),element('p',entry.notes,'review-notes'),element('small',`${entry.workType} · ${entry.workRole} · ${entry.billable==='AUTO'?'Billing: ConnectWise default (unconfirmed)':entry.billable==='B'?'Billable':entry.billable==='NB'?'Do not bill':'No charge'}`));
-    card.append(row);
+    body.append(row);
   }
   container.append(card);
  }

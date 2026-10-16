@@ -10,6 +10,7 @@ const syncRunButtons=()=>{topRunButton.hidden=primaryRunButton.hidden;topRunButt
 new MutationObserver(syncRunButtons).observe(primaryRunButton,{attributes:true,childList:true,subtree:true,characterData:true});
 topRunButton.onclick=()=>primaryRunButton.click();
 syncRunButtons();
+$('toggle-logs').onclick=()=>{const expanded=output.classList.toggle('logs-expanded');const button=$('toggle-logs');button.textContent=expanded?'−':'+';button.setAttribute('aria-expanded',String(expanded));button.setAttribute('aria-label',expanded?'Collapse logs':'Expand logs');button.title=expanded?'Collapse logs':'Expand logs';};
 const params=new URLSearchParams(location.hash.slice(1));
 let run,reportResult,tabId,busy=false,legacyTicket=false;
 const copyIcon=$('copy-run-result').innerHTML;

@@ -17,3 +17,11 @@
 .review-totals h3,.review-totals h4{margin:0 0 8px}
 .review-totals h4:not(:first-of-type){margin-top:18px}
 .review-totals p{margin:6px 0}
+
+.review-ticket-heading{cursor:pointer;position:relative;list-style:none;padding-right:22px}
+.review-ticket-heading::-webkit-details-marker{display:none}
+.review-ticket-heading::after{content:'+';position:absolute;right:0;top:5px;font-size:22px;line-height:1;color:#355e91}
+.review-ticket[open]>.review-ticket-heading::after{content:'−'}
+.review-ticket-heading:focus-visible{outline:2px solid #5481c8;outline-offset:4px}
+.review-compact-meta{display:block;color:#526277;font-size:12px;margin-top:6px}
+.review-ticket[open]>.review-ticket-heading{border-bottom:1px solid #e2e8f0;padding-bottom:12px;margin-bottom:12px}
