@@ -1,3 +1,4 @@
+import { renderRunReview } from './run-review.mjs';
 import { applyTicketOwner } from './owner-settings.mjs';
 import { executePlan } from './execute-plan.mjs';
 import { chooseConnectWiseTab, mainWorkspaceTab } from './navigation.mjs';
@@ -19,7 +20,7 @@ async function send(action,tabId,fields={}) {
     run.diagnostics=(run.diagnostics||[]).concat(info).slice(-100);await saveRun(run);throw error;}
   return result;
 }
-function showReview(plan){$('review').textContent=reviewText(plan);}
+function showReview(plan){renderRunReview($('review'),plan);}
 async function showReports(){
  const reports=combinedReports(await allRuns());
  if(!reports.length){$('daily-report').hidden=true;return;}

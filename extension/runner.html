@@ -7,12 +7,13 @@
     body { font: 15px system-ui, sans-serif; max-width: 740px; margin: 40px auto; line-height: 1.5; }
     pre { white-space: pre-wrap; overflow-wrap: anywhere; padding: 16px; background: #f2f4f6; }
   </style>
+<link rel="stylesheet" href="run-review.css">
 </head>
 <body>
   <h1>ConnectWise daily / weekly run</h1>
   <p id="status" role="status">Loading the weekly work record…</p>
   <button id="copy-run-result" type="button" disabled title="Copy run results" aria-label="Copy run results"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 5H6a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-3"/><rect x="9" y="2" width="6" height="6" rx="1"/></svg></button><p id="copy-run-status" role="status"></p>
-  <p><a href="history.html">Run history and daily summaries</a></p><details open><summary>Pre-run review</summary><pre id="review"></pre></details><button id="start-run" type="button" hidden>Start reviewed run</button><h2>Progress</h2><ol id="progress" aria-live="polite"></ol><button id="copy-diagnostics" title="Copy redacted diagnostics" aria-label="Copy redacted diagnostics"></button><pre id="result"></pre>
+  <p><a href="history.html">Run history and daily summaries</a></p><details open><summary>Pre-run review</summary><div id="review"></div></details><button id="start-run" type="button" hidden>Start reviewed run</button><h2>Progress</h2><ol id="progress" aria-live="polite"></ol><button id="copy-diagnostics" title="Copy redacted diagnostics" aria-label="Copy redacted diagnostics"></button><pre id="result"></pre>
   <section id="daily-report" hidden><h2>End-of-day email update</h2>
     <label>Report date <select id="email-date"></select></label>
     <p>Each report combines verified work from saved runs for that date. DITL tickets are excluded. Status reflects saved verification; stopped runs may leave work missing.</p>

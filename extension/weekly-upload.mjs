@@ -1,3 +1,4 @@
+import { renderRunReview } from './run-review.mjs';
 import { reviewText } from './workflow.mjs';
 import { exampleEodHtml, exampleEodFile } from './eod-example.mjs';
 import { withTicketOwner } from './owner-settings.mjs';
@@ -65,7 +66,7 @@ validateButton.addEventListener('click', async () => {
     const plan = (record.date ? planDay : planWeek)(record, await withTicketOwner(await response.json()));
     if (plan.exampleOnly) throw new Error('Example-only JSON cannot be run in ConnectWise.');
     validatedPlan = plan;
-    preview.textContent = reviewText(plan);
+    renderRunReview(preview,plan);
     const reportCount = new Set(plan.tickets.flatMap((item) => item.timeEntries.map((entry) => entry.date))).size;
     status.textContent = `Validated ${plan.tickets.length} ticket(s) and ${plan.totalEntries} time entry/entries for ${plan.mode === 'daily' ? plan.date : `${plan.weekStart}–${plan.weekEnd}`}. After verified saves, ${reportCount} EoD email update(s) will be generated, one per date. Nothing has been saved or emailed.`;
     runButton.disabled = false;
