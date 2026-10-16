@@ -4,7 +4,7 @@ var connectwiseActionQueue = Promise.resolve();
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message?.action === 'helperBuild') {
-    sendResponse({ ok: true, version: '0.9.1', ticketSaveMethod: 'exact-element' });
+    sendResponse({ ok: true, version: '0.9.2', ticketSaveMethod: 'exact-element' });
     return false;
   }
   const actions = {
@@ -32,7 +32,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   const pending = connectwiseActionQueue.then(() => action(message));
   connectwiseActionQueue = pending.catch(() => {});
   pending.then(sendResponse, (error) => sendResponse({ ok: false,
-    error: `[Helper 0.9.1; ${message.action}] ${error.message}`,
+    error: `[Helper 0.9.2; ${message.action}] ${error.message}`,
     ticketId: Number.isSafeInteger(error.ticketId) ? error.ticketId : null }));
   return true;
 });
@@ -601,7 +601,7 @@ async function trustedTicketText(tabId, frameId, selector, value, verifyText = t
 async function locateTicketOption(selector, value, searchMode = false) {
   const visible = (el) => el && el.getBoundingClientRect().width > 0 && el.getBoundingClientRect().height > 0;
   const normalize = (text) => String(text || '').replace(/\s+/g, ' ').trim().replace(/^\$\s*/, '').replace(/~$/, '').trim().toLowerCase();
-  const optionSelector = ['input.cw_workType', 'input.cw_ticketOwner'].includes(selector) ? '.gwt-dropdown-options .mm_label' : '.gwt-dropdown-options > .mm_label';
+  const optionSelector = ['input.cw_workType', 'input.cw_billable', 'input.cw_ticketOwner'].includes(selector) ? '.gwt-dropdown-options .mm_label' : '.gwt-dropdown-options > .mm_label';
   const inputs = [...document.querySelectorAll(selector === 'ticket-status' ? 'input.cw_status' : selector)].filter((input) =>
     visible(input) && (selector !== 'ticket-status'
       || (/^Status\s*:/i.test(input.closest('tr')?.innerText.trim() || '') || /^(pre-process|scheduled remote|scheduled onsite|working issue now|scheduling required|waiting parts\/repair|waiting client response|waiting on 3rd party|waiting for next onsite visit|pending closure|completed|closed|closed\/client unresponsive)\s*~?$/i.test((input.value || '').trim()))));
@@ -627,7 +627,7 @@ async function locateTicketOption(selector, value, searchMode = false) {
     options: [...document.querySelectorAll(optionSelector)]
       .filter(visible).map((option) => option.textContent.trim()).slice(0, 12) };
   if (matches.length !== 1) throw new Error(`${selector}: ${value} matched ${matches.length} visible choices.`);
-  if (['input.cw_workType', 'input.cw_ticketOwner'].includes(selector)) {
+  if (['input.cw_workType', 'input.cw_billable', 'input.cw_ticketOwner'].includes(selector)) {
     matches[0].scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: 'instant' });
     await new Promise((resolve) => setTimeout(resolve, 150));
   }
@@ -686,7 +686,7 @@ function inspectSelectedTicketOption(selector, value) {
   const inputs = [...document.querySelectorAll(selector === 'ticket-status' ? 'input.cw_status' : selector)]
     .filter((input) => input.getBoundingClientRect().width > 0 && input.getBoundingClientRect().height > 0
       && (selector !== 'ticket-status' || (/^Status\s*:/i.test(input.closest('tr')?.innerText.trim() || '') || /^(pre-process|scheduled remote|scheduled onsite|working issue now|scheduling required|waiting parts\/repair|waiting client response|waiting on 3rd party|waiting for next onsite visit|pending closure|completed|closed|closed\/client unresponsive)\s*~?$/i.test((input.value || '').trim()))));
-  const pickerOpen = ['ticket-status', 'input.cw_workType', 'input.cw_ticketOwner'].includes(selector) && [...document.querySelectorAll(selector === 'ticket-status' ? '.gwt-dropdown-options > .mm_label' : '.gwt-dropdown-options .mm_label')]
+  const pickerOpen = ['ticket-status', 'input.cw_workType', 'input.cw_billable', 'input.cw_ticketOwner'].includes(selector) && [...document.querySelectorAll(selector === 'ticket-status' ? '.gwt-dropdown-options > .mm_label' : '.gwt-dropdown-options .mm_label')]
     .some((option) => option.getBoundingClientRect().width > 0 && option.getBoundingClientRect().height > 0);
   return { verified: inputs.length === 1 && normalize(inputs[0].value) === normalize(value) && !pickerOpen,
     pickerOpen,
@@ -716,7 +716,7 @@ async function chooseTicketOptionInTab(tabId, frameId, selector, value, ticketId
     if (!choice.result?.found) throw new Error(`${selector}: ${value} choice was not located (field: ${JSON.stringify(choice.result?.displayed)}, visible choices: ${choice.result?.options?.join(', ') || 'none'}).`);
     if (selector === 'ticket-status' && ticketId) {
       await trustedTicketControlClick(tabId, frameId, ticketId, 'status-option', value);
-    } else if (selector === 'input.cw_workType' && ticketId) {
+    } else if (['input.cw_workType','input.cw_billable'].includes(selector) && ticketId) {
       await trustedTicketControlClick(tabId, frameId, ticketId, 'time-option', value, selector);
     } else if (selector === 'input.cw_ticketOwner' && ticketId) {
       await trustedTicketControlClick(tabId, frameId, ticketId, 'owner-option', value, selector);
@@ -1908,6 +1908,11 @@ async function prepareTimeDraftInTab({ tabId, ticketId, entry }) {
   // Select Work Type with trusted browser input before filling times. A page
   // .click() can leave GWT's selection unchanged, especially for payroll types.
   await chooseTicketOptionInTab(tabId, frameId, 'input.cw_workType', entry.workType, ticketId);
+  if (entry.billable !== 'AUTO') {
+    const billing = {B:'Billable',NB:'Do Not Bill',NC:'No Charge'}[entry.billable];
+    if(!billing) throw new Error('Unsupported billing choice.');
+    await chooseTicketOptionInTab(tabId, frameId, 'input.cw_billable', billing, ticketId);
+  }
   const [fill] = await executeConnectWiseScript({
     target: { tabId, frameIds: [frameId] }, func: fillTimeDraft,
     args: [{ ...entry, ticketId: String(ticketId) }]

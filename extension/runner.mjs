@@ -2,7 +2,7 @@ import { renderRunReview } from './run-review.mjs';
 import { applyTicketOwner } from './owner-settings.mjs';
 import { executePlan } from './execute-plan.mjs';
 import { chooseConnectWiseTab, mainWorkspaceTab } from './navigation.mjs';
-import { allRuns, saveRun, resumePlan, reviewPlan, combinedReports, diagnostic, mergeEvidence, reviewText } from './workflow.mjs';
+import { allRuns, saveRun, resumePlan, reviewPlan, combinedReports, diagnostic, mergeEvidence, reviewText, correctPendingHuddles } from './workflow.mjs';
 import { attachReportEditor } from './report-editor.mjs';
 const $=id=>document.getElementById(id),status=$('status'),output=$('result');
 const params=new URLSearchParams(location.hash.slice(1));
@@ -133,6 +133,7 @@ async function main(){
  if(!plan||plan.exampleOnly||!Array.isArray(plan.tickets))throw new Error('A validated non-example plan is required.');
  if(!run){await applyTicketOwner(plan);run={id:crypto.randomUUID(),createdAt:new Date().toISOString(),plan,state:'ready',diagnostics:[]};await saveRun(run);if(params.get('source')==='upload'){const stagedKey=(params.get('kind')==='ticket'?'ticketJob:':'weeklyJob:')+params.get('jobId');await chrome.storage.local.remove(stagedKey);await chrome.storage.session.remove(stagedKey);}}
  history.replaceState(null,'',location.pathname+'#source=history&runId='+run.id);
+ if(correctPendingHuddles(run.plan,run.evidence||run.result))await saveRun(run);
  showReview(plan);$('start-run').hidden=false;$('start-run').textContent=run.result?'Resume / recheck saved run':'Start reviewed run';
  status.textContent='Review planned lookups, statuses, time totals, gaps and billing below. AUTO billing remains unknown until read from ConnectWise.';
  if(run.result){output.textContent=JSON.stringify(run.result,null,2);$('copy-run-result').disabled=false;}

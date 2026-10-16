@@ -70,8 +70,8 @@ export function combinedReports(runs) {
 export function renderReport(record) {return renderEod(record,record.tickets.map(row=>({...row,verified:true})));}
 export async function allRuns() { const data=await chrome.storage.local.get(null);return Object.entries(data).filter(([key])=>key.startsWith('runHistory:')).map(([,value])=>value).sort((a,b)=>b.updatedAt.localeCompare(a.updatedAt)); }
 export async function saveRun(run) {run.updatedAt=new Date().toISOString();await chrome.storage.local.set({[`runHistory:${run.id}`]:run});}
-export const defaultPresets=[{id:'huddle',name:'Morning huddle',workType:'Staff Meeting',workRole:'Onsite Engineer',notes:'Attended the morning huddle.',billable:'B'},{id:'ops',name:'Ops check-in',workType:'Onsite Support',workRole:'Onsite Engineer',notes:'Checked in with the Ops team.',billable:'AUTO'},{id:'lunch',name:'Lunch',workType:'Payroll Wrap',workRole:'Onsite Engineer',notes:'Lunch break.',billable:'AUTO'}];
-export function diagnostic(action,error,ticketId=null) {return {time:new Date().toISOString(),action,ticketId,message:String(error.message||error).replace(/https?:\/\/\S+/g,'[URL removed]').replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi,'[email removed]').replace(/(token|password|cookie|authorization)\s*[:=]\s*\S+/gi,'$1=[redacted]').slice(0,1500),helperVersion:'0.9.0'};}
+export const defaultPresets=[{id:'huddle',name:'Morning huddle',workType:'Onsite Support',workRole:'Onsite Engineer',notes:'Attended the morning huddle.',billable:'B'},{id:'ops',name:'Ops check-in',workType:'Onsite Support',workRole:'Onsite Engineer',notes:'Checked in with the Ops team.',billable:'AUTO'},{id:'lunch',name:'Lunch',workType:'Payroll Wrap',workRole:'Onsite Engineer',notes:'Lunch break.',billable:'AUTO'}];
+export function diagnostic(action,error,ticketId=null) {return {time:new Date().toISOString(),action,ticketId,message:String(error.message||error).replace(/https?:\/\/\S+/g,'[URL removed]').replace(/[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}/gi,'[email removed]').replace(/(token|password|cookie|authorization)\s*[:=]\s*\S+/gi,'$1=[redacted]').slice(0,1500),helperVersion:'0.9.2'};}
 
 export function mergeEvidence(previous, snapshot) {
   const results=(previous?.results||[]).map(row=>structuredClone(row));
@@ -89,4 +89,13 @@ export function mergeEvidence(previous, snapshot) {
 export function reviewText(plan,targetHours=8.5){
   const review=reviewPlan(plan,targetHours),hours=n=>(n/60).toFixed(2)+' h',time=n=>String(Math.floor(n/60)).padStart(2,'0')+':'+String(n%60).padStart(2,'0');
   return review.tickets.map((t,index)=>`${t.summary}\n  ${t.lookup}; ${t.action}\n  ${t.entries} entries; final status: ${t.status}\n${plan.tickets[index].timeEntries.map(e=>`  ${e.date} ${e.start}–${e.end} | ${e.workType} | ${e.billable} | ${e.notes}`).join('\n')}`).join('\n\n')+'\n\n'+review.days.map(d=>`${d.date}: ${hours(d.totalMinutes)} total (${hours(d.lunchMinutes)} lunch)\n  Billable ${hours(d.billableMinutes)}; nonbillable ${hours(d.nonbillableMinutes)}; AUTO/unconfirmed ${hours(d.unknownBillingMinutes)}\n  Gaps within entered day: ${d.gaps.map(g=>time(g.start)+'–'+time(g.end)).join(', ')||'none'}; overlaps: ${d.overlaps.length}\n  Below ${targetHours} h target by ${hours(d.shortfallMinutes)}. No time is added automatically.`).join('\n\n');
+}
+
+export function correctPendingHuddles(plan, evidence) {
+ let changed=false;
+ for(const [i,item] of plan.tickets.entries()) for(const [j,entry] of item.timeEntries.entries()){
+  const saved=evidence?.results?.[i]?.entries?.[j];
+  if(entry.workType==='Staff Meeting' && /huddle/i.test(entry.notes) && !verifiedEntry(saved) && saved?.status!=='save_attempted') {entry.workType='Onsite Support';changed=true;}
+ }
+ return changed;
 }
