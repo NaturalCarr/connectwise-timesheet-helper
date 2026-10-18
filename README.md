@@ -15,9 +15,9 @@ The helper uses the signed-in visible browser UI. It does not include API creden
 ## Setup
 
 1. Clone this repository. Node.js is required only for the CLI and tests.
-2. Replace the fictional values in extension/ticket-settings.json and ticket-settings.json with your own configuration.
+2. Download the latest extension ZIP from [Releases](https://github.com/NaturalCarr/connectwise-timesheet-helper/releases/latest) and extract it, or use this checkout.
 3. Open your Chromium browser's extensions page, enable Developer mode, and use Load unpacked on extension/.
-4. Enter your exact Ticket Owner display name in the extension, then open your signed-in ConnectWise tab.
+4. Open Ticket defaults and configuration in the extension and save your exact ConnectWise labels. Enter your Ticket Owner display name at the top of the popup. CLI users can download ticket-settings.json from the settings page and pass it with --settings.
 5. Validate and review real work records before running. Samples use exampleOnly: true and cannot be submitted as-is.
 
 The default supported host is na.myconnectwise.net. Other hosts require deliberate manifest and navigation changes. Never commit browser profiles, login data, roster exports or actual timesheets. Local history contains work notes and stays in extension storage.

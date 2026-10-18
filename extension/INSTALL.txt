@@ -34,3 +34,5 @@ Daily runs: upload or paste daily JSON in Daily/ Weekly TimeSheets and EoD. DAIL
 Unified ticket form: School is optional. Enter a ticket number and/or title text; the number is tried first. A missing number can fall back to one open title match. Use Also enter one time entry for time. Text boxes grow automatically.
 
 Ticket time: click + Add a Time Entry for each separate time record; Remove entry removes only that draft. Mark ticket as applies after all time records are saved and verified. Draft entries remain when the popup is closed.
+
+Open Ticket defaults and configuration in the popup to save your company, site, board and other exact ConnectWise labels. Browser settings persist independently of drafts. Download CLI settings JSON there if using the CLI. Existing reviewed plans retain their original configuration; validate a new plan after changing settings.

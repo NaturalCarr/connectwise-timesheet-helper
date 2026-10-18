@@ -1,3 +1,4 @@
+import { configuredDefaults } from './config-settings.mjs';
 import { eodStatuses } from './eod-model.mjs';
 import { requireTicketOwner } from './owner-settings.mjs';
 import { planTimeEntry } from './plan.mjs';
@@ -24,7 +25,7 @@ async function main() {
   if (!job || !Number.isInteger(job.tabId)) throw new Error('The time job is missing.');
   const settingsResponse = await fetch(chrome.runtime.getURL('ticket-settings.json'));
   if (!settingsResponse.ok) throw new Error('Ticket settings could not be loaded.');
-  const settings = await settingsResponse.json();
+  const settings = await configuredDefaults(await settingsResponse.json());
   const entry = planTimeEntry(job.entry, settings.status);
   const tabId = job.tabId;
   let baselineTimeCount = null;

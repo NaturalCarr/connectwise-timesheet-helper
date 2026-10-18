@@ -39,11 +39,12 @@
     <p id="owner-settings-status" role="status"></p>
   </form>
   <button id="clear-saved-inputs" type="button">Clear saved inputs</button>
+  <p><a href="settings.html" target="_blank">Ticket defaults and configuration</a></p>
   <h2>Open a service ticket</h2>
   <p>Enter a ticket number, title text, or an issue for a new ticket. Number takes priority; title text is the fallback. Add a school acronym when needed.</p>
   <form id="ticket-form">
     <div class="row">
-      <label>School acronym (optional)<input id="ticket-school" pattern="[A-Za-z0-9]{2,16}" placeholder="SCHC"></label>
+      <label>School acronym (optional)<input id="ticket-school" pattern="[A-Za-z0-9]{2,16}"></label>
       <label>Existing ticket number (optional)<input id="ticket-existing-id" type="number" min="1" step="1"></label>
     </div>
     <label>Existing ticket title contains (optional)<input id="ticket-title-contains" placeholder="For example T-90463"></label>

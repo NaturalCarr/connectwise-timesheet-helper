@@ -1,3 +1,4 @@
+import { configuredDefaults } from './config-settings.mjs';
 export const ownerKey = 'helperSettings:ticketOwner';
 
 export async function requireTicketOwner(storage = chrome.storage.local) {
@@ -9,7 +10,7 @@ export async function requireTicketOwner(storage = chrome.storage.local) {
 }
 
 export async function withTicketOwner(settings) {
-  return { ...settings, owner: await requireTicketOwner() };
+  return { ...await configuredDefaults(settings), owner: await requireTicketOwner() };
 }
 
 export async function applyTicketOwner(plan) {
