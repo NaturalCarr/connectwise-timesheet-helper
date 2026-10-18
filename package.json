@@ -1,0 +1,10 @@
+{
+  "name": "connectwise-timesheet-helper",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "plan": "node src/plan-cli.mjs",
+    "agent": "node src/agent-cli.mjs",
+    "test": "node --test"
+  }
+}

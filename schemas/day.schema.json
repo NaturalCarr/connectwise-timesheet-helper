@@ -1,0 +1,15 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "ConnectWise daily tickets, time, and end-of-day report",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["date", "items"],
+  "properties": {
+    "schemaVersion": { "const": "1.2" },
+    "exampleOnly": { "type": "boolean" },
+    "timeZone": { "const": "America/New_York" },
+    "date": { "type": "string", "format": "date" },
+    "endOfDay": { "type": "object", "additionalProperties": false, "properties": { "subject": { "type": "string", "minLength": 1 } } },
+    "items": { "type": "array", "minItems": 1, "items": { "$ref": "week.schema.json#/properties/items/items" } }
+  }
+}

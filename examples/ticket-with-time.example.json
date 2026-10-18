@@ -1,0 +1,17 @@
+{
+  "schemaVersion": "1.0",
+  "exampleOnly": true,
+  "school": "SCHC",
+  "issue": "Example issue - do not submit",
+  "description": "Example description only. Replace this with the actual issue.",
+  "timeEntry": {
+    "date": "2026-10-08",
+    "start": "11:30",
+    "end": "11:35",
+    "notes": "Example note only. Replace this with the work actually performed.",
+    "workType": "Onsite Support",
+    "workRole": "Onsite Engineer",
+    "billable": "B"
+  },
+  "completeAfterTime": true
+}

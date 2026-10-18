@@ -1,0 +1,14 @@
+{
+  "company": "Example Public Schools",
+  "site": "Example Public Schools",
+  "contact": "Example Contact",
+  "board": "Example Implementation (MS)",
+  "status": "Working Issue Now",
+  "completedStatus": "Completed",
+  "type": "General Question",
+  "subtype": "Information Ticket",
+  "owner": "Example Engineer",
+  "priority": "Priority 3 - Medium",
+  "agreement": "Example Service Agreement",
+  "source": "Internal"
+}
