@@ -3,7 +3,32 @@
   "exampleOnly": true,
   "timeZone": "America/New_York",
   "date": "2026-10-14",
-  "endOfDay": { "subject": "SCHC - End of day update - 10/14/2026" },
+  "endOfDay": {
+    "subject": "SCHC - End of day update - 10/14/2026",
+    "inventory": [
+      {
+        "item": "MacBooks",
+        "quantity": 2,
+        "model": "M1"
+      },
+      {
+        "item": "MacBooks",
+        "quantity": 1,
+        "model": "M4"
+      },
+      {
+        "item": "Chromebooks",
+        "quantity": 3
+      }
+    ],
+    "purchases": [
+      {
+        "item": "USB-C adapter",
+        "quantity": 2,
+        "url": "https://example.com/usb-c-adapter"
+      }
+    ]
+  },
   "items": [
     {
       "recordId": "example-copier",
@@ -13,11 +38,17 @@
       "finalStatus": "Waiting Parts/Repair",
       "endOfDayNotes": "Replace with the actual work performed.",
       "nextStep": "Replace with the actual next step.",
-      "timeEntries": [{
-        "date": "2026-10-14", "start": "09:00", "end": "09:30",
-        "notes": "Example only. Replace with actual notes.",
-        "workType": "Onsite Support", "workRole": "Onsite Engineer", "billable": "AUTO"
-      }]
+      "timeEntries": [
+        {
+          "date": "2026-10-14",
+          "start": "09:00",
+          "end": "09:30",
+          "notes": "Example only. Replace with actual notes.",
+          "workType": "Onsite Support",
+          "workRole": "Onsite Engineer",
+          "billable": "AUTO"
+        }
+      ]
     },
     {
       "recordId": "example-existing",
@@ -25,11 +56,17 @@
       "issue": "Example imported issue",
       "titleContains": "EXAMPLE-REFERENCE",
       "finalStatus": "Completed",
-      "timeEntries": [{
-        "date": "2026-10-14", "start": "10:00", "end": "10:15",
-        "notes": "Example only. Replace with the actual work performed.",
-        "workType": "Remote Support", "workRole": "Onsite Engineer", "billable": "AUTO"
-      }]
+      "timeEntries": [
+        {
+          "date": "2026-10-14",
+          "start": "10:00",
+          "end": "10:15",
+          "notes": "Example only. Replace with the actual work performed.",
+          "workType": "Remote Support",
+          "workRole": "Onsite Engineer",
+          "billable": "AUTO"
+        }
+      ]
     }
   ]
 }

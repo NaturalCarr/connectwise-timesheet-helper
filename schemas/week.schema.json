@@ -3,72 +3,315 @@
   "title": "ConnectWise weekly work plan",
   "type": "object",
   "additionalProperties": false,
-  "required": ["weekStart", "items"],
+  "required": [
+    "weekStart",
+    "items"
+  ],
   "properties": {
-    "schemaVersion": { "const": "1.1" },
-    "exampleOnly": { "type": "boolean", "description": "True for documentation examples; execution must refuse submission" },
-    "timeZone": { "const": "America/New_York" },
-    "weekStart": { "type": "string", "format": "date", "description": "Monday of the week" },
+    "schemaVersion": {
+      "const": "1.1"
+    },
+    "exampleOnly": {
+      "type": "boolean",
+      "description": "True for documentation examples; execution must refuse submission"
+    },
+    "timeZone": {
+      "const": "America/New_York"
+    },
+    "weekStart": {
+      "type": "string",
+      "format": "date",
+      "description": "Monday of the week"
+    },
     "items": {
       "type": "array",
       "minItems": 1,
       "items": {
         "type": "object",
         "additionalProperties": false,
-        "required": ["timeEntries"],
+        "required": [
+          "timeEntries"
+        ],
         "properties": {
-          "recordId": { "type": "string", "minLength": 1, "description": "Stable ID from the voice tool for this issue" },
-          "school": { "type": "string", "pattern": "^[A-Za-z0-9]{2,16}$" },
-          "site": { "type": "string", "const": "Example Public Schools", "description": "Optional; all tickets use the company-wide Site" },
-          "issue": { "type": "string", "minLength": 1 },
-          "description": { "type": "string" },
-          "finalStatus": { "type": "string" },
-          "endOfDayNotes": { "type": "string" },
-          "nextStep": { "type": "string" },
+          "recordId": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Stable ID from the voice tool for this issue"
+          },
+          "school": {
+            "type": "string",
+            "pattern": "^[A-Za-z0-9]{2,16}$"
+          },
+          "site": {
+            "type": "string",
+            "const": "Democracy Prep Public Schools",
+            "description": "Optional; all tickets use the company-wide Site"
+          },
+          "issue": {
+            "type": "string",
+            "minLength": 1
+          },
+          "description": {
+            "type": "string"
+          },
+          "finalStatus": {
+            "type": "string"
+          },
+          "endOfDayNotes": {
+            "type": "string"
+          },
+          "nextStep": {
+            "type": "string"
+          },
           "context": {
-            "type": "object", "additionalProperties": false,
+            "type": "object",
+            "additionalProperties": false,
             "properties": {
-              "building": { "type": "string" },
-              "room": { "type": "string" },
-              "asset": { "type": "string" },
-              "people": { "type": "array", "items": {
-                "type": "object", "additionalProperties": false, "required": ["name", "role"],
-                "properties": {
-                  "name": { "type": "string", "minLength": 1 },
-                  "email": { "type": "string", "format": "email" },
-                  "role": { "enum": ["reportedBy", "affected", "assisted"] }
+              "building": {
+                "type": "string"
+              },
+              "room": {
+                "type": "string"
+              },
+              "asset": {
+                "type": "string"
+              },
+              "people": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": [
+                    "name",
+                    "role"
+                  ],
+                  "properties": {
+                    "name": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "email": {
+                      "type": "string",
+                      "format": "email"
+                    },
+                    "role": {
+                      "enum": [
+                        "reportedBy",
+                        "affected",
+                        "assisted"
+                      ]
+                    }
+                  }
                 }
-              } }
+              }
             }
           },
-          "titleContains": { "type": "string", "minLength": 1, "description": "Literal substring of an existing title; zero or multiple matches stop without creating a ticket" },
-    "existingTicketId": { "type": "integer", "minimum": 1 },
-          "sourceRecordIds": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true },
+          "titleContains": {
+            "type": "string",
+            "minLength": 1,
+            "description": "Literal substring of an existing title; zero or multiple matches stop without creating a ticket"
+          },
+          "existingTicketId": {
+            "type": "integer",
+            "minimum": 1
+          },
+          "sourceRecordIds": {
+            "type": "array",
+            "items": {
+              "type": "string",
+              "minLength": 1
+            },
+            "uniqueItems": true
+          },
           "timeEntries": {
             "type": "array",
             "minItems": 1,
             "items": {
               "type": "object",
               "additionalProperties": false,
-              "required": ["date", "start", "end", "notes", "workType", "workRole", "billable"],
+              "required": [
+                "date",
+                "start",
+                "end",
+                "notes",
+                "workType",
+                "workRole",
+                "billable"
+              ],
               "properties": {
-                "recordId": { "type": "string", "minLength": 1, "description": "Stable ID from the voice tool for this time entry" },
-                "date": { "type": "string", "format": "date" },
-                "start": { "type": "string", "pattern": "^([01][0-9]|2[0-3]):[0-5][0-9]$" },
-                "end": { "type": "string", "pattern": "^([01][0-9]|2[0-3]):[0-5][0-9]$" },
-                "notes": { "type": "string", "minLength": 1 },
-                "workType": { "type": "string", "minLength": 1 },
-                "workRole": { "type": "string", "minLength": 1 },
-                "billable": { "enum": ["B", "NB", "NC", "AUTO"] },
-                "location": { "type": "string" },
-                "businessUnit": { "type": "string" },
-                "agreement": { "type": "string" },
-                "ticketStatus": { "type": "string" },
-                "addNoteTo": { "enum": ["Discussion", "Internal", "Resolution"] },
-                "workFacts": { "type": "array", "items": { "type": "string", "minLength": 1 } },
-                "outcome": { "type": "string" },
-                "followUp": { "type": "string" },
-                "sourceRecordIds": { "type": "array", "items": { "type": "string", "minLength": 1 }, "uniqueItems": true }
+                "recordId": {
+                  "type": "string",
+                  "minLength": 1,
+                  "description": "Stable ID from the voice tool for this time entry"
+                },
+                "date": {
+                  "type": "string",
+                  "format": "date"
+                },
+                "start": {
+                  "type": "string",
+                  "pattern": "^([01][0-9]|2[0-3]):[0-5][0-9]$"
+                },
+                "end": {
+                  "type": "string",
+                  "pattern": "^([01][0-9]|2[0-3]):[0-5][0-9]$"
+                },
+                "notes": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "workType": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "workRole": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "billable": {
+                  "enum": [
+                    "B",
+                    "NB",
+                    "NC",
+                    "AUTO"
+                  ]
+                },
+                "location": {
+                  "type": "string"
+                },
+                "businessUnit": {
+                  "type": "string"
+                },
+                "agreement": {
+                  "type": "string"
+                },
+                "ticketStatus": {
+                  "type": "string"
+                },
+                "addNoteTo": {
+                  "enum": [
+                    "Discussion",
+                    "Internal",
+                    "Resolution"
+                  ]
+                },
+                "workFacts": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "outcome": {
+                  "type": "string"
+                },
+                "followUp": {
+                  "type": "string"
+                },
+                "sourceRecordIds": {
+                  "type": "array",
+                  "items": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "uniqueItems": true
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "endOfDays": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "date"
+        ],
+        "properties": {
+          "date": {
+            "type": "string",
+            "format": "date"
+          },
+          "subject": {
+            "type": "string",
+            "minLength": 1
+          },
+          "inventory": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "item"
+              ],
+              "properties": {
+                "item": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "count": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "quantity": {
+                  "type": "integer",
+                  "minimum": 0
+                },
+                "model": {
+                  "type": "string",
+                  "minLength": 1
+                }
+              },
+              "oneOf": [
+                {
+                  "required": [
+                    "count"
+                  ],
+                  "not": {
+                    "required": [
+                      "quantity"
+                    ]
+                  }
+                },
+                {
+                  "required": [
+                    "quantity"
+                  ],
+                  "not": {
+                    "required": [
+                      "count"
+                    ]
+                  }
+                }
+              ]
+            }
+          },
+          "purchases": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": [
+                "item",
+                "quantity",
+                "url"
+              ],
+              "properties": {
+                "item": {
+                  "type": "string",
+                  "minLength": 1
+                },
+                "quantity": {
+                  "type": "integer",
+                  "minimum": 1
+                },
+                "url": {
+                  "type": "string",
+                  "pattern": "^https?://"
+                }
               }
             }
           }
@@ -77,7 +320,3 @@
     }
   }
 }
-
-
-
-

@@ -3,13 +3,116 @@
   "title": "ConnectWise daily tickets, time, and end-of-day report",
   "type": "object",
   "additionalProperties": false,
-  "required": ["date", "items"],
+  "required": [
+    "date",
+    "items"
+  ],
   "properties": {
-    "schemaVersion": { "const": "1.2" },
-    "exampleOnly": { "type": "boolean" },
-    "timeZone": { "const": "America/New_York" },
-    "date": { "type": "string", "format": "date" },
-    "endOfDay": { "type": "object", "additionalProperties": false, "properties": { "subject": { "type": "string", "minLength": 1 } } },
-    "items": { "type": "array", "minItems": 1, "items": { "$ref": "week.schema.json#/properties/items/items" } }
+    "schemaVersion": {
+      "const": "1.2"
+    },
+    "exampleOnly": {
+      "type": "boolean"
+    },
+    "timeZone": {
+      "const": "America/New_York"
+    },
+    "date": {
+      "type": "string",
+      "format": "date"
+    },
+    "endOfDay": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "subject": {
+          "type": "string",
+          "minLength": 1
+        },
+        "inventory": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "item"
+            ],
+            "properties": {
+              "item": {
+                "type": "string",
+                "minLength": 1
+              },
+              "count": {
+                "type": "string",
+                "minLength": 1
+              },
+              "quantity": {
+                "type": "integer",
+                "minimum": 0
+              },
+              "model": {
+                "type": "string",
+                "minLength": 1
+              }
+            },
+            "oneOf": [
+              {
+                "required": [
+                  "count"
+                ],
+                "not": {
+                  "required": [
+                    "quantity"
+                  ]
+                }
+              },
+              {
+                "required": [
+                  "quantity"
+                ],
+                "not": {
+                  "required": [
+                    "count"
+                  ]
+                }
+              }
+            ]
+          }
+        },
+        "purchases": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "item",
+              "quantity",
+              "url"
+            ],
+            "properties": {
+              "item": {
+                "type": "string",
+                "minLength": 1
+              },
+              "quantity": {
+                "type": "integer",
+                "minimum": 1
+              },
+              "url": {
+                "type": "string",
+                "pattern": "^https?://"
+              }
+            }
+          }
+        }
+      }
+    },
+    "items": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "$ref": "week.schema.json#/properties/items/items"
+      }
+    }
   }
 }

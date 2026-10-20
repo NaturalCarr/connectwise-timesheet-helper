@@ -1,3 +1,4 @@
+import { normalizeEodExtras } from './eod-extras.mjs';
 const clean = (value) => typeof value === 'string' ? value.trim().replace(/\s+/g, ' ') : '';
 const cleanBlock = (value) => typeof value === 'string' ? value.trim() : '';
 import { eodStatuses } from './eod-model.mjs';
@@ -303,6 +304,7 @@ export function planWeek(input, settings) {
   ]);
   return { schemaVersion: input.schemaVersion || '1.1', exampleOnly: input.exampleOnly === true,
     timeZone: input.timeZone || 'America/New_York', weekStart, weekEnd, tickets, steps,
+    endOfDays: normalizeReportDays(input.endOfDays, weekStart, weekEnd),
     totalEntries: tickets.reduce((sum, ticket) => sum + ticket.timeEntries.length, 0) };
 }
 
@@ -319,9 +321,19 @@ export function planDay(input, settings) {
   const monday = new Date(parsed); monday.setUTCDate(monday.getUTCDate() - (monday.getUTCDay() + 6) % 7);
   const plan = planWeek({ ...input, schemaVersion: '1.1', weekStart: monday.toISOString().slice(0,10) }, settings);
   const subject = clean(input.endOfDay?.subject) || `End of day update - ${date}`;
-  return { ...plan, mode: 'daily', schemaVersion: '1.2', date, endOfDay: { subject,
+  return { ...plan, mode: 'daily', schemaVersion: '1.2', date, endOfDay: { subject, ...normalizeEodExtras(input.endOfDay),
     tickets: input.items.map((item, index) => ({ status: plan.tickets[index].completedStatus,
       notes: cleanBlock(item.endOfDayNotes) || item.timeEntries.map((entry) => cleanBlock(entry.notes)).join('\n'),
       nextStep: cleanBlock(item.nextStep) || item.timeEntries.map((entry) => cleanBlock(entry.followUp)).filter(Boolean).join('\n') })) } };
 }
 
+
+function normalizeReportDays(value, start, end) {
+ if(value === undefined) return [];
+ if(!Array.isArray(value)) throw new Error('endOfDays must be an array.');
+ const seen=new Set();return value.map(day=>{
+  if(!day || !/^\d{4}-\d{2}-\d{2}$/.test(day.date || '') || day.date<start || day.date>end || Number.isNaN(Date.parse(day.date)) || new Date(day.date).toISOString().slice(0,10)!==day.date) throw new Error('EoD date must be a valid date inside the week.');
+  if(seen.has(day.date)) throw new Error('Duplicate EoD date.');seen.add(day.date);
+  return {date:day.date,subject:clean(day.subject),...normalizeEodExtras(day)};
+ });
+}

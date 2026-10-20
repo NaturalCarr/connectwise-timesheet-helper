@@ -34,6 +34,11 @@ export function resumePlan(plan, previous) {
 }
 export function combinedReports(runs) {
   const days=new Map();
+  const reportDetails=new Map();
+  for(const run of [...runs].sort((a,b)=>a.updatedAt.localeCompare(b.updatedAt))){
+    const details=run.plan.mode==='daily'?[{date:run.plan.date,...run.plan.endOfDay}]:(run.plan.endOfDays || []);
+    for(const day of details){const prior=reportDetails.get(day.date)||{};reportDetails.set(day.date,{...prior,...(day.inventory?.length?{inventory:day.inventory}:{}),...(day.purchases?.length?{purchases:day.purchases}:{})});}
+  }
   const finalStatuses=new Map();
   for(const run of [...runs].sort((a,b)=>a.updatedAt.localeCompare(b.updatedAt)))for(const result of run.result?.results||[]){if(['completed_verified','status_changed_verified'].includes(result.status)&&result.ticketStatus)finalStatuses.set(result.ticketId,{status:result.ticketStatus,at:run.updatedAt});}
   // Newest verified evidence for the same ticket/interval wins. Never infer a save from a pending entry.
@@ -63,7 +68,7 @@ export function combinedReports(runs) {
       tickets.set(row.ticketId,ticket);
     }
     const rows=[...tickets.values()].map(row=>({...row,notes:row.notes.join('\n'),nextStep:row.nextStep.join('\n')}));
-    const record={date,subject:`End of day update - ${date}`,tickets:rows};
+    const record={date,subject:`End of day update - ${date}`,tickets:rows,...reportDetails.get(date)};
     return {...record,html:renderReport(record)};
   });
 }

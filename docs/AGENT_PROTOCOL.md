@@ -14,3 +14,39 @@ node --test
 ```
 
 See the schemas, README and timesheets.md for record preparation and recovery. Historical release tags contain extension files only.
+
+## EoD inventory and purchase JSON
+
+Daily records accept endOfDay.inventory and endOfDay.purchases. Weekly records accept endOfDays: an array of objects with date, optional subject, inventory and purchases. Each inventory row has item plus quantity (a nonnegative integer) and optional model, or a freeform count string. Repeated item names are grouped. Example:
+
+```json
+{
+  "endOfDay": {
+    "inventory": [
+      {
+        "item": "MacBooks",
+        "quantity": 2,
+        "model": "M1"
+      },
+      {
+        "item": "MacBooks",
+        "quantity": 1,
+        "model": "M4"
+      },
+      {
+        "item": "Chromebooks",
+        "quantity": 3
+      }
+    ],
+    "purchases": [
+      {
+        "item": "USB-C adapter",
+        "quantity": 2,
+        "url": "https://example.com/usb-c-adapter"
+      }
+    ]
+  }
+}
+```
+
+Mac models render as amount x model, for example 2 x M1, 1 x M4. Inventory is report metadata: it creates no ticket or time. Never invent quantities or inventory work time. The report editor can override these details locally per date. Purchase rows use item, positive integer quantity and HTTP(S) url; the entire Item × quantity label is linked.

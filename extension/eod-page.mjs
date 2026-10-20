@@ -8,7 +8,7 @@ let html = '';
 let busy = false;
 function row(ticket = {}) {
   const field = document.createElement('fieldset');
-  field.innerHTML = '<legend>Ticket</legend><label>ConnectWise ticket number<input class="id" type="number" min="1"></label><label>Or title contains<input class="title" placeholder="Other platform reference, for example T-90463"></label><label>Status<select class="state"></select></label><label>Work notes (one point per line)<textarea class="notes"></textarea></label><label>Next step (optional)<textarea class="next"></textarea></label><button class="remove">Remove ticket</button>';
+  field.innerHTML = '<legend>Ticket</legend><label>ConnectWise ticket number<input class="id" type="number" min="1"></label><label>Or title contains<input class="title" placeholder="Other platform reference, for example T-52463"></label><label>Status<select class="state"></select></label><label>Work notes (one point per line)<textarea class="notes"></textarea></label><label>Next step (optional)<textarea class="next"></textarea></label><button class="remove">Remove ticket</button>';
   for (const value of eodStatuses) field.querySelector('.state').add(new Option(value, value));
   field.querySelector('.id').value = ticket.ticketId || '';
   field.querySelector('.title').value = ticket.titleContains || '';
@@ -85,7 +85,7 @@ $('run').onclick = async () => navigator.locks.request('connectwise-helper-brows
       $('result').textContent = JSON.stringify(results, null, 2);
     }
     html = renderEod(plan, results); $('preview').innerHTML = html;
-    const report={date:plan.date,subject:plan.subject,tickets:plan.tickets.map((ticket,index)=>({...ticket,summary:results[index].summary,ticketId:results[index].ticketId})),html};
+    const report={date:plan.date,subject:plan.subject,inventory:plan.inventory,purchases:plan.purchases,tickets:plan.tickets.map((ticket,index)=>({...ticket,summary:results[index].summary,ticketId:results[index].ticketId})),html};
     attachReportEditor([report],{select:$('report-date'),preview:$('preview'),editor:$('email-editor'),copy:$('copy-email'),status:$('status')});
     $('status').textContent = 'All ticket statuses saved and verified. Email ready to copy; nothing was sent.';
   } catch (error) { $('status').textContent = `Stopped: ${error.message}`; $('result').textContent = JSON.stringify(results, null, 2); }
