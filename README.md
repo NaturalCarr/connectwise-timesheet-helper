@@ -39,3 +39,7 @@ See [HISTORY.md](HISTORY.md). Historical tags v0.8.25 through v0.9.6 preserve av
 ## Asset provenance
 
 The bundled Carlton animation preserves the vector frames supplied with the project; see extension/assets/carlton-source.md. No additional third-party asset license is asserted by this export.
+
+## EoD inventory and purchases
+
+The report editor includes inventory counts and recommended purchase links. Add item names, quantities and links beside the EoD copy controls; additions save locally by report date. The copied email includes a bordered inventory table and clickable Item name × quantity purchase labels. These fields do not update ConnectWise or send email.
