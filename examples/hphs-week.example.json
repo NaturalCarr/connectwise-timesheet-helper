@@ -14,10 +14,15 @@
         "room": "Example room 204",
         "asset": "Example classroom projector",
         "people": [
-          { "name": "Example Staff Member", "role": "reportedBy" }
+          {
+            "name": "Example Staff Member",
+            "role": "reportedBy"
+          }
         ]
       },
-      "sourceRecordIds": ["voice-note-example-001"],
+      "sourceRecordIds": [
+        "voice-note-example-001"
+      ],
       "timeEntries": [
         {
           "recordId": "voice-2026-10-06-hphs-time-1",
@@ -40,7 +45,9 @@
           "agreement": "Example Service Agreement",
           "ticketStatus": "Working Issue Now",
           "addNoteTo": "Discussion",
-          "sourceRecordIds": ["voice-note-example-001"]
+          "sourceRecordIds": [
+            "voice-note-example-001"
+          ]
         },
         {
           "recordId": "voice-2026-10-06-hphs-time-2",
@@ -62,7 +69,37 @@
           "agreement": "Example Service Agreement",
           "ticketStatus": "Working Issue Now",
           "addNoteTo": "Discussion",
-          "sourceRecordIds": ["voice-note-example-002"]
+          "sourceRecordIds": [
+            "voice-note-example-002"
+          ]
+        }
+      ]
+    }
+  ],
+  "endOfDays": [
+    {
+      "date": "2026-10-06",
+      "inventory": [
+        {
+          "item": "MacBooks",
+          "quantity": 2,
+          "model": "M1"
+        },
+        {
+          "item": "MacBooks",
+          "quantity": 1,
+          "model": "M4"
+        },
+        {
+          "item": "Chromebooks",
+          "quantity": 3
+        }
+      ],
+      "purchases": [
+        {
+          "item": "USB-C adapter",
+          "quantity": 2,
+          "url": "https://example.com/usb-c-adapter"
         }
       ]
     }
