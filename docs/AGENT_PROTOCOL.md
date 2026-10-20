@@ -50,3 +50,5 @@ Daily records accept endOfDay.inventory and endOfDay.purchases. Weekly records a
 ```
 
 Mac models render as amount x model, for example 2 x M1, 1 x M4. Inventory is report metadata: it creates no ticket or time. Never invent quantities or inventory work time. The report editor can override these details locally per date. Purchase rows use item, positive integer quantity and HTTP(S) url; the entire Item × quantity label is linked.
+
+EoD layout (0.9.10): inventory is rendered inside the ticket table. Each inventory row uses two merged cells spanning the four ticket columns. Recommended purchase links also remain within the same table. Clipboard and sample HTML use the shared renderer.
