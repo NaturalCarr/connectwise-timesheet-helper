@@ -1,3 +1,4 @@
+import { openPlannedEod } from './planned-eod.mjs';
 import { renderRunReview } from './run-review.mjs';
 import { reviewText } from './workflow.mjs';
 import { exampleEodHtml, exampleEodFile } from './eod-example.mjs';
@@ -11,6 +12,8 @@ const runButton = document.getElementById('run-week');
 const status = document.getElementById('week-status');
 const preview = document.getElementById('week-preview');
 let validatedPlan = null;
+const eodButton=document.getElementById('preview-json-eod');
+eodButton.onclick=async()=>{try{if(validatedPlan)await openPlannedEod(validatedPlan);}catch(error){status.textContent=error.message;}};
 
 for (const [id, path, name] of [
   ['download-weekly-sample', 'WEEKLY-EXAMPLE.json', 'ConnectWise-weekly-sample.json'],
@@ -31,6 +34,7 @@ for (const [id, path, name] of [
 
 function clearValidation() {
   validatedPlan = null;
+  eodButton.disabled=true;
   runButton.disabled = true;
   status.textContent = '';
   delete status.dataset.state;
@@ -66,9 +70,10 @@ validateButton.addEventListener('click', async () => {
     const plan = (record.date ? planDay : planWeek)(record, await withTicketOwner(await response.json()));
     if (plan.exampleOnly) throw new Error('Example-only JSON cannot be run in ConnectWise.');
     validatedPlan = plan;
+    eodButton.disabled=false;
     renderRunReview(preview,plan);
     const reportCount = new Set(plan.tickets.flatMap((item) => item.timeEntries.map((entry) => entry.date))).size;
-    status.textContent = `Validated ${plan.tickets.length} ticket(s) and ${plan.totalEntries} time entry/entries for ${plan.mode === 'daily' ? plan.date : `${plan.weekStart}–${plan.weekEnd}`}. After verified saves, ${reportCount} EoD email update(s) will be generated, one per date. Nothing has been saved or emailed.`;
+    status.textContent = `Validated ${plan.tickets.length} ticket(s) and ${plan.totalEntries} time entry/entries for ${plan.mode === 'daily' ? plan.date : `${plan.weekStart}–${plan.weekEnd}`}. EoD previews for ${reportCount} date(s) are ready now. Use Preview / copy EoD from JSON before running. Saved results are verified separately. Nothing has been saved or emailed.`;
     runButton.disabled = false;
     status.dataset.state = 'valid';
     status.textContent = `✓ JSON valid — ${status.textContent}`;

@@ -1,3 +1,4 @@
+import { openPlannedEod } from './planned-eod.mjs';
 import { createRunMascot } from './run-mascot.mjs';
 import { renderRunReview } from './run-review.mjs';
 import { applyTicketOwner } from './owner-settings.mjs';
@@ -37,7 +38,8 @@ async function send(action,tabId,fields={}) {
     run.diagnostics=(run.diagnostics||[]).concat(info).slice(-100);await saveRun(run);throw error;}
   return result;
 }
-function showReview(plan){renderRunReview($('review'),plan);}
+$('preview-json-eod').onclick=async()=>{try{if(run?.plan)await openPlannedEod(run.plan);}catch(error){$('copy-run-status').textContent=error.message;}};
+function showReview(plan){$('preview-json-eod').disabled=false;renderRunReview($('review'),plan);}
 async function showReports(){
  const reports=combinedReports(await allRuns());
  if(!reports.length){$('daily-report').hidden=true;return;}

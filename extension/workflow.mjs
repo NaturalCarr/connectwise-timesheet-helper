@@ -1,3 +1,4 @@
+import { renderPlannedEod } from './eod-model.mjs';
 import { isPayrollWrap, workReportNotes } from './payroll-report.mjs';
 import { isDitlTitle, renderEod } from './eod-model.mjs';
 export const verifiedEntry = entry => ['saved_verified','existing_verified'].includes(entry?.status);
@@ -73,7 +74,7 @@ export function combinedReports(runs) {
     return {...record,html:renderReport(record)};
   });
 }
-export function renderReport(record) {return renderEod(record,record.tickets.map(row=>({...row,verified:true})));}
+export function renderReport(record) {if(record.verification==='planned')return renderPlannedEod(record);return renderEod(record,record.tickets.map(row=>({...row,verified:true})));}
 export async function allRuns() { const data=await chrome.storage.local.get(null);return Object.entries(data).filter(([key])=>key.startsWith('runHistory:')).map(([,value])=>value).sort((a,b)=>b.updatedAt.localeCompare(a.updatedAt)); }
 export async function saveRun(run) {run.updatedAt=new Date().toISOString();await chrome.storage.local.set({[`runHistory:${run.id}`]:run});}
 export const defaultPresets=[{id:'huddle',name:'Morning huddle',workType:'Onsite Support',workRole:'Onsite Engineer',notes:'Attended the morning huddle.',billable:'B'},{id:'ops',name:'Ops check-in',workType:'Onsite Support',workRole:'Onsite Engineer',notes:'Checked in with the Ops team.',billable:'AUTO'},{id:'lunch',name:'Lunch',workType:'Payroll Wrap',workRole:'Onsite Engineer',notes:'Lunch break.',billable:'AUTO'}];
