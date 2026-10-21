@@ -1,9 +1,7 @@
-export const isPayrollWrap = entry => /^\$?payroll wrap$/i.test(String(entry.workType || '').trim()) && !/\blunch\b/i.test(String(entry.notes || ''));
-export function reportPayroll(plan, execution, date) {
- const rows=[];
- for(const [i,result] of (execution.results || []).entries()) for(const [j,saved] of (result.entries || []).entries()) {
-  const entry=plan.tickets[i]?.timeEntries[j];
-  if(entry?.date===date && isPayrollWrap(entry) && ['saved_verified','existing_verified'].includes(saved.status))rows.push({ticketId:result.ticketId,date,start:entry.start,end:entry.end,notes:entry.notes});
- }
- return rows;
+export const isPayrollWrap = entry => /^\$?payroll wrap$/i.test(String(entry.workType || '').trim());
+export const cleanEodNotes = text => String(text || '').split(/\r?\n/).filter(line => !/payroll\s+wrap|^\s*(?:[-*•]\s*)?(?:wrap|lunch)(?:[.!:\s]|$)/i.test(line)).join('\n').trim();
+export function workReportNotes(item, preferred) {
+ const excluded=new Set(item.timeEntries.filter(isPayrollWrap).flatMap(e=>String(e.notes || '').split(/\r?\n/)).map(s=>s.trim()).filter(Boolean));
+ const text=preferred || item.timeEntries.filter(e=>!isPayrollWrap(e)).map(e=>e.notes).join('\n');
+ return cleanEodNotes(String(text).split(/\r?\n/).filter(line=>!excluded.has(line.trim())).join('\n'));
 }

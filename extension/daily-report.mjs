@@ -1,4 +1,4 @@
-import { reportPayroll } from './payroll-report.mjs';
+import { isPayrollWrap, workReportNotes } from './payroll-report.mjs';
 import { renderEod, isDitlTitle } from './eod-model.mjs';
 export function dailyReport(plan, execution) {
   if (plan.mode !== 'daily') return null;
@@ -7,12 +7,12 @@ export function dailyReport(plan, execution) {
     const item = plan.tickets[index];
     if (result.ticketStatus !== item.completedStatus || result.entries?.length !== item.timeEntries.length
       || result.entries.some((entry) => !['saved_verified', 'existing_verified'].includes(entry.status))) throw new Error('Daily report contains unverified time or status.');
-    return { ticketId: result.ticketId, ...plan.endOfDay.tickets[index] };
+    return { ticketId: result.ticketId, ...plan.endOfDay.tickets[index], notes:workReportNotes(item,plan.endOfDay.tickets[index].notes), omitFromEod:item.timeEntries.every(isPayrollWrap) };
   });
-  const record = { date: plan.date, subject: plan.endOfDay.subject, payrollWrap:reportPayroll(plan,execution,plan.date), inventory:plan.endOfDay.inventory, purchases:plan.endOfDay.purchases, tickets };
+  const record = { date: plan.date, subject: plan.endOfDay.subject, inventory:plan.endOfDay.inventory, purchases:plan.endOfDay.purchases, tickets };
   const html = renderEod(record, execution.results.map((result) => ({ ticketId: result.ticketId,
     summary: result.summary, status: result.ticketStatus, verified: true })));
-  return { ...record, tickets: record.tickets.filter((ticket, index) => !isDitlTitle(execution.results[index].summary)), html };
+  return { ...record, tickets: record.tickets.filter((ticket, index) => !isDitlTitle(execution.results[index].summary) && !ticket.omitFromEod), html };
 }
 
 export function reportsByDay(plan, execution) {
@@ -25,7 +25,8 @@ export function reportsByDay(plan, execution) {
       || result.entries.some((entry) => !['saved_verified', 'existing_verified'].includes(entry.status))) throw new Error('Report contains unverified time or status.');
     const dates = [...new Set(item.timeEntries.map((entry) => entry.date))];
     for (const date of dates) {
-      const entries = item.timeEntries.filter((entry) => entry.date === date);
+      const entries = item.timeEntries.filter((entry) => entry.date === date && !isPayrollWrap(entry));
+      if(!entries.length)continue;
       if (!days.has(date)) days.set(date, []);
       days.get(date).push({
         ticket: { ticketId: result.ticketId, status: result.ticketStatus,
@@ -37,7 +38,7 @@ export function reportsByDay(plan, execution) {
   });
   return [...days].sort(([a], [b]) => a.localeCompare(b)).map(([date, rows]) => {
     const details=plan.endOfDays?.find(day=>day.date===date);
-    const record = { date, payrollWrap:reportPayroll(plan,execution,date), subject: details?.subject || `End of day update - ${date}`, inventory:details?.inventory,purchases:details?.purchases, tickets: rows.map((row) => row.ticket) };
+    const record = { date, subject: details?.subject || `End of day update - ${date}`, inventory:details?.inventory,purchases:details?.purchases, tickets: rows.map((row) => row.ticket) };
     return { ...record, tickets: record.tickets.filter((ticket, index) => !isDitlTitle(rows[index].verified.summary)), html: renderEod(record, rows.map((row) => row.verified)) };
   });
 }

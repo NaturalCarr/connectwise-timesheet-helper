@@ -10,8 +10,8 @@ export function attachReportEditor(reports, {select,preview,editor,copy,status,o
   let drawVersion=0;
   const draw=()=>{const report=current();preview.innerHTML=report.html;editor.replaceChildren();
     const version=++drawVersion;
-    const saved=chrome.storage.local.get(['eodExtras:'+report.date,'helperSettings:includePayrollWrap']);
-    saved.then(values=>{if(version!==drawVersion)return;Object.assign(report,values['eodExtras:'+report.date]||{});report.includePayrollWrap=values['helperSettings:includePayrollWrap']!==false;try{report.html=renderReport(report);preview.innerHTML=report.html;}catch(error){status.textContent=error.message;}mountExtras(report,extras,async error=>{
+    const saved=chrome.storage.local.get('eodExtras:'+report.date);
+    saved.then(values=>{if(version!==drawVersion)return;Object.assign(report,values['eodExtras:'+report.date]||{});try{report.html=renderReport(report);preview.innerHTML=report.html;}catch(error){status.textContent=error.message;}mountExtras(report,extras,async error=>{
       try{await chrome.storage.local.set({['eodExtras:'+report.date]:{inventory:report.inventory,purchases:report.purchases}});if(error)throw error;report.html=renderReport(report);preview.innerHTML=report.html;status.textContent='EoD additions saved for '+report.date+'.';}catch(error){status.textContent=error.message;}
     });}).catch(error=>status.textContent=error.message);
     for(const row of report.tickets){const box=document.createElement('fieldset');const legend=document.createElement('legend');legend.textContent=row.summary;box.append(legend);

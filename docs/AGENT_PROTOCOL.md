@@ -54,3 +54,5 @@ Mac models render as amount x model, for example 2 x M1, 1 x M4. Inventory is re
 EoD layout (0.9.10): inventory is rendered inside the ticket table. Each inventory row uses two merged cells spanning the four ticket columns. Recommended purchase links also remain within the same table. Clipboard and sample HTML use the shared renderer.
 
 Version 0.9.11: Include Payroll Wrap in EoD is checked by default and remembered independently of drafts. Report previews and rich clipboard output include only verified Payroll Wrap time, including DITL intervals, deduplicated across runs. Lunch is excluded. Unchecking hides these rows without modifying saved time or ConnectWise.
+
+Version 0.9.12 supersedes 0.9.11: Payroll Wrap is always excluded from EoD reports. There is no inclusion checkbox. Legacy inclusion preferences and payloads are ignored. Daily, weekly and historical reports omit Payroll Wrap intervals on all tickets, including lunch, and preserve actual work on mixed tickets. Timesheet records remain unchanged.

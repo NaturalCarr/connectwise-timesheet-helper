@@ -1,12 +1,17 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { combinedReports,renderReport } from '../extension/workflow.mjs';
-const entry=(start,end,notes='Wrap.')=>({date:'2026-10-21',start,end,notes,workType:'Payroll Wrap'});
-test('verified DITL wrap is included by default, can be hidden, and excludes lunch and pending saves',()=>{
- const plan={mode:'daily',date:'2026-10-21',tickets:[{ticket:{summary:'School - DITL'},timeEntries:[entry('09:00','09:20'),entry('13:00','13:30','Lunch.'),entry('15:00','15:10')]}]};
- const result={results:[{ticketId:123,summary:'School - DITL',status:'stopped',entries:[{status:'saved_verified'},{status:'saved_verified'},{status:'pending'}]}]};
- const report=combinedReports([{plan,result,updatedAt:'2026-10-21T20:00:00Z'},{plan,result,updatedAt:'2026-10-21T21:00:00Z'}])[0];
- assert.equal(report.tickets.length,0);assert.equal(report.payrollWrap.length,1);assert.match(report.html,/Payroll Wrap/);assert.match(report.html,/09:00–09:20/);assert.doesNotMatch(report.html,/Lunch|15:00/);
- assert.doesNotMatch(renderReport({...report,includePayrollWrap:false}),/Payroll Wrap|09:00/);
- assert.equal(report.payrollWrap.length,1);
+import { reportsByDay } from '../extension/daily-report.mjs';
+const time=(start,end,notes,workType='Payroll Wrap')=>({date:'2026-10-21',start,end,notes,workType});
+function fixture(mode='daily'){
+ const timeEntries=[time('09:00','09:20','Private administrative interval'),time('13:00','13:30','Lunch.'),time('15:00','15:30','Configured printer.','Onsite Support')];
+ const plan={mode,date:'2026-10-21',endOfDay:{subject:'Update',tickets:[{notes:'Private administrative interval\nLunch.\nConfigured printer.',status:'Completed'}]},tickets:[{ticket:{summary:'Printing'},completedStatus:'Completed',timeEntries}]};
+ const result={ok:true,results:[{ticketId:123,summary:'Printing',ticketStatus:'Completed',status:'completed_verified',entries:timeEntries.map(e=>({...e,status:'saved_verified'}))}]};return {plan,result};
+}
+test('daily, weekly and historical reports exclude wrap regardless of ticket and keep work notes',()=>{
+ for(const mode of ['daily','weekly']){const {plan,result}=fixture(mode);const reports=reportsByDay(plan,result);assert.match(reports[0].html,/Configured printer/);assert.doesNotMatch(reports[0].html,/Private administrative|Lunch|Payroll Wrap/);const combined=combinedReports([{plan,result,updatedAt:'2026-10-21T20:00:00Z'}]);assert.match(combined[0].html,/Configured printer/);assert.doesNotMatch(combined[0].html,/Private administrative|Lunch|Payroll Wrap/);assert.equal(plan.tickets[0].timeEntries.length,3);}
+});
+test('legacy include setting and payroll payload never render, including DITL-only history',()=>{
+ const {plan,result}=fixture();plan.tickets[0].ticket.summary='School - DITL';result.results[0].summary='School - DITL';assert.deepEqual(combinedReports([{plan,result,updatedAt:'2026-10-21T20:00:00Z'}]),[]);
+ const html=renderReport({date:'2026-10-21',subject:'Update',includePayrollWrap:true,payrollWrap:[{start:'09:00',end:'09:20',notes:'Legacy wrap'}],tickets:[{ticketId:123,summary:'Printing',status:'Completed',notes:'Configured printer.\nPayroll Wrap.\nWrap.',nextStep:''}]});assert.match(html,/Configured printer/);assert.doesNotMatch(html,/Legacy wrap|Payroll Wrap|09:00|<li>Wrap/);
 });

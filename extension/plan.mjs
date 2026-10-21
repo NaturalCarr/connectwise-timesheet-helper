@@ -1,3 +1,4 @@
+import { workReportNotes } from './payroll-report.mjs';
 import { normalizeEodExtras } from './eod-extras.mjs';
 const clean = (value) => typeof value === 'string' ? value.trim().replace(/\s+/g, ' ') : '';
 const cleanBlock = (value) => typeof value === 'string' ? value.trim() : '';
@@ -323,7 +324,7 @@ export function planDay(input, settings) {
   const subject = clean(input.endOfDay?.subject) || `End of day update - ${date}`;
   return { ...plan, mode: 'daily', schemaVersion: '1.2', date, endOfDay: { subject, ...normalizeEodExtras(input.endOfDay),
     tickets: input.items.map((item, index) => ({ status: plan.tickets[index].completedStatus,
-      notes: cleanBlock(item.endOfDayNotes) || item.timeEntries.map((entry) => cleanBlock(entry.notes)).join('\n'),
+      notes: workReportNotes(item,cleanBlock(item.endOfDayNotes)),
       nextStep: cleanBlock(item.nextStep) || item.timeEntries.map((entry) => cleanBlock(entry.followUp)).filter(Boolean).join('\n') })) } };
 }
 
