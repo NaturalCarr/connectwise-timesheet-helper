@@ -4,6 +4,11 @@ export function mountExtras(report, host, changed) {
  const heading = document.createElement('h3'); heading.textContent = 'Finish your EoD';
  const intro = document.createElement('p'); intro.textContent = 'Add stock counts and purchase recommendations below the ticket table. Saved locally for this date; no ConnectWise changes.';
  host.append(heading,intro);
+ const toggleLabel=document.createElement('label');toggleLabel.className='payroll-toggle';
+ const toggle=document.createElement('input');toggle.type='checkbox';toggle.checked=report.includePayrollWrap!==false;
+ toggleLabel.append(toggle,document.createTextNode(' Include Payroll Wrap in EoD'));host.append(toggleLabel);
+ toggle.onchange=async()=>{report.includePayrollWrap=toggle.checked;try{await chrome.storage.local.set({'helperSettings:includePayrollWrap':toggle.checked});changed();}catch(error){changed(error);}};
+ const hint=document.createElement('p');hint.textContent='Includes verified Payroll Wrap intervals, including those on DITL tickets. Lunch stays excluded. This changes only the email report.';host.append(hint);
  const refresh = () => { try { renderEodExtras(report); changed(); } catch(error) { changed(error); } };
  const section = (key,title,description,fields) => {
   report[key] ||= [];

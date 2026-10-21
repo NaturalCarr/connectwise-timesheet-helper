@@ -25,6 +25,10 @@ export function renderEodExtras(record, integrated = false) {
  const purchases = (record.purchases || []).filter(row => row.item || row.quantity || row.url);
  let html = inventory.length ? '<h3>Inventory</h3>'+table('<tr><th style="'+cell+'">Item</th><th style="'+cell+'">Count / details</th></tr>'+inventory.map(row => '<tr><td style="'+cell+'">'+escape(row.item)+'</td><td style="'+cell+'">'+escape(formatInventoryCount(row.count))+'</td></tr>').join('')) : '';
  if(integrated) html = inventory.length ? '<tr><th colspan="4" style="'+cell+';background-color:#eee">Inventory</th></tr>'+inventory.map(row => '<tr><th colspan="2" style="'+cell+'">'+escape(row.item)+'</th><td colspan="2" style="'+cell+'">'+escape(formatInventoryCount(row.count))+'</td></tr>').join('') : '';
+ if(record.includePayrollWrap !== false && record.payrollWrap?.length) {
+  const rows=record.payrollWrap.map(row=>'<tr><td colspan="2" style="'+cell+'">'+escape(row.start)+'–'+escape(row.end)+'</td><td colspan="2" style="'+cell+'">'+escape(row.notes || 'Wrap.')+'</td></tr>').join('');
+  html += integrated ? '<tr><th colspan="4" style="'+cell+';background-color:#eee">Payroll Wrap</th></tr>'+rows : '<h3>Payroll Wrap</h3>'+table(rows);
+ }
  if(purchases.length) html += (integrated ? '<tr><td colspan="4" style="'+cell+'">' : '') + '<h3>Recommended purchases</h3><ul>'+purchases.map(row => {
   let url; try { url = new URL(row.url); } catch { throw new Error('Enter a valid purchase link.'); }
   if(!['https:','http:'].includes(url.protocol)) throw new Error('Purchase links must use https:// or http://.');

@@ -1,3 +1,4 @@
+import { reportPayroll } from './payroll-report.mjs';
 import { isDitlTitle, renderEod } from './eod-model.mjs';
 export const verifiedEntry = entry => ['saved_verified','existing_verified'].includes(entry?.status);
 const minutes = value => { const [h,m]=value.split(':').map(Number); return h*60+m; };
@@ -35,6 +36,11 @@ export function resumePlan(plan, previous) {
 export function combinedReports(runs) {
   const days=new Map();
   const reportDetails=new Map();
+  const payroll=new Map();
+  for(const run of [...runs].sort((a,b)=>a.updatedAt.localeCompare(b.updatedAt))){
+    const dates=new Set((run.plan.tickets || []).flatMap(item=>item.timeEntries.map(e=>e.date)));
+    for(const date of dates)for(const row of reportPayroll(run.plan,run.result || {},date)){const rows=payroll.get(date)||new Map();rows.set([row.ticketId,row.start,row.end,row.notes].join('|'),row);payroll.set(date,rows);}
+  }
   for(const run of [...runs].sort((a,b)=>a.updatedAt.localeCompare(b.updatedAt))){
     const details=run.plan.mode==='daily'?[{date:run.plan.date,...run.plan.endOfDay}]:(run.plan.endOfDays || []);
     for(const day of details){const prior=reportDetails.get(day.date)||{};reportDetails.set(day.date,{...prior,...(day.inventory?.length?{inventory:day.inventory}:{}),...(day.purchases?.length?{purchases:day.purchases}:{})});}
@@ -58,6 +64,7 @@ export function combinedReports(runs) {
       }
     }
   }
+  for(const date of payroll.keys())if(!days.has(date))days.set(date,new Map());
   return [...days].sort(([a],[b])=>a.localeCompare(b)).map(([date,entries])=>{
     const tickets=new Map();
     for(const row of entries.values()) {
@@ -68,7 +75,7 @@ export function combinedReports(runs) {
       tickets.set(row.ticketId,ticket);
     }
     const rows=[...tickets.values()].map(row=>({...row,notes:row.notes.join('\n'),nextStep:row.nextStep.join('\n')}));
-    const record={date,subject:`End of day update - ${date}`,tickets:rows,...reportDetails.get(date)};
+    const record={date,subject:`End of day update - ${date}`,tickets:rows,payrollWrap:[...(payroll.get(date)?.values() || [])],...reportDetails.get(date)};
     return {...record,html:renderReport(record)};
   });
 }

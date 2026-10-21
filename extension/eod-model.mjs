@@ -9,7 +9,7 @@ const escape = (value) => String(value).replace(/[&<>"']/g, (char) =>
 
 export function validateEod(record) {
   if (!record || !/^\d{4}-\d{2}-\d{2}$/.test(record.date || '') || !record.subject?.trim()
-    || !Array.isArray(record.tickets) || !record.tickets.length) throw new Error('Date, subject, and at least one ticket are required.');
+    || !Array.isArray(record.tickets) || (!record.tickets.length && !record.payrollWrap?.length)) throw new Error('Date, subject, and at least one ticket are required.');
   const seen = new Set();
   const tickets = record.tickets.map((ticket) => {
     const ticketId = ticket.ticketId ? Number(ticket.ticketId) : null;
@@ -25,7 +25,7 @@ export function validateEod(record) {
     return { ticketId, titleContains, status: ticket.status, notes: String(ticket.notes).trim(),
       nextStep: String(ticket.nextStep || '').trim() };
   });
-  return { date: record.date, subject: record.subject.trim(), ...normalizeEodExtras(record), tickets };
+  return { date: record.date, subject: record.subject.trim(), ...normalizeEodExtras(record), payrollWrap: record.payrollWrap || [], includePayrollWrap:record.includePayrollWrap !== false, tickets };
 }
 
 export function renderEod(record, verified) {
