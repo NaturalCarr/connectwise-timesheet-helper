@@ -29,13 +29,13 @@ test('verified evidence is retained during interrupted rechecking',()=>{
  const prior={results:[{ticketId:123,status:'completed_verified',ticketStatus:'Completed',entries:[{...entry,status:'saved_verified'}]}]};
  const evidence=mergeEvidence(prior,{results:[{ticketId:123,status:'pending',entries:[]}]});assert.equal(evidence.results[0].status,'completed_verified');assert.equal(evidence.results[0].entries.length,1);
 });
-test('combined EoD deduplicates retries, includes earlier verified tickets and excludes pending and DITL',()=>{
+test('combined EoD deduplicates retries, includes earlier verified tickets and includes DITL and excludes pending',()=>{
  const row={ticketId:123,summary:'T-1 - Work',status:'completed_verified',ticketStatus:'Completed',entries:[{...entry,status:'saved_verified'}]};
  const run={updatedAt:'2026-10-16T10:00:00Z',plan,result:{results:[row]}};
  const later={updatedAt:'2026-10-16T11:00:00Z',plan,result:{results:[{...row,ticketId:124,summary:'T-2 - Other work'}]}};
  const ditl={...later,result:{results:[{...row,ticketId:125,summary:'School - DITL'}]}};
  const pending={...later,result:{results:[{...row,ticketId:126,status:'stopped'}]}};
- const report=combinedReports([run,run,later,ditl,pending])[0];assert.equal(report.tickets.length,2);assert.match(report.html,/T-1/);assert.match(report.html,/T-2/);assert.doesNotMatch(report.html,/DITL/);
+ const report=combinedReports([run,run,later,ditl,pending])[0];assert.equal(report.tickets.length,3);assert.match(report.html,/T-1/);assert.match(report.html,/T-2/);assert.match(report.html,/DITL/);
 });
 test('review separates AUTO billing, lunch, gaps, overlaps and target shortfall',()=>{
  const review=reviewPlan({tickets:[{...item,timeEntries:[entry,{...entry,start:'09:00',end:'09:30',notes:'Lunch break.',billable:'NB'}]}]});const day=review.days[0];assert.equal(day.totalMinutes,45);assert.equal(day.unknownBillingMinutes,15);assert.equal(day.nonbillableMinutes,30);assert.equal(day.lunchMinutes,30);assert.deepEqual(day.gaps,[{start:495,end:540}]);assert.equal(day.shortfallMinutes,465);

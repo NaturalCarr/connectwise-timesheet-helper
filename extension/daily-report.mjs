@@ -1,5 +1,5 @@
 import { isPayrollWrap, workReportNotes } from './payroll-report.mjs';
-import { renderEod, isDitlTitle } from './eod-model.mjs';
+import { renderEod } from './eod-model.mjs';
 export function dailyReport(plan, execution) {
   if (plan.mode !== 'daily') return null;
   if (!execution.ok || execution.results?.length !== plan.tickets.length) throw new Error('Daily report requires every ticket to finish successfully.');
@@ -12,7 +12,7 @@ export function dailyReport(plan, execution) {
   const record = { date: plan.date, subject: plan.endOfDay.subject, inventory:plan.endOfDay.inventory, purchases:plan.endOfDay.purchases, tickets };
   const html = renderEod(record, execution.results.map((result) => ({ ticketId: result.ticketId,
     summary: result.summary, status: result.ticketStatus, verified: true })));
-  return { ...record, tickets: record.tickets.filter((ticket, index) => !isDitlTitle(execution.results[index].summary) && !ticket.omitFromEod), html };
+  return { ...record, tickets: record.tickets.filter((ticket, index) => !ticket.omitFromEod), html };
 }
 
 export function reportsByDay(plan, execution) {
@@ -39,7 +39,7 @@ export function reportsByDay(plan, execution) {
   return [...days].sort(([a], [b]) => a.localeCompare(b)).map(([date, rows]) => {
     const details=plan.endOfDays?.find(day=>day.date===date);
     const record = { date, subject: details?.subject || `End of day update - ${date}`, inventory:details?.inventory,purchases:details?.purchases, tickets: rows.map((row) => row.ticket) };
-    return { ...record, tickets: record.tickets.filter((ticket, index) => !isDitlTitle(rows[index].verified.summary)), html: renderEod(record, rows.map((row) => row.verified)) };
+    return { ...record, tickets: record.tickets, html: renderEod(record, rows.map((row) => row.verified)) };
   });
 }
 

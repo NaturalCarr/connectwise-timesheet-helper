@@ -14,7 +14,7 @@ test('JSON-only EoD works without saved results and keeps planned status distinc
   assert.ok(reports.some(r=>r.html.includes('2 x M1, 1 x M4')));
  }
 });
-test('planned EoD excludes DITL and wrap including mixed-ticket notes',()=>{
+test('planned EoD includes DITL work and excludes wrap from mixed tickets',()=>{
  const plan={mode:'daily',date:'2026-10-21',endOfDay:{subject:'Test',tickets:[{notes:'Wrap.\nFixed printing.'},{notes:'Huddle'}]},tickets:[{ticket:{summary:'Printing'},completedStatus:'Completed',timeEntries:[{date:'2026-10-21',workType:'Payroll Wrap',notes:'Wrap.'},{date:'2026-10-21',workType:'Onsite Support',notes:'Fixed printing.'}]},{ticket:{summary:'School - DITL'},completedStatus:'Completed',timeEntries:[{date:'2026-10-21',workType:'Onsite Support',notes:'Huddle'}]}]};
- const r=plannedReports(plan)[0];assert.equal(r.tickets.length,1);assert.match(r.html,/Fixed printing/);assert.doesNotMatch(r.html,/DITL|Huddle|Wrap/);
+ const r=plannedReports(plan)[0];assert.equal(r.tickets.length,2);assert.match(r.html,/Fixed printing/);assert.match(r.html,/DITL/);assert.match(r.html,/Huddle/);assert.doesNotMatch(r.html,/Wrap/);
 });

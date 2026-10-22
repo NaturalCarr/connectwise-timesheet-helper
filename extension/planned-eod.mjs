@@ -1,5 +1,5 @@
 import { isPayrollWrap, workReportNotes, cleanEodNotes } from './payroll-report.mjs';
-import { isDitlTitle, renderPlannedEod } from './eod-model.mjs';
+import { renderPlannedEod } from './eod-model.mjs';
 export function plannedReports(plan) {
  const dates=[...new Set(plan.tickets.flatMap(item=>item.timeEntries.map(entry=>entry.date)))].sort();
  return dates.map(date=>{
@@ -7,7 +7,7 @@ export function plannedReports(plan) {
   const tickets=[];
   plan.tickets.forEach((item,index)=>{
    const entries=item.timeEntries.filter(entry=>entry.date===date && !isPayrollWrap(entry));
-   if(!entries.length || isDitlTitle(item.ticket.summary) || /payroll\s+wrap/i.test(item.ticket.summary))return;
+   if(!entries.length || /payroll\s+wrap/i.test(item.ticket.summary))return;
    const daily=plan.mode==='daily'?plan.endOfDay?.tickets[index]:null;
    const notes=workReportNotes({...item,timeEntries:item.timeEntries},daily?.notes || entries.map(e=>e.notes).join('\n'));
    if(!notes)return;

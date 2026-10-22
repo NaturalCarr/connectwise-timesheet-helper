@@ -1,6 +1,6 @@
 import { renderPlannedEod } from './eod-model.mjs';
 import { isPayrollWrap, workReportNotes } from './payroll-report.mjs';
-import { isDitlTitle, renderEod } from './eod-model.mjs';
+import { renderEod } from './eod-model.mjs';
 export const verifiedEntry = entry => ['saved_verified','existing_verified'].includes(entry?.status);
 const minutes = value => { const [h,m]=value.split(':').map(Number); return h*60+m; };
 export function reviewPlan(plan, targetHours=8.5) {
@@ -48,7 +48,7 @@ export function combinedReports(runs) {
     for(let i=0;i<(run.result?.results||[]).length;i++) {
       const result=run.result.results[i],item=run.plan.tickets[i];
       const final=finalStatuses.get(result.ticketId);
-      if(!item || !result.ticketId || !final || final.at<run.updatedAt || isDitlTitle(result.summary||item.ticket.summary)) continue;
+      if(!item || !result.ticketId || !final || final.at<run.updatedAt) continue;
       for(let j=0;j<(result.entries||[]).length;j++) {
         const saved=result.entries[j],entry=item.timeEntries[j];
         if(!entry || !verifiedEntry(saved) || isPayrollWrap(entry)) continue;

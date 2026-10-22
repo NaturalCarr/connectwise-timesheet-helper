@@ -149,7 +149,7 @@ For multiple matches, unverifiable status, missing owner selection, or a page/pe
 
 
 ### Saved runs, presets and EoD (0.9.0)
-Use the helper's history/Resume for a stopped run rather than regenerating already saved entries. Resume pins observed ConnectWise IDs and duplicate-checks exact saved records. The combined EoD uses locally retained verified runs; do not submit duplicate time to populate a report. AUTO billing is unknown until ConnectWise readback confirms it. Morning huddle is explicitly billable; its built-in preset uses Onsite Support with billable B. Presets never supply dates or times. Email-only edits affect the copied report, not ticket records. DITL tickets remain excluded from EoD.
+Use the helper's history/Resume for a stopped run rather than regenerating already saved entries. Resume pins observed ConnectWise IDs and duplicate-checks exact saved records. The combined EoD uses locally retained verified runs; do not submit duplicate time to populate a report. AUTO billing is unknown until ConnectWise readback confirms it. Morning huddle is explicitly billable; its built-in preset uses Onsite Support with billable B. Presets never supply dates or times. Email-only edits affect the copied report, not ticket records. DITL work is included in EoD; Payroll Wrap and lunch remain excluded.
 
 Use concise professional wording for ticket titles, descriptions, time-entry notes and EoD notes. Preserve the user's actual work, outcomes, times and pending follow-ups; do not add unsupported verification or claim a planned email was sent.
 
@@ -189,3 +189,5 @@ Daily records accept endOfDay.inventory and endOfDay.purchases. Weekly records a
 ```
 
 Mac models render as amount x model, for example 2 x M1, 1 x M4. Inventory is report metadata: it creates no ticket or time. Never invent quantities or inventory work time. The report editor can override these details locally per date. Purchase rows use item, positive integer quantity and HTTP(S) url; the entire Item × quantity label is linked.
+
+Version 0.9.14 supersedes the earlier DITL exclusion: DITL work entries belong in the EoD. Only Payroll Wrap entries (including lunch) are excluded, regardless of ticket. This applies to JSON previews, saved daily/weekly reports and combined historical reports. Timesheet entries are unchanged.
