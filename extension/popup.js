@@ -6,7 +6,7 @@ document.getElementById('open-eod').addEventListener('click', () => {
 });
 chrome.runtime.sendMessage({ action: 'helperBuild' }).then((build) => {
   document.getElementById('helper-build').textContent = build?.version
-    ? `Loaded helper ${build.version} · Ticket Save: ${build.ticketSaveMethod}`
+    ? `Version ${build.version}`
     : 'Reload the extension: its background worker did not report a version.';
 }).catch(() => {
   document.getElementById('helper-build').textContent = 'Reload the extension to refresh its background worker.';
