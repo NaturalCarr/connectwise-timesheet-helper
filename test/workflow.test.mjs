@@ -29,7 +29,7 @@ test('verified evidence is retained during interrupted rechecking',()=>{
  const prior={results:[{ticketId:123,status:'completed_verified',ticketStatus:'Completed',entries:[{...entry,status:'saved_verified'}]}]};
  const evidence=mergeEvidence(prior,{results:[{ticketId:123,status:'pending',entries:[]}]});assert.equal(evidence.results[0].status,'completed_verified');assert.equal(evidence.results[0].entries.length,1);
 });
-test('combined EoD deduplicates retries, includes earlier verified tickets and includes DITL and excludes pending',()=>{
+test('combined Daily Report deduplicates retries, includes earlier verified tickets and includes DITL and excludes pending',()=>{
  const row={ticketId:123,summary:'T-1 - Work',status:'completed_verified',ticketStatus:'Completed',entries:[{...entry,status:'saved_verified'}]};
  const run={updatedAt:'2026-10-16T10:00:00Z',plan,result:{results:[row]}};
  const later={updatedAt:'2026-10-16T11:00:00Z',plan,result:{results:[{...row,ticketId:124,summary:'T-2 - Other work'}]}};
@@ -47,7 +47,7 @@ test('diagnostics redact URLs, email addresses and credential labels',()=>{
  const info=diagnostic('save',Error('user@example.com token=secret https://host/path?private=1'),123);assert.doesNotMatch(info.message,/secret|example.com|private=1/);assert.equal(info.ticketId,123);
 });
 
-test('EoD includes saved work from a stopped partial run after later status verification',()=>{
+test('Daily Report includes saved work from a stopped partial run after later status verification',()=>{
  const first={updatedAt:'2026-10-16T10:00:00Z',plan,result:{results:[{ticketId:123,summary:'T-1 - Work',status:'stopped',entries:[{...entry,status:'saved_verified'}]}]}};
  const laterEntry={...entry,start:'09:00',end:'09:15',notes:'Later work'};
  const second={updatedAt:'2026-10-16T11:00:00Z',plan:{tickets:[{...item,timeEntries:[laterEntry]}]},result:{results:[{ticketId:123,summary:'T-1 - Work',status:'completed_verified',ticketStatus:'Completed',entries:[{...laterEntry,status:'saved_verified'}]}]}};

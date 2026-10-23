@@ -1,6 +1,6 @@
 export const formatInventoryCount = value => String(value ?? '').replace(/(\d+)\s*(?:[x×]\s*)?(M\d+)\b/gi, (_,amount,model) => amount+' x '+model.toUpperCase());
 export function normalizeEodExtras(value = {}) {
- if(!value || typeof value !== 'object' || Array.isArray(value)) throw new Error('EoD details must be an object.');
+ if(!value || typeof value !== 'object' || Array.isArray(value)) throw new Error('Daily Report details must be an object.');
  if(value.inventory !== undefined && !Array.isArray(value.inventory)) throw new Error('Inventory must be an array.');
  if(value.purchases !== undefined && !Array.isArray(value.purchases)) throw new Error('Purchases must be an array.');
  const inventory = (value.inventory || []).map(row => {

@@ -73,7 +73,7 @@ validateButton.addEventListener('click', async () => {
     eodButton.disabled=false;
     renderRunReview(preview,plan);
     const reportCount = new Set(plan.tickets.flatMap((item) => item.timeEntries.map((entry) => entry.date))).size;
-    status.textContent = `Validated ${plan.tickets.length} ticket(s) and ${plan.totalEntries} time entry/entries for ${plan.mode === 'daily' ? plan.date : `${plan.weekStart}–${plan.weekEnd}`}. EoD previews for ${reportCount} date(s) are ready now. Use Preview / copy EoD from JSON before running. Saved results are verified separately. Nothing has been saved or emailed.`;
+    status.textContent = `Validated ${plan.tickets.length} ticket(s) and ${plan.totalEntries} time entry/entries for ${plan.mode === 'daily' ? plan.date : `${plan.weekStart}–${plan.weekEnd}`}. Daily Report previews for ${reportCount} date(s) are ready now. Use Preview / copy Daily Report from JSON before running. Saved results are verified separately. Nothing has been saved or emailed.`;
     runButton.disabled = false;
     status.dataset.state = 'valid';
     status.textContent = `✓ JSON valid — ${status.textContent}`;
@@ -99,7 +99,7 @@ runButton.addEventListener('click', async () => {
     }
     await chrome.storage.local.set({ [`weeklyJob:${jobId}`]: validatedPlan });
     await chrome.tabs.create({ url: chrome.runtime.getURL(`runner.html#${params}`), active: true });
-    status.textContent = 'Runner opened. It will save and verify tickets/time, then generate one EoD email update per date with preview, copy, and download controls. Nothing is emailed automatically.';
+    status.textContent = 'Runner opened. It will save and verify tickets/time, then generate one Daily Report email update per date with preview, copy, and download controls. Nothing is emailed automatically.';
   } catch (error) {
     status.textContent = `Could not open the runner: ${error.message}`;
     runButton.disabled = false;
@@ -109,9 +109,9 @@ runButton.addEventListener('click', async () => {
 
 document.getElementById('download-eod-sample').addEventListener('click', () => {
   const url = URL.createObjectURL(new Blob([exampleEodFile], { type: 'text/html' }));
-  const link = document.createElement('a'); link.href=url; link.download='ConnectWise-EoD-example.html'; link.click();
+  const link = document.createElement('a'); link.href=url; link.download='ConnectWise-Daily-Report-example.html'; link.click();
   setTimeout(()=>URL.revokeObjectURL(url),1000);
-  status.textContent='Example EoD downloaded as HTML. Open it to view the bordered email table.';
+  status.textContent='Example Daily Report downloaded as HTML. Open it to view the bordered email table.';
 });
 document.getElementById('copy-eod-sample').addEventListener('click', async () => {
   try {
@@ -120,8 +120,8 @@ document.getElementById('copy-eod-sample').addEventListener('click', async () =>
       'text/html':new Blob([exampleEodHtml],{type:'text/html'}),
       'text/plain':new Blob([[...preview.querySelectorAll('tr')].map(row=>[...row.children].map(cell=>cell.textContent).join('\t')).join('\n')],{type:'text/plain'})
     })]);
-    status.textContent='Example EoD copied with table formatting. Paste into your email composer.';
-  } catch(error) { status.textContent=`Example EoD copy failed: ${error.message}`; }
+    status.textContent='Example Daily Report copied with table formatting. Paste into your email composer.';
+  } catch(error) { status.textContent=`Example Daily Report copy failed: ${error.message}`; }
 });
 
 

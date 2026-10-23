@@ -127,7 +127,7 @@ async function execute(){
   }});
   run.evidence=mergeEvidence(run.evidence,result);run.result=result;if(!result.ok){const stopped=result.results.at(-1);run.diagnostics=(run.diagnostics||[]).concat(diagnostic(stopped.step,stopped.error,stopped.ticketId)).slice(-100);}run.state=result.ok?'completed':'stopped';await saveRun(run);if(!result.ok)mascot.set('stopped');
   output.textContent=JSON.stringify(result,null,2);$('copy-run-result').disabled=false;
-  status.textContent=result.ok?'Run saved and verified. Combined EoD reports are below.':'Run stopped. Review results and diagnostics; Resume rechecks saved records.';
+  status.textContent=result.ok?'Run saved and verified. Combined Daily Report reports are below.':'Run stopped. Review results and diagnostics; Resume rechecks saved records.';
   $('start-run').textContent=result.ok?'Recheck saved run':'Resume stopped run';
   if(result.ok)await chrome.storage.local.remove('popupDraft:week');
   await showReports();mascot.set(result.ok?'completed':'stopped');

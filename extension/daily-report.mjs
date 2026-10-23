@@ -38,7 +38,7 @@ export function reportsByDay(plan, execution) {
   });
   return [...days].sort(([a], [b]) => a.localeCompare(b)).map(([date, rows]) => {
     const details=plan.endOfDays?.find(day=>day.date===date);
-    const record = { date, subject: details?.subject || `End of day update - ${date}`, inventory:details?.inventory,purchases:details?.purchases, tickets: rows.map((row) => row.ticket) };
+    const record = { date, subject: details?.subject || `Daily Report - ${date}`, inventory:details?.inventory,purchases:details?.purchases, tickets: rows.map((row) => row.ticket) };
     return { ...record, tickets: record.tickets, html: renderEod(record, rows.map((row) => row.verified)) };
   });
 }

@@ -11,7 +11,7 @@ async function load(){
  }
  const total=reviewPlan({tickets:[{ticket:{summary:'Verified time'},timeEntries:[...entries.values()]}]});
  $('totals').textContent=total.days.map(d=>d.date+' — '+(d.totalMinutes/60).toFixed(2)+' h saved; '+(d.lunchMinutes/60).toFixed(2)+' h lunch\nBillable '+(d.billableMinutes/60).toFixed(2)+' h · Nonbillable '+(d.nonbillableMinutes/60).toFixed(2)+' h · Billing unconfirmed '+(d.unknownBillingMinutes/60).toFixed(2)+' h\nGaps within entered day: '+d.gaps.length+' · Overlaps: '+d.overlaps.length+' · Short of 8.5 h target: '+(d.shortfallMinutes/60).toFixed(2)+' h').join('\n\n')||'No verified time yet.';
- const reports=combinedReports(runs);if(!reports.length){$('status').textContent='No verified EoD rows yet.';$('copy').disabled=true;return;}
+ const reports=combinedReports(runs);if(!reports.length){$('status').textContent='No verified Daily Report rows yet.';$('copy').disabled=true;return;}
  const sources=new Map();for(const r of reports)for(const t of r.tickets)sources.set(r.date+'|'+t.ticketId,JSON.stringify([t.notes,t.nextStep]));
  for(const report of reports){const key='eodDraft:'+report.date;const overrides=(await chrome.storage.local.get(key))[key]||{};for(const row of report.tickets){const o=overrides[row.ticketId];if(o?.source===sources.get(report.date+'|'+row.ticketId)){row.notes=o.notes;row.nextStep=o.nextStep;}}report.html=renderReport(report);}
  $('copy').disabled=false;

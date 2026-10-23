@@ -70,7 +70,7 @@ export function combinedReports(runs) {
       tickets.set(row.ticketId,ticket);
     }
     const rows=[...tickets.values()].map(row=>({...row,notes:row.notes.join('\n'),nextStep:row.nextStep.join('\n')}));
-    const record={date,subject:`End of day update - ${date}`,tickets:rows,...reportDetails.get(date)};
+    const record={date,subject:`Daily Report - ${date}`,tickets:rows,...reportDetails.get(date)};
     return {...record,html:renderReport(record)};
   });
 }

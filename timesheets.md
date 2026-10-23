@@ -16,7 +16,7 @@ Use this guide to turn the user's account of a workday into JSON for ConnectWise
 
 Lunch is an additional time entry on one of that day's existing work tickets. Do not create a separate lunch ticket unless explicitly requested.
 
-Use workType Payroll Wrap, notes Lunch break., billable AUTO, and the actual lunch interval. It must not overlap any other entry, including other entries on that same ticket. Attaching it to a work ticket is a timekeeping convenience: do not describe lunch as work on that issue. Keep EoD work notes focused on the work, using endOfDayNotes when needed.
+Use workType Payroll Wrap, notes Lunch break., billable AUTO, and the actual lunch interval. It must not overlap any other entry, including other entries on that same ticket. Attaching it to a work ticket is a timekeeping convenience: do not describe lunch as work on that issue. Keep Daily Report work notes focused on the work, using endOfDayNotes when needed.
 
 ## Ticket references and creation
 
@@ -50,7 +50,7 @@ Item fields:
 - existingTicketId: optional integer
 - titleContains: optional literal title substring, without * or ? wildcards
 - finalStatus: selected supported status (the planner defaults to Completed if omitted, so specify it explicitly)
-- endOfDayNotes: optional user-supplied or fact-preserving work summary for the daily EoD
+- endOfDayNotes: optional user-supplied or fact-preserving work summary for the daily Daily Report
 - nextStep: optional actual follow-up; do not invent one
 - timeEntries: one or more entries, each containing date, start, end, notes, workType, workRole, billable
 
@@ -68,7 +68,7 @@ The following times and reference are demonstration data, not a real work record
   "exampleOnly": true,
   "timeZone": "America/New_York",
   "date": "2026-10-15",
-  "endOfDay": { "subject": "Example end of day update" },
+  "endOfDay": { "subject": "Example daily report" },
   "items": [
     {
       "recordId": "example-printing",
@@ -127,15 +127,15 @@ node src/agent-cli.mjs capabilities
 
 The plan commands validate without writing to ConnectWise. Keep real work records in ignored .local, not examples or Git. Do not copy browser profiles, sessions, credentials, or private directory exports. The extension GUI needs no Node.js.
 
-For the user: paste/upload JSON in Daily/ Weekly TimeSheets and EoD, click Validate JSON, review the green/red result, then Save tickets & time + generate EoD updates. Do not describe validation or a populated form as submitted.
+For the user: paste/upload JSON in Daily/ Weekly TimeSheets and Daily Report, click Validate JSON, review the green/red result, then Save tickets & time + generate Daily Report updates. Do not describe validation or a populated form as submitted.
 
 For authorized agent execution, run-day/run-week use the same JSON with --extension-id and optionally --tab-id. Read capabilities before relying on unattended execution; browserSubmission is still false. No ConnectWise API or model-specific integration is used.
 
-## EoD output
+## Daily Report output
 
-A successful daily/weekly run generates a formatted Ticket / Status / Notes / Next Step table for each represented date. Select the report date and click Copy EoD to Clipboard, then paste into an email body. The helper does not send email. Status is the final verified status from the run, not an inferred historical daily status.
+A successful daily/weekly run generates a formatted Ticket / Status / Notes / Next Step table for each represented date. Select the report date and click Copy Daily Report to Clipboard, then paste into an email body. The helper does not send email. Status is the final verified status from the run, not an inferred historical daily status.
 
-A stopped run does not generate a complete EoD. A continuation JSON produces an EoD only for the records it contains; it does not automatically merge earlier runs. Maintain a cumulative list of verified results, then combine their actual ticket IDs and approved notes into a full-day report without resubmitting time or using EoD - Manual Entry merely to regenerate already-completed statuses.
+A stopped run does not generate a complete Daily Report. A continuation JSON produces an Daily Report only for the records it contains; it does not automatically merge earlier runs. Maintain a cumulative list of verified results, then combine their actual ticket IDs and approved notes into a full-day report without resubmitting time or using Daily Report - Manual Entry merely to regenerate already-completed statuses.
 
 ## Continue a stopped run safely
 
@@ -148,13 +148,13 @@ Keep dates and notes unchanged for entries being retried. A Save may have succee
 For multiple matches, unverifiable status, missing owner selection, or a page/permission failure, stop and preserve the results. Report what actually saved, what remains, and the exact error. When providing JSON in chat, use one complete copyable JSON block with no comments or trailing commas.
 
 
-### Saved runs, presets and EoD (0.9.0)
-Use the helper's history/Resume for a stopped run rather than regenerating already saved entries. Resume pins observed ConnectWise IDs and duplicate-checks exact saved records. The combined EoD uses locally retained verified runs; do not submit duplicate time to populate a report. AUTO billing is unknown until ConnectWise readback confirms it. Morning huddle is explicitly billable; its built-in preset uses Onsite Support with billable B. Presets never supply dates or times. Email-only edits affect the copied report, not ticket records. DITL work is included in EoD; Payroll Wrap and lunch remain excluded.
+### Saved runs, presets and Daily Report (0.9.0)
+Use the helper's history/Resume for a stopped run rather than regenerating already saved entries. Resume pins observed ConnectWise IDs and duplicate-checks exact saved records. The combined Daily Report uses locally retained verified runs; do not submit duplicate time to populate a report. AUTO billing is unknown until ConnectWise readback confirms it. Morning huddle is explicitly billable; its built-in preset uses Onsite Support with billable B. Presets never supply dates or times. Email-only edits affect the copied report, not ticket records. DITL work is included in Daily Report; Payroll Wrap and lunch remain excluded.
 
-Use concise professional wording for ticket titles, descriptions, time-entry notes and EoD notes. Preserve the user's actual work, outcomes, times and pending follow-ups; do not add unsupported verification or claim a planned email was sent.
+Use concise professional wording for ticket titles, descriptions, time-entry notes and Daily Report notes. Preserve the user's actual work, outcomes, times and pending follow-ups; do not add unsupported verification or claim a planned email was sent.
 
 
-## EoD inventory and purchase JSON
+## Daily Report inventory and purchase JSON
 
 Daily records accept endOfDay.inventory and endOfDay.purchases. Weekly records accept endOfDays: an array of objects with date, optional subject, inventory and purchases. Each inventory row has item plus quantity (a nonnegative integer) and optional model, or a freeform count string. Repeated item names are grouped. Example:
 
@@ -190,4 +190,4 @@ Daily records accept endOfDay.inventory and endOfDay.purchases. Weekly records a
 
 Mac models render as amount x model, for example 2 x M1, 1 x M4. Inventory is report metadata: it creates no ticket or time. Never invent quantities or inventory work time. The report editor can override these details locally per date. Purchase rows use item, positive integer quantity and HTTP(S) url; the entire Item × quantity label is linked.
 
-Version 0.9.14 supersedes the earlier DITL exclusion: DITL work entries belong in the EoD. Only Payroll Wrap entries (including lunch) are excluded, regardless of ticket. This applies to JSON previews, saved daily/weekly reports and combined historical reports. Timesheet entries are unchanged.
+Version 0.9.14 supersedes the earlier DITL exclusion: DITL work entries belong in the Daily Report. Only Payroll Wrap entries (including lunch) are excluded, regardless of ticket. This applies to JSON previews, saved daily/weekly reports and combined historical reports. Timesheet entries are unchanged.

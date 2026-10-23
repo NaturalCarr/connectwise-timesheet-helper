@@ -77,7 +77,7 @@ test('loaded popup shows title lookup and reveals time fields; owner survives cl
       assert.match(await page.evaluate(()=>window.exampleClipboard),/T-EXAMPLE/);
       const downloadPromise=page.waitForEvent('download');
       await page.locator('#download-eod-sample').click();
-      assert.equal((await downloadPromise).suggestedFilename(),'ConnectWise-EoD-example.html');
+      assert.equal((await downloadPromise).suggestedFilename(),'ConnectWise-Daily-Report-example.html');
       await page.getByText('Time-entry presets',{exact:true}).click();
       await page.locator('#time-preset').selectOption('huddle');
       await page.locator('#add-preset').click();

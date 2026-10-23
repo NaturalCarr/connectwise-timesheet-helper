@@ -12,7 +12,7 @@ export function attachReportEditor(reports, {select,preview,editor,copy,status,o
     const version=++drawVersion;
     const saved=chrome.storage.local.get('eodExtras:'+report.date);
     saved.then(values=>{if(version!==drawVersion)return;Object.assign(report,values['eodExtras:'+report.date]||{});try{report.html=renderReport(report);preview.innerHTML=report.html;}catch(error){status.textContent=error.message;}mountExtras(report,extras,async error=>{
-      try{await chrome.storage.local.set({['eodExtras:'+report.date]:{inventory:report.inventory,purchases:report.purchases}});if(error)throw error;report.html=renderReport(report);preview.innerHTML=report.html;status.textContent='EoD additions saved for '+report.date+'.';}catch(error){status.textContent=error.message;}
+      try{await chrome.storage.local.set({['eodExtras:'+report.date]:{inventory:report.inventory,purchases:report.purchases}});if(error)throw error;report.html=renderReport(report);preview.innerHTML=report.html;status.textContent='Daily Report additions saved for '+report.date+'.';}catch(error){status.textContent=error.message;}
     });}).catch(error=>status.textContent=error.message);
     for(const row of report.tickets){const box=document.createElement('fieldset');const legend=document.createElement('legend');legend.textContent=row.summary;box.append(legend);
       for(const key of ['notes','nextStep']){const label=document.createElement('label');label.textContent=key==='notes'?'Email notes':'Next step';const input=document.createElement('textarea');input.value=row[key]||'';input.rows=1;input.style.width='100%';input.style.minHeight='32px';
@@ -22,6 +22,6 @@ export function attachReportEditor(reports, {select,preview,editor,copy,status,o
     }
   };
   select.onchange=draw; draw();
-  copy.onclick=async()=>{try{const report=current();report.html=renderReport(report);preview.innerHTML=report.html;await navigator.clipboard.write([new ClipboardItem({'text/html':new Blob([report.html],{type:'text/html'}),'text/plain':new Blob([preview.innerText],{type:'text/plain'})})]);status.textContent='EoD copied. Email edits do not change ConnectWise records.';}catch(error){status.textContent=`Copy failed: ${error.message}`;}};
+  copy.onclick=async()=>{try{const report=current();report.html=renderReport(report);preview.innerHTML=report.html;await navigator.clipboard.write([new ClipboardItem({'text/html':new Blob([report.html],{type:'text/html'}),'text/plain':new Blob([preview.innerText],{type:'text/plain'})})]);status.textContent='Daily Report copied. Email edits do not change ConnectWise records.';}catch(error){status.textContent=`Copy failed: ${error.message}`;}};
 }
 import { renderReport } from './workflow.mjs';

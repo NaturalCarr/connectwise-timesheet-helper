@@ -62,3 +62,5 @@ Version 0.9.13: Validate JSON enables Preview / copy EoD from JSON immediately. 
 Version 0.9.14 supersedes the earlier DITL exclusion: DITL work entries belong in the EoD. Only Payroll Wrap entries (including lunch) are excluded, regardless of ticket. This applies to JSON previews, saved daily/weekly reports and combined historical reports. Timesheet entries are unchanged.
 
 Version 0.9.15 updates the main extension screen. Ticket Owner stays visible. Open a Service Ticket and Daily/Weekly Timesheets & EoD are collapsible, with section state stored independently of work drafts. Use Ticket JSON Instead sits beside Find or Create Ticket and reveals import controls below; it never submits. The header can open the same interface in a full browser tab. Textareas retain compact JSON and growing notes behavior. Browser-save logic is unchanged.
+
+Version 0.9.16: UI report labels now use Daily Report. Multi-Ticket (Timesheets and Reports) replaces the old batch section title. JSON endOfDay/endOfDays fields, module names and storage keys remain compatible. Report copy behavior and saved-record verification are unchanged.

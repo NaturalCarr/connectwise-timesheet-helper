@@ -54,27 +54,27 @@
   </form>
   <p id="ticket-status" role="status"></p></div></details>
   <details class="workspace-section workflow" id="weekly-section">
-  <summary><span class="section-icon" aria-hidden="true">02</span><span class="section-title">Daily/Weekly Timesheets &amp; EoD<small>Run your day or week. Copy your EoD anytime.</small></span></summary><div class="section-body">
-  <p>Paste your daily or weekly JSON to create or find tickets, record time, and update statuses. <strong>Validate first, then preview and copy your EoD immediately.</strong></p>
-  <p>Get one EoD per date, including inventory and purchase links. Copy it into your email and send when ready.</p>
+  <summary><span class="section-icon" aria-hidden="true">02</span><span class="section-title">Multi-Ticket (Timesheets and Reports)<small>Run your day or week. Copy your Daily Report anytime.</small></span></summary><div class="section-body">
+  <p>Paste your daily or weekly JSON to create or find tickets, record time, and update statuses. <strong>Validate first, then preview and copy your Daily Report immediately.</strong></p>
+  <p>Get one Daily Report per date, including inventory and purchase links. Copy it into your email and send when ready.</p>
   <button id="select-tab" type="button">Use this ConnectWise tab for runs</button>
   <label>Daily / weekly JSON file<input id="week-file" type="file" accept=".json,application/json"></label>
   <label>Or paste daily / weekly JSON<textarea id="week-json" spellcheck="false" placeholder="Paste the complete daily or weekly JSON here"></textarea></label>
   <button id="validate-week" type="button" class="primary-action">Validate JSON</button>
   <p id="week-status" role="status" aria-live="polite"></p>
-  <button id="preview-json-eod" type="button" disabled>Preview / copy EoD from JSON</button>
-  <button id="run-week" type="button" disabled>Save tickets &amp; time + generate EoD updates</button>
+  <button id="preview-json-eod" type="button" disabled>Preview / copy Daily Report from JSON</button>
+  <button id="run-week" type="button" disabled>Save tickets &amp; time + generate Daily Report updates</button>
   <details>
     <summary>Download Example Files</summary>
     <button id="download-daily-sample" type="button">Daily JSON</button>
     <button id="download-weekly-sample" type="button">Weekly JSON</button>
-    <div style="display:flex;align-items:center;gap:4px"><button id="download-eod-sample" type="button">EoD HTML ↓</button><button id="copy-eod-sample" type="button" title="Copy example EoD to clipboard" aria-label="Copy example EoD to clipboard"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 5H6a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-3"/><rect x="9" y="2" width="6" height="6" rx="1"/></svg></button></div>
+    <div style="display:flex;align-items:center;gap:4px"><button id="download-eod-sample" type="button">Daily Report HTML ↓</button><button id="copy-eod-sample" type="button" title="Copy example Daily Report to clipboard" aria-label="Copy example Daily Report to clipboard"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 5H6a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-3"/><rect x="9" y="2" width="6" height="6" rx="1"/></svg></button></div>
   </details>
   <div id="week-preview"></div><p>Review tickets, time totals, and gaps before starting the run.</p>
-  <p>EoD previews use the statuses in your JSON. Run results separately confirm what ConnectWise saved.</p>
+  <p>Daily Report previews use the statuses in your JSON. Run results separately confirm what ConnectWise saved.</p>
   </div></details>
-  <div class="workspace-shortcuts"><button id="open-run-history" type="button">Run history, Resume &amp; combined EoD</button>
-  <button id="open-eod" type="button">EoD - Manual Entry</button></div>
+  <div class="workspace-shortcuts"><button id="open-run-history" type="button">Run history, Resume &amp; combined Daily Report</button>
+  <button id="open-eod" type="button">Daily Report - Manual Entry</button></div>
   <details>
     <summary>Inspect form controls</summary>
     <p>This reads control identifiers only and does not submit anything.</p>

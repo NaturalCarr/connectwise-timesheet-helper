@@ -4,7 +4,7 @@ import {createRequire} from 'node:module';
 import {readFileSync} from 'node:fs';
 const require=createRequire(import.meta.url);let chromium;try{({chromium}=require('playwright'));}catch{}
 const enabled=process.env.CW_BROWSER_TEST==='1'&&chromium;
-test('runner survives reload after save, resumes without duplicate and edits combined EoD locally',{skip:!enabled},async()=>{
+test('runner survives reload after save, resumes without duplicate and edits combined Daily Report locally',{skip:!enabled},async()=>{
  const browser=await chromium.launch({executablePath:'C:/Program Files/BraveSoftware/Brave-Browser/Application/brave.exe',headless:true});
  try{
  const page=await browser.newPage();const errors=[];page.on('pageerror',error=>errors.push(error.message));

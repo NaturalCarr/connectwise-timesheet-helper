@@ -321,7 +321,7 @@ export function planDay(input, settings) {
   }
   const monday = new Date(parsed); monday.setUTCDate(monday.getUTCDate() - (monday.getUTCDay() + 6) % 7);
   const plan = planWeek({ ...input, schemaVersion: '1.1', weekStart: monday.toISOString().slice(0,10) }, settings);
-  const subject = clean(input.endOfDay?.subject) || `End of day update - ${date}`;
+  const subject = clean(input.endOfDay?.subject) || `Daily Report - ${date}`;
   return { ...plan, mode: 'daily', schemaVersion: '1.2', date, endOfDay: { subject, ...normalizeEodExtras(input.endOfDay),
     tickets: input.items.map((item, index) => ({ status: plan.tickets[index].completedStatus,
       notes: workReportNotes(item,cleanBlock(item.endOfDayNotes)),
@@ -333,8 +333,8 @@ function normalizeReportDays(value, start, end) {
  if(value === undefined) return [];
  if(!Array.isArray(value)) throw new Error('endOfDays must be an array.');
  const seen=new Set();return value.map(day=>{
-  if(!day || !/^\d{4}-\d{2}-\d{2}$/.test(day.date || '') || day.date<start || day.date>end || Number.isNaN(Date.parse(day.date)) || new Date(day.date).toISOString().slice(0,10)!==day.date) throw new Error('EoD date must be a valid date inside the week.');
-  if(seen.has(day.date)) throw new Error('Duplicate EoD date.');seen.add(day.date);
+  if(!day || !/^\d{4}-\d{2}-\d{2}$/.test(day.date || '') || day.date<start || day.date>end || Number.isNaN(Date.parse(day.date)) || new Date(day.date).toISOString().slice(0,10)!==day.date) throw new Error('Daily Report date must be a valid date inside the week.');
+  if(seen.has(day.date)) throw new Error('Duplicate Daily Report date.');seen.add(day.date);
   return {date:day.date,subject:clean(day.subject),...normalizeEodExtras(day)};
  });
 }

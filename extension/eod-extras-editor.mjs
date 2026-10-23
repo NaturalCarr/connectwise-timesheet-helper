@@ -1,7 +1,7 @@
 import { formatInventoryCount, renderEodExtras } from './eod-extras.mjs';
 export function mountExtras(report, host, changed) {
  host.replaceChildren();
- const heading = document.createElement('h3'); heading.textContent = 'Finish your EoD';
+ const heading = document.createElement('h3'); heading.textContent = 'Finish your Daily Report';
  const intro = document.createElement('p'); intro.textContent = 'Add stock counts and purchase recommendations below the ticket table. Saved locally for this date; no ConnectWise changes.';
  host.append(heading,intro);
  const refresh = () => { try { renderEodExtras(report); changed(); } catch(error) { changed(error); } };
