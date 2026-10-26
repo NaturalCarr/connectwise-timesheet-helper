@@ -85,7 +85,7 @@ $('run').onclick = async () => navigator.locks.request('connectwise-helper-brows
       $('result').textContent = JSON.stringify(results, null, 2);
     }
     html = renderEod(plan, results); $('preview').innerHTML = html;
-    const report={date:plan.date,subject:plan.subject,inventory:plan.inventory,purchases:plan.purchases,tickets:plan.tickets.map((ticket,index)=>({...ticket,summary:results[index].summary,ticketId:results[index].ticketId})),html};
+    const report={date:plan.date,subject:plan.subject,docCams:plan.docCams,inventory:plan.inventory,purchases:plan.purchases,tickets:plan.tickets.map((ticket,index)=>({...ticket,summary:results[index].summary,ticketId:results[index].ticketId})),html};
     attachReportEditor([report],{select:$('report-date'),preview:$('preview'),editor:$('email-editor'),copy:$('copy-email'),status:$('status')});
     $('status').textContent = 'All ticket statuses saved and verified. Email ready to copy; nothing was sent.';
   } catch (error) { $('status').textContent = `Stopped: ${error.message}`; $('result').textContent = JSON.stringify(results, null, 2); }

@@ -79,3 +79,15 @@ Mac models render as amount x model, for example 2 x M1, 1 x M4. Inventory is re
 Version 0.9.13: Validate JSON enables Preview / copy EoD from JSON immediately. The runner offers the same action before and during submission. These reports use supplied work notes, planned titles and requested statuses, with no invented saved IDs or verification evidence. The dedicated report page labels the source as unverified JSON, supports per-date inventory/purchase and email edits, and never calls ConnectWise. DITL and Payroll Wrap remain excluded. Saved-record reports and combined history remain separate.
 
 Version 0.9.14 supersedes the earlier DITL exclusion: DITL work entries belong in the EoD. Only Payroll Wrap entries (including lunch) are excluded, regardless of ticket. This applies to JSON previews, saved daily/weekly reports and combined historical reports. Timesheet entries are unchanged.
+
+## Document-camera reporting (0.9.19)
+
+Daily JSON accepts endOfDay.docCams; weekly endOfDays objects accept docCams for the matching date. Example:
+
+```json
+{ "docCams": { "inUse": 12, "neededIn": ["211", "336"] } }
+```
+
+This metadata fragment is not a complete work record. inUse is the total confirmed working cameras onsite currently in use, a nonnegative whole number. neededIn lists room designations where a camera is needed. Either field may be omitted when unknown. A confirmed zero is valid; an explicit empty neededIn array means none. Unknown fields render Not recorded. Omit docCams, or use null, to leave out the row. These counts add no time.
+
+The editor has DocCams (In Use) and DocCam needed In inputs beside inventory. Type rooms separated by commas. Clear removes the row and saves that local per-date override. Preview, rich clipboard, JSON-generated reports and saved reports all use two merged cells in the same bordered table: DocCams (In Use): 12 | DocCam needed In: 211, 336.

@@ -12,7 +12,7 @@ export function attachReportEditor(reports, {select,preview,editor,copy,status,o
     const version=++drawVersion;
     const saved=chrome.storage.local.get('eodExtras:'+report.date);
     saved.then(values=>{if(version!==drawVersion)return;Object.assign(report,values['eodExtras:'+report.date]||{});try{report.html=renderReport(report);preview.innerHTML=report.html;}catch(error){status.textContent=error.message;}mountExtras(report,extras,async error=>{
-      try{await chrome.storage.local.set({['eodExtras:'+report.date]:{inventory:report.inventory,purchases:report.purchases}});if(error)throw error;report.html=renderReport(report);preview.innerHTML=report.html;status.textContent='Daily Report additions saved for '+report.date+'.';}catch(error){status.textContent=error.message;}
+      try{await chrome.storage.local.set({['eodExtras:'+report.date]:{inventory:report.inventory,purchases:report.purchases,docCams:report.docCams ?? null}});if(error)throw error;report.html=renderReport(report);preview.innerHTML=report.html;status.textContent='Daily Report additions saved for '+report.date+'.';}catch(error){status.textContent=error.message;}
     });}).catch(error=>status.textContent=error.message);
     for(const row of report.tickets){const box=document.createElement('fieldset');const legend=document.createElement('legend');legend.textContent=row.summary;box.append(legend);
       for(const key of ['notes','nextStep']){const label=document.createElement('label');label.textContent=key==='notes'?'Email notes':'Next step';const input=document.createElement('textarea');input.value=row[key]||'';input.rows=1;input.style.width='100%';input.style.minHeight='32px';

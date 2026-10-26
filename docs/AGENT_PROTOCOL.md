@@ -83,3 +83,15 @@ Version 0.9.16: UI report labels now use Daily Report. Multi-Ticket (Timesheets 
 Version 0.9.17: New-ticket summaries receive focus and selection checks immediately before browser typing, stable readback, and at most one retry of an editable unsaved summary. Creation and Save are never retried by this recovery. Titles longer than 100 characters are shortened before lookup and creation; imported T references are retained and the full requested title is preserved in the description. This also normalizes unsaved resumed plans. A stricter live field limit still stops safely. Diagnostics use the installed manifest version. Isolated browser tests cover transient resets, focus loss and maxlength guards; no production ticket was created during validation.
 
 Version 0.9.18: the final creation duplicate guard reuses one verified exact match instead of stopping; multiple/invalid matches still stop, and reuse sends no New or Save. The normal runner then opens the resolved ID and checks ownership/time. Resume skips tickets whose final status and every entry were already confirmed in the same saved run; evidence is retained and no browser operations are sent for those tickets. Incomplete/uncertain entries still receive exact duplicate checks. Changed entry signatures invalidate the skip. This is not a fresh live audit of previously completed tickets.
+
+## Document-camera reporting (0.9.19)
+
+Daily JSON accepts endOfDay.docCams; weekly endOfDays objects accept docCams for the matching date. Example:
+
+```json
+{ "docCams": { "inUse": 12, "neededIn": ["211", "336"] } }
+```
+
+This metadata fragment is not a complete work record. inUse is the total confirmed working cameras onsite currently in use, a nonnegative whole number. neededIn lists room designations where a camera is needed. Either field may be omitted when unknown. A confirmed zero is valid; an explicit empty neededIn array means none. Unknown fields render Not recorded. Omit docCams, or use null, to leave out the row. These counts add no time.
+
+The editor has DocCams (In Use) and DocCam needed In inputs beside inventory. Type rooms separated by commas. Clear removes the row and saves that local per-date override. Preview, rich clipboard, JSON-generated reports and saved reports all use two merged cells in the same bordered table: DocCams (In Use): 12 | DocCam needed In: 211, 336.

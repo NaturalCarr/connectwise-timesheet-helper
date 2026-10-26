@@ -1,3 +1,12 @@
+export function normalizeDocCams(value) {
+ if(value == null)return null;
+ if(typeof value!=='object' || Array.isArray(value))throw new Error('docCams must be an object.');
+ const result={};
+ if(value.inUse!==undefined){if(!Number.isSafeInteger(value.inUse)||value.inUse<0)throw new Error('DocCams in use must be a nonnegative whole number.');result.inUse=value.inUse;}
+ if(value.neededIn!==undefined){if(!Array.isArray(value.neededIn) || value.neededIn.some(room=>!(typeof room==='string'&&room.trim()) && !(Number.isSafeInteger(room)&&room>=0)))throw new Error('DocCam neededIn must be an array of room designations.');result.neededIn=[...new Set(value.neededIn.map(room=>String(room).trim()))];}
+ if(!Object.keys(result).length)throw new Error('Enter a DocCam count or rooms needing one.');
+ return result;
+}
 export const formatInventoryCount = value => String(value ?? '').replace(/(\d+)\s*(?:[x×]\s*)?(M\d+)\b/gi, (_,amount,model) => amount+' x '+model.toUpperCase());
 export function normalizeEodExtras(value = {}) {
  if(!value || typeof value !== 'object' || Array.isArray(value)) throw new Error('Daily Report details must be an object.');
@@ -15,7 +24,7 @@ export function normalizeEodExtras(value = {}) {
  });
  const grouped=[];
  for(const row of inventory){const prior=grouped.find(other=>other.item.toLowerCase()===row.item.toLowerCase());if(prior)prior.count+=', '+row.count;else grouped.push({...row});}
- const result={inventory:grouped,purchases:value.purchases || []}; renderEodExtras(result); return result;
+ const result={inventory:grouped,purchases:value.purchases || [],...(value.docCams!==undefined?{docCams:normalizeDocCams(value.docCams)}:{})}; renderEodExtras(result); return result;
 }
 const escape = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 export function renderEodExtras(record, integrated = false) {
@@ -25,6 +34,11 @@ export function renderEodExtras(record, integrated = false) {
  const purchases = (record.purchases || []).filter(row => row.item || row.quantity || row.url);
  let html = inventory.length ? '<h3>Inventory</h3>'+table('<tr><th style="'+cell+'">Item</th><th style="'+cell+'">Count / details</th></tr>'+inventory.map(row => '<tr><td style="'+cell+'">'+escape(row.item)+'</td><td style="'+cell+'">'+escape(formatInventoryCount(row.count))+'</td></tr>').join('')) : '';
  if(integrated) html = inventory.length ? '<tr><th colspan="4" style="'+cell+';background-color:#eee">Inventory</th></tr>'+inventory.map(row => '<tr><th colspan="2" style="'+cell+'">'+escape(row.item)+'</th><td colspan="2" style="'+cell+'">'+escape(formatInventoryCount(row.count))+'</td></tr>').join('') : '';
+ const docCams=normalizeDocCams(record.docCams);
+ if(docCams){const left='<strong>DocCams (In Use)</strong>: '+(docCams.inUse===undefined?'Not recorded':docCams.inUse);
+ const right='<strong>DocCam needed In</strong>: '+(docCams.neededIn===undefined?'Not recorded':docCams.neededIn.length?docCams.neededIn.map(escape).join(', '):'None');
+ const row='<tr><td'+(integrated?' colspan="2"':'')+' style="'+cell+'">'+left+'</td><td'+(integrated?' colspan="2"':'')+' style="'+cell+'">'+right+'</td></tr>';
+ html+=integrated?row:table(row);}
  if(purchases.length) html += (integrated ? '<tr><td colspan="4" style="'+cell+'">' : '') + '<h3>Recommended purchases</h3><ul>'+purchases.map(row => {
   let url; try { url = new URL(row.url); } catch { throw new Error('Enter a valid purchase link.'); }
   if(!['https:','http:'].includes(url.protocol)) throw new Error('Purchase links must use https:// or http://.');

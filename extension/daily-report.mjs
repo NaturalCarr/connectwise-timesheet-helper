@@ -9,7 +9,7 @@ export function dailyReport(plan, execution) {
       || result.entries.some((entry) => !['saved_verified', 'existing_verified'].includes(entry.status))) throw new Error('Daily report contains unverified time or status.');
     return { ticketId: result.ticketId, ...plan.endOfDay.tickets[index], notes:workReportNotes(item,plan.endOfDay.tickets[index].notes), omitFromEod:item.timeEntries.every(isPayrollWrap) };
   });
-  const record = { date: plan.date, subject: plan.endOfDay.subject, inventory:plan.endOfDay.inventory, purchases:plan.endOfDay.purchases, tickets };
+  const record = { date: plan.date, subject: plan.endOfDay.subject, docCams:plan.endOfDay.docCams, inventory:plan.endOfDay.inventory, purchases:plan.endOfDay.purchases, tickets };
   const html = renderEod(record, execution.results.map((result) => ({ ticketId: result.ticketId,
     summary: result.summary, status: result.ticketStatus, verified: true })));
   return { ...record, tickets: record.tickets.filter((ticket, index) => !ticket.omitFromEod), html };
@@ -38,7 +38,7 @@ export function reportsByDay(plan, execution) {
   });
   return [...days].sort(([a], [b]) => a.localeCompare(b)).map(([date, rows]) => {
     const details=plan.endOfDays?.find(day=>day.date===date);
-    const record = { date, subject: details?.subject || `Daily Report - ${date}`, inventory:details?.inventory,purchases:details?.purchases, tickets: rows.map((row) => row.ticket) };
+    const record = { date, subject: details?.subject || `Daily Report - ${date}`, docCams:details?.docCams,inventory:details?.inventory,purchases:details?.purchases, tickets: rows.map((row) => row.ticket) };
     return { ...record, tickets: record.tickets, html: renderEod(record, rows.map((row) => row.verified)) };
   });
 }

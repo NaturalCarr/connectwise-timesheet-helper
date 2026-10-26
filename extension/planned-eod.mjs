@@ -13,7 +13,7 @@ export function plannedReports(plan) {
    if(!notes)return;
    tickets.push({titleContains:'planned-row-'+index,summary:item.ticket.summary,status:item.completedStatus || item.ticket.status,notes,nextStep:cleanEodNotes(daily?.nextStep || entries.map(e=>e.followUp || '').filter(Boolean).join('\n'))});
   });
-  const report={date,subject:details?.subject || 'Daily Report - '+date,inventory:details?.inventory || [],purchases:details?.purchases || [],tickets,verification:'planned'};
+  const report={date,subject:details?.subject || 'Daily Report - '+date,docCams:details?.docCams,inventory:details?.inventory || [],purchases:details?.purchases || [],tickets,verification:'planned'};
   return {...report,html:renderPlannedEod(report)};
  });
 }

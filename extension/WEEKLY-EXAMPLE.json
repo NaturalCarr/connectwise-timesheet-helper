@@ -101,7 +101,14 @@
           "quantity": 2,
           "url": "https://example.com/usb-c-adapter"
         }
-      ]
+      ],
+      "docCams": {
+        "inUse": 12,
+        "neededIn": [
+          "211",
+          "336"
+        ]
+      }
     }
   ]
 }

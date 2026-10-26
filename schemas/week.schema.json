@@ -314,6 +314,50 @@
                 }
               }
             }
+          },
+          "docCams": {
+            "anyOf": [
+              {
+                "type": "null"
+              },
+              {
+                "type": "object",
+                "additionalProperties": false,
+                "properties": {
+                  "inUse": {
+                    "type": "integer",
+                    "minimum": 0
+                  },
+                  "neededIn": {
+                    "type": "array",
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        {
+                          "type": "integer",
+                          "minimum": 0
+                        }
+                      ]
+                    }
+                  }
+                },
+                "anyOf": [
+                  {
+                    "required": [
+                      "inUse"
+                    ]
+                  },
+                  {
+                    "required": [
+                      "neededIn"
+                    ]
+                  }
+                ]
+              }
+            ]
           }
         }
       }
