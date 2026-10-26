@@ -219,7 +219,14 @@ Use the selected label without a display-only trailing tilde. Distinguish succes
 
 ## 11. Recover safely
 
-A stopped run may already have created tickets or saved time. Prefer Resume in the existing run/history; do not rerun the entire original JSON blindly. Retain observed ConnectWise IDs and omit already verified entries when explicitly preparing a continuation. An uncertain save must be reconciled through duplicate checks before another save. Do not duplicate time just to populate an Daily Report.
+A stopped run may already have created tickets or saved time. Reload the installed extension after an update, select the intended ConnectWise tab, then Resume the same saved run. Don't restart the original input blindly.
+
+- Fully confirmed tickets are skipped when their saved final status and all entry evidence match the saved run. Earlier evidence is retained; this isn't a fresh live audit.
+- Partial and uncertain entries still get exact duplicate checks before any new save. Missing or ambiguous previously verified rows stop for reconciliation; they aren't recreated.
+- Changed entry signatures invalidate the skip. Keep observed ConnectWise IDs and omit confirmed entries when explicitly preparing a continuation JSON.
+- The final creation guard reuses a single verified existing match. Multiple/invalid matches still stop for a choice. Reuse sends no New or Save; the normal open, owner and time checks follow.
+- New-ticket titles longer than 100 characters are shortened before duplicate lookup and creation. Imported T references are retained where applicable; the full requested title stays in the description. Existing tickets aren't renamed. A stricter live field limit still stops safely.
+- Summary recovery retries only an editable unsaved summary once. It doesn't repeat ticket creation or Save.
 
 ## 12. Optional local validation for agents with the source checkout
 
