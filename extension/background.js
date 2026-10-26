@@ -4,7 +4,7 @@ var connectwiseActionQueue = Promise.resolve();
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message?.action === 'helperBuild') {
-    sendResponse({ ok: true, version: '0.9.19', ticketSaveMethod: 'exact-element' });
+    sendResponse({ ok: true, version: '0.9.20', ticketSaveMethod: 'exact-element' });
     return false;
   }
   const actions = {
@@ -32,7 +32,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   const pending = connectwiseActionQueue.then(() => action(message));
   connectwiseActionQueue = pending.catch(() => {});
   pending.then(sendResponse, (error) => sendResponse({ ok: false,
-    error: `[Helper 0.9.19; ${message.action}] ${error.message}`,
+    error: `[Helper 0.9.20; ${message.action}] ${error.message}`,
     ticketId: Number.isSafeInteger(error.ticketId) ? error.ticketId : null }));
   return true;
 });

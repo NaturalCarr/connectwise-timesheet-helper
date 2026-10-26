@@ -78,7 +78,7 @@ test('runner survives reload after save, resumes without duplicate and edits com
  await page.locator('#email-editor textarea').first().fill('Edited for the email only.');
  await page.locator('#copy-daily-email').click();await page.waitForFunction(()=>Boolean(window.copied));assert.match(await page.evaluate(()=>window.copied),/Edited for the email only/);
  assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('test-state')).actions.filter(a=>a==='savePreparedTime').length),1);
- await page.goto('https://helper.test/history.html');await page.waitForFunction(()=>document.querySelectorAll('#runs article').length===1);
+ await page.goto('https://helper.test/history.html');await page.waitForFunction(()=>document.querySelectorAll('#runs article').length===1);await page.getByRole('tab',{name:'Daily Reports',exact:true}).click();
  assert.match(await page.locator('#totals').textContent(),/Billable 0.25 h/);
  assert.match(await page.locator('#preview').innerText(),/Edited for the email only/);
  await page.screenshot({path:'.local/workflow-history-preview.png',fullPage:true});

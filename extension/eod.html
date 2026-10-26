@@ -1,12 +1,12 @@
 <!doctype html>
 <html lang="en"><head><meta charset="utf-8"><title>Daily Report</title>
-<style>body{font:15px system-ui;max-width:1000px;margin:24px auto;padding:16px}label{display:block;margin:12px 0}input,textarea,select{font:inherit;padding:6px;box-sizing:border-box}input,textarea{width:100%}textarea{min-height:34px;height:34px;line-height:18px;resize:none;overflow-y:hidden}fieldset{margin:16px 0;border:1px solid #ccc}button{padding:8px;margin:4px}table{width:100%}#result{white-space:pre-wrap}</style></head>
+<style>body{font:15px system-ui;max-width:1000px;margin:24px auto;padding:16px}label{display:block;margin:12px 0}input,textarea,select{font:inherit;padding:6px;box-sizing:border-box}input,textarea{width:100%}textarea{min-height:34px;height:34px;line-height:18px;resize:none;overflow-y:hidden}fieldset{margin:16px 0;border:1px solid #ccc}button{padding:8px;margin:4px}table{width:100%}#result{white-space:pre-wrap}</style><link rel="stylesheet" href="page-ui.css"></head>
 <body><h1>Daily Report</h1><p>Enter actual work notes and next steps. This saves the selected status on each ticket before generating the email. It does not send email or add time records.</p>
 <label>Date<input id="eod-date" type="date" required></label><label>Email subject<input id="eod-subject" required placeholder="Daily Report"></label>
 <div id="tickets"></div><button id="add">Add ticket</button><button id="run">Update statuses and generate email</button>
 <button id="copy-email" disabled title="Copy Daily Report to Clipboard" aria-label="Copy Daily Report to Clipboard"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 5H6a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-3"/><rect x="9" y="2" width="6" height="6" rx="1"/></svg></button>
 <p>After generation, copy the formatted table and paste it directly into your email body.</p><p id="status" role="status"></p><pre id="result"></pre><details><summary>Edit generated email only</summary><div id="email-editor"></div></details><select id="report-date" aria-label="Report date" hidden></select><div id="preview"></div>
-<script type="module" src="eod-page.mjs"></script><script src="popup-layout.js"></script></body></html>
+<script type="module" src="eod-page.mjs"></script><script src="popup-layout.js"></script></body><script type="module" src="page-ui.mjs"></script></html>
 
 
 

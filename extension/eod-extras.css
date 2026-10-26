@@ -3,3 +3,5 @@
 .payroll-toggle{display:flex;align-items:center;gap:8px;margin:16px 0 4px;font-weight:600}.payroll-toggle input[type=checkbox]{width:18px;height:18px;margin:0;accent-color:#205dc6}
 
 .doccam-row{display:grid;grid-template-columns:1fr 1fr auto;gap:10px;align-items:end}.doccam-row label{font-size:12px;font-weight:600;color:#42556d}.doccam-row input{display:block;box-sizing:border-box;width:100%;min-width:0;font:14px system-ui;padding:9px;border:1px solid #bfcddd;border-radius:6px;margin-top:5px}@media(max-width:650px){.doccam-row{grid-template-columns:1fr}}
+
+.eod-extras>details,body.app-page .eod-extras>details{border:0;margin:0;padding:0;background:transparent}.eod-extras>details>summary{font-weight:650;cursor:pointer;font-size:14px}.eod-extras>details[open]>summary{margin-bottom:18px}

@@ -60,3 +60,9 @@ The bundled Carlton animation preserves the vector frames supplied with the proj
 ## EoD inventory and purchases
 
 The report editor includes inventory counts and recommended purchase links. Add item names, quantities and links beside the EoD copy controls; additions save locally by report date. The copied email includes a bordered inventory table and clickable Item name × quantity purchase labels. These fields do not update ConnectWise or send email.
+
+## Interface layout (0.9.20)
+
+History & Resume has separate Saved runs, Verified time and Daily Reports tabs. Saved runs can be searched by date, title or ticket number and filtered by state. Six compact run cards appear per page; expand Tickets and progress for details. Resume/View results opens the original saved run. Verified time uses deduplicated saved-row evidence, with billing details and coverage shown separately. Daily Reports opens the newest available date first. Inventory, document cameras and purchase fields are collapsed until expanded.
+
+Standalone pages share Workspace, History & Resume, and Settings navigation, consistent controls and responsive layouts. The popup keeps its compact/full-workspace behavior. These are presentation changes; saved records, user configuration, JSON contracts and browser-save safeguards remain in place.
