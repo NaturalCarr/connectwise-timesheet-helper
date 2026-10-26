@@ -4,7 +4,7 @@ var connectwiseActionQueue = Promise.resolve();
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message?.action === 'helperBuild') {
-    sendResponse({ ok: true, version: '0.9.17', ticketSaveMethod: 'exact-element' });
+    sendResponse({ ok: true, version: '0.9.18', ticketSaveMethod: 'exact-element' });
     return false;
   }
   const actions = {
@@ -32,7 +32,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   const pending = connectwiseActionQueue.then(() => action(message));
   connectwiseActionQueue = pending.catch(() => {});
   pending.then(sendResponse, (error) => sendResponse({ ok: false,
-    error: `[Helper 0.9.17; ${message.action}] ${error.message}`,
+    error: `[Helper 0.9.18; ${message.action}] ${error.message}`,
     ticketId: Number.isSafeInteger(error.ticketId) ? error.ticketId : null }));
   return true;
 });
@@ -952,13 +952,22 @@ async function verifyCreatedTicketAfterReload(tabId, ticketId, ticket) {
   throw error;
 }
 
+function reuseCreationMatch(match) {
+ if(!Number.isSafeInteger(match?.ticketId) || match.ticketId<=0)throw new Error('Existing ticket ID was not verified.');
+ return {ok:true,ticketId:match.ticketId,reused:true,created:false};
+}
+
 async function createTicketInTab({ tabId, ticket }) {
   const search = await findTicketsInTab({ tabId, ticket });
-  if (search.matches.length) throw new Error('A matching ticket exists. Stop before creating a duplicate.');
+  if(!Array.isArray(search.matches))throw new Error('Creation duplicate search was not verified.');
+  if(search.matches.length>1)throw new Error('Multiple matching tickets exist. Choose one before continuing.');
+  if(search.matches.length===1)return reuseCreationMatch(search.matches[0]);
   if (ticket.titleContains) {
     const { titleContains, ...exactTicket } = ticket;
     const exact = await findTicketsInTab({ tabId, ticket: exactTicket });
-    if (exact.matches.length) throw new Error('A ticket with this exact title exists. Stop before creating a duplicate.');
+    if(!Array.isArray(exact.matches))throw new Error('Exact-title duplicate search was not verified.');
+    if(exact.matches.length>1)throw new Error('Multiple tickets with this exact title exist. Choose one before continuing.');
+    if(exact.matches.length===1)return reuseCreationMatch(exact.matches[0]);
   }
   const frames = await executeConnectWiseScript({ target: { tabId, allFrames: true }, func: inspectBoardFrame });
   const boards = frames.filter((frame) => frame.result?.matches);

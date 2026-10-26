@@ -19,6 +19,17 @@ export async function executePlan(plan, driver, options = {}) {
     results.push(result);
     const previous = options.previous?.results?.[ticketIndex];
     const checkpoint = async () => { if(options.onCheckpoint) await options.onCheckpoint({ok:false,results:structuredClone(results)}); };
+    const finished = previous && ['completed_verified','status_changed_verified'].includes(previous.status)
+      && Number.isSafeInteger(previous.ticketId) && previous.ticketId>0
+      && (!item.existingTicketId || item.existingTicketId===previous.ticketId)
+      && previous.ticketStatus===item.completedStatus
+      && previous.entries?.length===item.timeEntries.length
+      && item.timeEntries.every((entry,index)=>{
+        const saved=previous.entries[index];
+        return ['saved_verified','existing_verified'].includes(saved?.status) && saved.date===entry.date && saved.start===entry.start && saved.end===entry.end
+          && (!saved.sourceSignature || saved.sourceSignature===JSON.stringify(entry));
+      });
+    if(finished){Object.assign(result,structuredClone(previous),{resumeSkipped:true});await checkpoint();if(options.onProgress)await options.onProgress({ticketIndex,action:'skip-confirmed-ticket',state:'finished'});continue;}
     let entryIndex = null;
     const call = async (method,...args) => {
       result.step=method; result.entryIndex=entryIndex;
@@ -76,7 +87,7 @@ export async function executePlan(plan, driver, options = {}) {
       for (const [currentEntryIndex, entry] of item.timeEntries.entries()) {
         entryIndex=currentEntryIndex;
         const entryResult = { recordId: entry.recordId || null, date: entry.date,
-          start: entry.start, end: entry.end, status: 'pending' };
+          start: entry.start, end: entry.end, sourceSignature:JSON.stringify(entry), status: 'pending' };
         result.entries.push(entryResult);
         const existing = await call('findTimeEntries', ticketId, entry);
         if (!Array.isArray(existing)) throw new Error('Existing time entries were not verified.');

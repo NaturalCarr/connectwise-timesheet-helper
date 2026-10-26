@@ -15,12 +15,17 @@ test('checkpoints survive a stop after save and resume reuses the observed ticke
  const next=resumePlan(plan,first);assert.equal(next.tickets[0].existingTicketId,123);
  const resumed=await executePlan(next,api,{previous:first});assert.equal(resumed.ok,true);assert.deepEqual(api.calls,['new','save']);assert.equal(resumed.results[0].entries[0].status,'existing_verified');
 });
-test('completed resume checks exact saved records without status writes or new entries',async()=>{
- const api=driver();const previous=await executePlan(plan,api);api.setTicketStatus=async()=>{throw Error('Must not reopen');};
- const resumed=await executePlan(resumePlan(plan,previous),api,{previous});assert.equal(resumed.ok,true);assert.deepEqual(api.calls,['new','save']);
- api.findTimeEntries=async()=>[];
- const missing=await executePlan(resumePlan(plan,previous),api,{previous});assert.equal(missing.ok,false);assert.match(missing.results[0].error,/missing or ambiguous/);assert.deepEqual(api.calls,['new','save']);
+test('Resume skips fully confirmed tickets without any browser calls',async()=>{
+ const api=driver();const previous=await executePlan(plan,api);
+ for(const key of Object.keys(api))if(typeof api[key]==='function')api[key]=async()=>{throw Error('Confirmed ticket must be skipped');};
+ const resumed=await executePlan(resumePlan(plan,previous),api,{previous});assert.equal(resumed.ok,true);assert.equal(resumed.results[0].resumeSkipped,true);assert.equal(resumed.results[0].entries[0].status,'saved_verified');assert.deepEqual(api.calls,['new','save']);
 });
+
+test('changed entries invalidate the completed-ticket skip and require reconciliation',async()=>{
+ const api=driver();const previous=await executePlan(plan,api);const changed=resumePlan(plan,previous);changed.tickets[0].timeEntries[0].notes='Changed work notes';api.findTimeEntries=async()=>[];
+ const next=await executePlan(changed,api,{previous});assert.equal(next.ok,false);assert.match(next.results[0].error,/missing or ambiguous/);assert.deepEqual(api.calls,['new','save']);
+});
+
 test('storage checkpoint failure prevents the first browser write',async()=>{
  const api=driver();api.findTickets=async()=>{throw Error('Browser should not run');};
  await assert.rejects(executePlan(plan,api,{onCheckpoint:async()=>{throw Error('storage full');}}),/storage full/);assert.deepEqual(api.calls,[]);
