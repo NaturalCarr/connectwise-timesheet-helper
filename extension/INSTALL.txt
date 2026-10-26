@@ -1,3 +1,9 @@
+CURRENT RELEASE: 0.9.18
+
+After an update, reload the extension and select the intended ConnectWise tab. Resume skips fully confirmed tickets; partial/uncertain time is duplicate-checked. A single existing exact-title match is reused without creating a duplicate. Titles over 100 characters are shortened; full text stays in the description.
+
+Validate JSON, then Preview / copy EoD from JSON to copy a Daily Report before the timesheet finishes. DITL work is included; Payroll Wrap and lunch are excluded. JSON statuses are requested values, not proof of saved records. No email is sent automatically.
+
 ConnectWise Timesheet Helper
 
 1. Extract this ZIP into a permanent folder on your computer.
@@ -31,7 +37,7 @@ extension page. Keep the same folder to preserve its extension identity.
 Daily runs: upload or paste daily JSON in Daily/ Weekly TimeSheets and EoD. DAILY-EXAMPLE.json is non-submittable example data. Use actual records. After all saves verify, the runner provides Copy email table and Download HTML. Email is never sent automatically.
 
 
-Unified ticket form: School is optional. Enter a ticket number and/or title text; the number is tried first. A missing number can fall back to one open title match. Use Also enter one time entry for time. Text boxes grow automatically.
+Unified ticket form: School is optional. Enter a ticket number and/or title text; the number is tried first. A missing number can fall back to one open title match. Use + Add a Time Entry for each time record. Text boxes grow automatically.
 
 Ticket time: click + Add a Time Entry for each separate time record; Remove entry removes only that draft. Mark ticket as applies after all time records are saved and verified. Draft entries remain when the popup is closed.
 

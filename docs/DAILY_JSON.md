@@ -1,5 +1,20 @@
 # Daily tickets, time, and email
 
+## Current behavior (0.9.18)
+
+This section takes precedence over older release notes below.
+
+- Configure Ticket Owner and ticket defaults inside the extension. CLI users can export their own settings JSON.
+- Validate daily/weekly JSON in Multi-Ticket (Timesheets and Reports). Preview / copy EoD from JSON opens a Daily Report immediately, before submission completes. JSON names endOfDay/endOfDays remain compatible. Requested statuses aren't proof of saved records.
+- DITL work is included. Payroll Wrap and lunch are always excluded, regardless of ticket. One bordered table contains ticket rows, two-column inventory rows and fully linked purchase labels.
+- New-ticket titles are shortened to 100 characters before duplicate lookup and creation. Full titles stay in the description; imported T references are retained where applicable. Existing tickets aren't renamed. A stricter live field limit stops safely.
+- Summary entry checks focus and stable readback and can retry an editable unsaved summary once. It never repeats New or Save as that recovery.
+- The final creation guard reuses one verified existing match. Multiple or invalid matches still stop.
+- Resume skips fully confirmed tickets from the same saved run without browser calls. Earlier evidence is retained; skipped tickets aren't freshly audited. Partial or uncertain time still gets exact duplicate checks, and missing/ambiguous previously verified rows aren't recreated.
+- Reload an updated extension, select the intended ConnectWise tab, then Resume. Don't rerun the original full JSON after a partial save.
+- Local/isolated-browser suite: 159 passed, 2 optional skipped. This isn't live production-save verification.
+
+
 Paste or upload daily JSON in **Daily/ Weekly TimeSheets and EoD**. Click **Validate JSON**, then **Run validated tickets in ConnectWise**. The owner saved in the extension is used for browser runs.
 
 Daily JSON uses `schemaVersion: "1.2"`, a `date` in `YYYY-MM-DD`, and `items`. Each item has `school`, `issue`, and one or more `timeEntries`. Every entry must have the daily date; overlapping time is rejected across tickets. Use `existingTicketId` for a known ConnectWise number, or `titleContains` for a literal imported reference. Omit both to search for an exact school/issue ticket and create one only if none exists. Ambiguous matches stop.
