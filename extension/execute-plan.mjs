@@ -1,3 +1,4 @@
+import { normalizeTicketTitle } from './ticket-title.mjs';
 // Browser drivers implement these operations against visible ConnectWise controls.
 // This module owns sequencing and never treats a click as proof of a save.
 export async function executePlan(plan, driver, options = {}) {
@@ -12,6 +13,7 @@ export async function executePlan(plan, driver, options = {}) {
   }
   const results = [];
   for (const [ticketIndex, item] of plan.tickets.entries()) {
+    if(!options.previous?.results?.[ticketIndex]?.ticketId)item.ticket=normalizeTicketTitle(item.ticket);
     const result = { recordId: item.recordId || null, summary: item.ticket.summary,
       ticketId: null, status: 'pending', entries: [] };
     results.push(result);

@@ -1,3 +1,4 @@
+import { normalizeTicketTitle } from './ticket-title.mjs';
 import { workReportNotes } from './payroll-report.mjs';
 import { normalizeEodExtras } from './eod-extras.mjs';
 const clean = (value) => typeof value === 'string' ? value.trim().replace(/\s+/g, ' ') : '';
@@ -83,7 +84,7 @@ export function planWorkItem(item, settings) {
   const baseSummary = issue ? (school ? `${school} - ${issue}` : issue) : titleContains || `Ticket #${existingTicketId}`;
   const summary = titleContains && !baseSummary.toLowerCase().includes(titleContains.toLowerCase())
     ? `${baseSummary} - ${titleContains}` : baseSummary;
-  const ticket = {
+  const ticket = normalizeTicketTitle({
     company: clean(settings.company),
     contact: clean(settings.contact),
     board: clean(settings.board),
@@ -98,7 +99,7 @@ export function planWorkItem(item, settings) {
     summary,
     description: cleanBlock(item.description) || summary,
     ...(titleContains ? { titleContains } : {})
-  };
+  });
   for (const [key, value] of Object.entries(ticket)) {
     if (!value) throw new Error(`Ticket ${key} is required.`);
   }

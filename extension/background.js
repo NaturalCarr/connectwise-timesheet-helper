@@ -4,7 +4,7 @@ var connectwiseActionQueue = Promise.resolve();
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   if (message?.action === 'helperBuild') {
-    sendResponse({ ok: true, version: '0.9.16', ticketSaveMethod: 'exact-element' });
+    sendResponse({ ok: true, version: '0.9.17', ticketSaveMethod: 'exact-element' });
     return false;
   }
   const actions = {
@@ -32,7 +32,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   const pending = connectwiseActionQueue.then(() => action(message));
   connectwiseActionQueue = pending.catch(() => {});
   pending.then(sendResponse, (error) => sendResponse({ ok: false,
-    error: `[Helper 0.9.16; ${message.action}] ${error.message}`,
+    error: `[Helper 0.9.17; ${message.action}] ${error.message}`,
     ticketId: Number.isSafeInteger(error.ticketId) ? error.ticketId : null }));
   return true;
 });
@@ -558,10 +558,12 @@ function inspectNewTicketFrame() {
     && !/Service Ticket #\d+/.test(document.body?.innerText || '') };
 }
 
-function focusTicketText(selector) {
+function focusTicketText(selector, value) {
   const inputs = [...document.querySelectorAll(selector)].filter((el) =>
     el.getBoundingClientRect().width > 0 && el.getBoundingClientRect().height > 0);
   if (inputs.length !== 1 || inputs[0].disabled) throw new Error(`${selector} is not a unique editable field.`);
+  if(inputs[0].readOnly)throw new Error(selector+' is read-only.');
+  if(typeof value==='string' && inputs[0].maxLength>=0 && value.length>inputs[0].maxLength)throw new Error(selector+': requested length '+value.length+' exceeds field limit '+inputs[0].maxLength+'. Shorten the title; no text or Save was sent.');
   inputs[0].focus();
   inputs[0].select();
   if (document.activeElement !== inputs[0]) throw new Error(`${selector} did not gain focus.`);
@@ -571,7 +573,9 @@ function focusTicketText(selector) {
 function verifyTicketText(selector, value) {
   const inputs = [...document.querySelectorAll(selector)].filter((el) =>
     el.getBoundingClientRect().width > 0 && el.getBoundingClientRect().height > 0);
-  return { verified: inputs.length === 1 && inputs[0].value === value };
+  return { verified:inputs.length===1 && inputs[0].value===value, editable:inputs.length===1 && !inputs[0].disabled && !inputs[0].readOnly,
+    focused:inputs.length===1 && document.activeElement===inputs[0],actualLength:inputs.length===1?inputs[0].value.length:null,maxLength:inputs.length===1?inputs[0].maxLength:null,
+    unsaved:!document.querySelector('a.cw_ticketId') && !/\b(?:Service Ticket|Ticket)\s*#\s*\d+/i.test(document.body.innerText) };
 }
 
 async function trustedTicketText(tabId, frameId, selector, value, verifyText = true) {
@@ -581,17 +585,27 @@ async function trustedTicketText(tabId, frameId, selector, value, verifyText = t
   try {
     foreignLease = await attachConnectWiseDebugger(target);
     attached = true;
-    await executeConnectWiseScript({
-      target: { tabId, frameIds: [frameId] }, func: focusTicketText, args: [selector]
-    });
-    await new Promise((resolve) => setTimeout(resolve, 250));
-    await chrome.debugger.sendCommand(target, 'Input.insertText', { text: value });
-    if (verifyText) {
-      const [check] = await executeConnectWiseScript({
-        target: { tabId, frameIds: [frameId] }, func: verifyTicketText, args: [selector, value]
-      });
-      if (!check.result?.verified) throw new Error(`${selector} did not retain the entered text.`);
+    const summary=selector==='input.cw_PsaSummaryHeader';
+    for(let attempt=0;attempt<(summary?2:1);attempt++) {
+      await executeConnectWiseScript({target:{tabId,frameIds:[frameId]},func:focusTicketText,args:[selector,value]});
+      await new Promise(resolve=>setTimeout(resolve,250));
+      const [ready]=await executeConnectWiseScript({target:{tabId,frameIds:[frameId]},func:verifyTicketText,args:[selector,value]});
+      if(!ready.result?.editable || !ready.result?.focused) {
+        if(summary && attempt===0 && ready.result?.editable && ready.result?.unsaved)continue;
+        throw new Error(selector+': focus changed before typing. No text or Save was sent.');
+      }
+      await executeConnectWiseScript({target:{tabId,frameIds:[frameId]},func:focusTicketText,args:[selector,value]});
+      await chrome.debugger.sendCommand(target,'Input.insertText',{text:value});
+      if(!verifyText)return;
+      let stable=0,last;
+      for(let poll=0;poll<12;poll++) {
+        await new Promise(resolve=>setTimeout(resolve,150));
+        const [check]=await executeConnectWiseScript({target:{tabId,frameIds:[frameId]},func:verifyTicketText,args:[selector,value]});
+        last=check.result;stable=last?.verified?stable+1:0;if(stable>=3)return;
+      }
+      if(!summary || attempt!==0 || !last?.editable || !last?.unsaved)throw new Error(selector+' did not retain the entered text (expected length '+value.length+', observed length '+last?.actualLength+', field limit '+last?.maxLength+'). Save was not attempted.');
     }
+    throw new Error(selector+' did not retain the entered text after one unsaved-draft retry. Save was not attempted.');
   } finally {
     if (attached) await chrome.debugger.detach(target).catch(() => {});
     if (foreignLease) await restoreForeignExtensionFrames(target.tabId, foreignLease);
