@@ -101,3 +101,7 @@ The editor has DocCams (In Use) and DocCam needed In inputs beside inventory. Ty
 History & Resume has separate Saved runs, Verified time and Daily Reports tabs. Saved runs can be searched by date, title or ticket number and filtered by state. Six compact run cards appear per page; expand Tickets and progress for details. Resume/View results opens the original saved run. Verified time uses deduplicated saved-row evidence, with billing details and coverage shown separately. Daily Reports opens the newest available date first. Inventory, document cameras and purchase fields are collapsed until expanded.
 
 Standalone pages share Workspace, History & Resume, and Settings navigation, consistent controls and responsive layouts. The popup keeps its compact/full-workspace behavior. These are presentation changes; saved records, user configuration, JSON contracts and browser-save safeguards remain in place.
+
+## Report-date calendar (0.9.21)
+
+Daily Reports open on the newest available report date, independent of the order reports were generated or loaded. Report date is now a calendar input instead of a dropdown on the JSON preview, run results, history and generated manual-report pages. The calendar spans available dates. If a selected date has no report, the old preview and editors are cleared and copy is disabled until a valid report date is chosen. Inventory and purchase edits stay tied to their report date.

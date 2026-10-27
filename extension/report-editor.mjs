@@ -1,14 +1,17 @@
 import { mountExtras } from './eod-extras-editor.mjs';
 export function attachReportEditor(reports, {select,preview,editor,copy,status,onSave=async()=>{}}) {
-  select.replaceChildren();
-  for(const report of reports)select.add(new Option(report.date,report.date));
+  const dates=[...new Set(reports.map(report=>report.date))].sort();
+  select.min=dates[0] || '';select.max=dates.at(-1) || '';select.value=dates.at(-1) || '';
+  select.setAttribute('aria-label','Report date');
   const current=()=>reports.find(report=>report.date===select.value);
   preview.previousElementSibling?.matches('.eod-extras') && preview.previousElementSibling.remove();
   const extras=document.createElement('div');extras.className='eod-extras';
   preview.before(extras);
   const link=document.createElement('link');link.rel='stylesheet';link.href='eod-extras.css';document.head.append(link);
   let drawVersion=0;
-  const draw=()=>{const report=current();preview.innerHTML=report.html;editor.replaceChildren();
+  const draw=()=>{const report=current();
+    if(!report){++drawVersion;copy.disabled=true;preview.replaceChildren();editor.replaceChildren();extras.replaceChildren();select.setAttribute('aria-invalid','true');status.textContent='No report is available for this date. Choose another date from the calendar.';return;}
+    copy.disabled=false;select.removeAttribute('aria-invalid');status.textContent='';preview.innerHTML=report.html;editor.replaceChildren();
     const version=++drawVersion;
     const saved=chrome.storage.local.get('eodExtras:'+report.date);
     saved.then(values=>{if(version!==drawVersion)return;Object.assign(report,values['eodExtras:'+report.date]||{});try{report.html=renderReport(report);preview.innerHTML=report.html;}catch(error){status.textContent=error.message;}mountExtras(report,extras,async error=>{
@@ -21,7 +24,7 @@ export function attachReportEditor(reports, {select,preview,editor,copy,status,o
       editor.append(box);
     }
   };
-  select.onchange=draw; draw();
+  select.onchange=draw;select.oninput=draw; draw();
   copy.onclick=async()=>{try{const report=current();report.html=renderReport(report);preview.innerHTML=report.html;await navigator.clipboard.write([new ClipboardItem({'text/html':new Blob([report.html],{type:'text/html'}),'text/plain':new Blob([preview.innerText],{type:'text/plain'})})]);status.textContent='Daily Report copied. Email edits do not change ConnectWise records.';}catch(error){status.textContent=`Copy failed: ${error.message}`;}};
 }
 import { renderReport } from './workflow.mjs';

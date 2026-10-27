@@ -5,7 +5,7 @@
 <label>Date<input id="eod-date" type="date" required></label><label>Email subject<input id="eod-subject" required placeholder="Daily Report"></label>
 <div id="tickets"></div><button id="add">Add ticket</button><button id="run">Update statuses and generate email</button>
 <button id="copy-email" disabled title="Copy Daily Report to Clipboard" aria-label="Copy Daily Report to Clipboard"><svg aria-hidden="true" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M9 5H6a2 2 0 0 0-2 2v13a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7a2 2 0 0 0-2-2h-3"/><rect x="9" y="2" width="6" height="6" rx="1"/></svg></button>
-<p>After generation, copy the formatted table and paste it directly into your email body.</p><p id="status" role="status"></p><pre id="result"></pre><details><summary>Edit generated email only</summary><div id="email-editor"></div></details><select id="report-date" aria-label="Report date" hidden></select><div id="preview"></div>
+<p>After generation, copy the formatted table and paste it directly into your email body.</p><p id="status" role="status"></p><pre id="result"></pre><details><summary>Edit generated email only</summary><div id="email-editor"></div></details><input type="date" id="report-date" aria-label="Report date" hidden><div id="preview"></div>
 <script type="module" src="eod-page.mjs"></script><script src="popup-layout.js"></script></body><script type="module" src="page-ui.mjs"></script></html>
 
 
