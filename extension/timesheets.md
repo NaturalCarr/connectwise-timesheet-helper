@@ -1,18 +1,19 @@
 # Timesheets: agent instructions
 
-## Current behavior (0.9.18)
+## Current behavior (0.9.21)
 
 This section takes precedence over older release notes below.
 
 - Configure Ticket Owner and ticket defaults inside the extension. CLI users can export their own settings JSON.
-- Validate daily/weekly JSON in Multi-Ticket (Timesheets and Reports). Preview / copy EoD from JSON opens a Daily Report immediately, before submission completes. JSON names endOfDay/endOfDays remain compatible. Requested statuses aren't proof of saved records.
+- Validate daily/weekly JSON in Multi-Ticket (Timesheets and Reports). Preview / copy Daily Report from JSON opens a Daily Report immediately, before submission completes. JSON names endOfDay/endOfDays remain compatible. Requested statuses aren't proof of saved records.
 - DITL work is included. Payroll Wrap and lunch are always excluded, regardless of ticket. One bordered table contains ticket rows, two-column inventory rows and fully linked purchase labels.
 - New-ticket titles are shortened to 100 characters before duplicate lookup and creation. Full titles stay in the description; imported T references are retained where applicable. Existing tickets aren't renamed. A stricter live field limit stops safely.
 - Summary entry checks focus and stable readback and can retry an editable unsaved summary once. It never repeats New or Save as that recovery.
 - The final creation guard reuses one verified existing match. Multiple or invalid matches still stop.
 - Resume skips fully confirmed tickets from the same saved run without browser calls. Earlier evidence is retained; skipped tickets aren't freshly audited. Partial or uncertain time still gets exact duplicate checks, and missing/ambiguous previously verified rows aren't recreated.
 - Reload an updated extension, select the intended ConnectWise tab, then Resume. Don't rerun the original full JSON after a partial save.
-- Local/isolated-browser suite: 159 passed, 2 optional skipped. This isn't live production-save verification.
+- Daily Reports default to the newest available report date and use a calendar selector. Dates without reports clear the preview and disable copy. Edits remain tied to their report date.
+- Local/isolated-browser suite: 162 passed, 2 optional skipped. This isn't live production-save verification.
 
 
 Use this guide to turn the user's account of a workday into JSON for ConnectWise Timesheet Helper. It is model independent. Generate and validate the JSON; submit only when the user asks you to run it.
@@ -142,7 +143,7 @@ node src/agent-cli.mjs capabilities
 
 The plan commands validate without writing to ConnectWise. Keep real work records in ignored .local, not examples or Git. Do not copy browser profiles, sessions, credentials, or private directory exports. The extension GUI needs no Node.js.
 
-For the user: paste/upload JSON in Daily/ Weekly TimeSheets and Daily Report, click Validate JSON, review the green/red result, then Save tickets & time + generate Daily Report updates. Do not describe validation or a populated form as submitted.
+For the user: paste/upload JSON in Multi-Ticket (Timesheets and Reports), click Validate JSON, review the green/red result, then Save tickets & time + generate Daily Report updates. Do not describe validation or a populated form as submitted.
 
 For authorized agent execution, run-day/run-week use the same JSON with --extension-id and optionally --tab-id. Read capabilities before relying on unattended execution; browserSubmission is still false. No ConnectWise API or model-specific integration is used.
 

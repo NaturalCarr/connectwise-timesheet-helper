@@ -1,21 +1,22 @@
 # Daily tickets, time, and email
 
-## Current behavior (0.9.18)
+## Current behavior (0.9.21)
 
 This section takes precedence over older release notes below.
 
 - Configure Ticket Owner and ticket defaults inside the extension. CLI users can export their own settings JSON.
-- Validate daily/weekly JSON in Multi-Ticket (Timesheets and Reports). Preview / copy EoD from JSON opens a Daily Report immediately, before submission completes. JSON names endOfDay/endOfDays remain compatible. Requested statuses aren't proof of saved records.
+- Validate daily/weekly JSON in Multi-Ticket (Timesheets and Reports). Preview / copy Daily Report from JSON opens a Daily Report immediately, before submission completes. JSON names endOfDay/endOfDays remain compatible. Requested statuses aren't proof of saved records.
 - DITL work is included. Payroll Wrap and lunch are always excluded, regardless of ticket. One bordered table contains ticket rows, two-column inventory rows and fully linked purchase labels.
 - New-ticket titles are shortened to 100 characters before duplicate lookup and creation. Full titles stay in the description; imported T references are retained where applicable. Existing tickets aren't renamed. A stricter live field limit stops safely.
 - Summary entry checks focus and stable readback and can retry an editable unsaved summary once. It never repeats New or Save as that recovery.
 - The final creation guard reuses one verified existing match. Multiple or invalid matches still stop.
 - Resume skips fully confirmed tickets from the same saved run without browser calls. Earlier evidence is retained; skipped tickets aren't freshly audited. Partial or uncertain time still gets exact duplicate checks, and missing/ambiguous previously verified rows aren't recreated.
 - Reload an updated extension, select the intended ConnectWise tab, then Resume. Don't rerun the original full JSON after a partial save.
-- Local/isolated-browser suite: 159 passed, 2 optional skipped. This isn't live production-save verification.
+- Daily Reports default to the newest available report date and use a calendar selector. Dates without reports clear the preview and disable copy. Edits remain tied to their report date.
+- Local/isolated-browser suite: 162 passed, 2 optional skipped. This isn't live production-save verification.
 
 
-Paste or upload daily JSON in **Daily/ Weekly TimeSheets and EoD**. Click **Validate JSON**, then **Run validated tickets in ConnectWise**. The owner saved in the extension is used for browser runs.
+Paste or upload daily JSON in **Multi-Ticket (Timesheets and Reports)**. Click **Validate JSON**, then **Save tickets & time + generate Daily Report updates**. The owner saved in the extension is used for browser runs.
 
 Daily JSON uses `schemaVersion: "1.2"`, a `date` in `YYYY-MM-DD`, and `items`. Each item has `school`, `issue`, and one or more `timeEntries`. Every entry must have the daily date; overlapping time is rejected across tickets. Use `existingTicketId` for a known ConnectWise number, or `titleContains` for a literal imported reference. Omit both to search for an exact school/issue ticket and create one only if none exists. Ambiguous matches stop.
 
@@ -76,7 +77,7 @@ Daily records accept endOfDay.inventory and endOfDay.purchases. Weekly records a
 
 Mac models render as amount x model, for example 2 x M1, 1 x M4. Inventory is report metadata: it creates no ticket or time. Never invent quantities or inventory work time. The report editor can override these details locally per date. Purchase rows use item, positive integer quantity and HTTP(S) url; the entire Item × quantity label is linked.
 
-Version 0.9.13: Validate JSON enables Preview / copy EoD from JSON immediately. The runner offers the same action before and during submission. These reports use supplied work notes, planned titles and requested statuses, with no invented saved IDs or verification evidence. The dedicated report page labels the source as unverified JSON, supports per-date inventory/purchase and email edits, and never calls ConnectWise. DITL and Payroll Wrap remain excluded. Saved-record reports and combined history remain separate.
+Version 0.9.13: Validate JSON enables Preview / copy Daily Report from JSON immediately. The runner offers the same action before and during submission. These reports use supplied work notes, planned titles and requested statuses, with no invented saved IDs or verification evidence. The dedicated report page labels the source as unverified JSON, supports per-date inventory/purchase and email edits, and never calls ConnectWise. DITL and Payroll Wrap remain excluded. Saved-record reports and combined history remain separate.
 
 Version 0.9.14 supersedes the earlier DITL exclusion: DITL work entries belong in the EoD. Only Payroll Wrap entries (including lunch) are excluded, regardless of ticket. This applies to JSON previews, saved daily/weekly reports and combined historical reports. Timesheet entries are unchanged.
 

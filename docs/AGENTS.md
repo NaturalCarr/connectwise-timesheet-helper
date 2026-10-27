@@ -1,6 +1,6 @@
 # Agent guide: ConnectWise Timesheet Helper JSON
 
-Use this file to prepare daily or weekly JSON for ConnectWise Timesheet Helper 0.9.19 or later. It works with any agent that can produce JSON. The user uploads or pastes the JSON into the extension. Preparing JSON does not submit tickets or time.
+Use this file to prepare daily or weekly JSON for ConnectWise Timesheet Helper 0.9.21 or later. It works with any agent that can produce JSON. The user uploads or pastes the JSON into the extension. Preparing JSON does not submit tickets or time.
 
 ## 1. Establish the facts
 

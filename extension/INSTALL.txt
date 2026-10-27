@@ -1,44 +1,45 @@
-CURRENT RELEASE: 0.9.18
-
-After an update, reload the extension and select the intended ConnectWise tab. Resume skips fully confirmed tickets; partial/uncertain time is duplicate-checked. A single existing exact-title match is reused without creating a duplicate. Titles over 100 characters are shortened; full text stays in the description.
-
-Validate JSON, then Preview / copy EoD from JSON to copy a Daily Report before the timesheet finishes. DITL work is included; Payroll Wrap and lunch are excluded. JSON statuses are requested values, not proof of saved records. No email is sent automatically.
+CURRENT RELEASE: 0.9.21
 
 ConnectWise Timesheet Helper
 
-1. Extract this ZIP into a permanent folder on your computer.
-2. In Brave, open brave://extensions. Turn on Developer mode.
-3. Click Load unpacked and select the extracted folder containing manifest.json.
-4. Pin ConnectWise Timesheet Helper from the browser Extensions menu.
-5. Open the helper. At the top, enter your exact ConnectWise display name
-   under Ticket Owner and click Save Ticket Owner.
-6. Sign in to ConnectWise with your own account and open the helper there.
+1. Extract the ZIP into a permanent folder.
+2. In Brave, open brave://extensions and enable Developer mode.
+3. Choose Load unpacked and select the folder containing manifest.json.
+4. Pin the helper, sign in to ConnectWise and select the intended ConnectWise tab.
+5. Save your exact ConnectWise display name as Ticket Owner.
+6. Open Settings and enter your own company, site and other exact labels.
+   Shared defaults are fictional.
 
-The saved owner stays until you manually replace it in the settings form.
-Clearing draft inputs and submitting work do not remove it. Uninstalling the
-extension or deleting browser extension data can remove local settings.
-Assign Me uses your signed-in account; the helper verifies the saved owner.
+For updates, replace files in the same folder and click Reload on the extension
+page. Preserve that folder to retain the extension identity and local settings.
 
-Company/Site defaults are Example Public Schools. This build targets
-na.myconnectwise.net. No Node.js or separate agent is needed for the GUI.
-Use actual work dates/times/notes. Check the runner's saved-record result.
-Final automated completion has not yet been verified in production.
+Use Find or Create Ticket with a ticket number or title text. A number takes
+priority. Imported references search title text without company/site filters.
+Multiple or unverified matches stop; a verified no-match can create a ticket.
+Use + Add a Time Entry for each time record.
 
-Find and open by title text accepts a reference from the original platform.
-It requires exactly one matching title at Example Schools and never creates a
-replacement when no match exists. Use an exact ConnectWise number if ambiguous.
-End-of-day email update lets you enter notes/next steps and choose each ticket's
-status. Update statuses and generate email saves/ verifies every status first.
-Copy email table pastes into your own email composer; the helper sends no email.
+In Multi-Ticket (Timesheets and Reports), paste/upload JSON and click Validate
+JSON. Review the preview, then Save tickets & time + generate Daily Report
+updates. Use actual work dates, times and notes.
 
-For an update: replace files in this same folder and click Reload on the
-extension page. Keep the same folder to preserve its extension identity.
+Preview / copy Daily Report from JSON is available after validation, before
+submission finishes. Requested statuses are not proof of saved records. DITL
+work is included; Payroll Wrap and lunch are excluded. Reports support inventory,
+document cameras and linked recommended purchases in a bordered table. Clipboard
+icon buttons copy the formatted report. No email is sent automatically.
 
-Daily runs: upload or paste daily JSON in Daily/ Weekly TimeSheets and EoD. DAILY-EXAMPLE.json is non-submittable example data. Use actual records. After all saves verify, the runner provides Copy email table and Download HTML. Email is never sent automatically.
+Daily Reports default to the newest available report date. Use the calendar to
+select another date. Dates without reports clear the preview and disable copy.
+Inventory, document-camera and purchase edits stay tied to their report date.
 
+History & Resume separates Saved runs, Verified time and Daily Reports. Resume
+the original stopped run rather than submitting its full JSON again. Fully
+confirmed tickets are skipped; partial/uncertain time is duplicate-checked.
+Read saved-record results before treating work as submitted.
 
-Unified ticket form: School is optional. Enter a ticket number and/or title text; the number is tried first. A missing number can fall back to one open title match. Use + Add a Time Entry for each time record. Text boxes grow automatically.
+Download Example Files provides fictional examples. AGENTS.md explains JSON
+preparation. Keep actual work records, staff details, local history, credentials
+and browser profiles out of shared packages.
 
-Ticket time: click + Add a Time Entry for each separate time record; Remove entry removes only that draft. Mark ticket as applies after all time records are saved and verified. Draft entries remain when the popup is closed.
-
-Open Ticket defaults and configuration in the popup to save your company, site, board and other exact ConnectWise labels. Browser settings persist independently of drafts. Download CLI settings JSON there if using the CLI. Existing reviewed plans retain their original configuration; validate a new plan after changing settings.
+Repository and releases:
+https://github.com/NaturalCarr/connectwise-timesheet-helper
