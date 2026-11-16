@@ -1,4 +1,4 @@
-CURRENT RELEASE: 0.11.5
+CURRENT RELEASE: 0.12.0
 
 ConnectWise Timesheet Helper
 
@@ -60,3 +60,6 @@ Multi-Day JSON supports any startDate/endDate range. Download the Multi-Day JSON
 IIQ Rake: select logged-in IIQ and CW tabs, enter your Resources search pattern,
 then Scan & preview changes. Pending Closure, Completed and Closed are ignored.
 After a stop, choose valid tabs and Continue selected changes to CW.
+
+School acronyms: add your own Company/acronym/Site rows in Settings and Save.
+No school mappings are bundled. Revalidate new work after changing mappings.

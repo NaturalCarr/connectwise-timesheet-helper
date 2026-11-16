@@ -9,7 +9,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     return false;
   }
   if (message?.action === 'helperBuild') {
-    sendResponse({ ok: true, version: '0.11.5', ticketSaveMethod: 'exact-element' });
+    sendResponse({ ok: true, version: '0.12.0', ticketSaveMethod: 'exact-element' });
     return false;
   }
   const actions = {
@@ -48,7 +48,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   });
   connectwiseActionQueue = pending.catch(() => {});
   pending.then(sendResponse, (error) => sendResponse({ ok: false,
-    error: `[Helper 0.11.5; ${message.action}] ${error.message}`,
+    error: `[Helper 0.12.0; ${message.action}] ${error.message}`,
     ticketId: Number.isSafeInteger(error.ticketId) ? error.ticketId : null }));
   return true;
 });
@@ -2347,11 +2347,11 @@ async function selectSchoolSite(tabId,frameId,site) {
  }
  throw new Error('Exact Site did not commit and close its picker. No Save was attempted.');
 }
-async function ensureTicketSiteInTab({tabId,ticketId,site}) {
+async function ensureTicketSiteInTab({tabId,ticketId,site,company}) {
  const found=await matchingFrame(tabId,ticketId,inspectTicketFrame);
  const target={tabId,frameIds:[found.frameId]};
  const [before]=await executeConnectWiseScript({target,func:inspectSchoolSite,args:[site]});
- if(before.result?.company!=='Democracy Prep Public Schools')throw new Error('School Site correction requires the expected Company.');
+ if(!company || String(before.result?.company||'').trim().toLowerCase()!==company.trim().toLowerCase())throw new Error('School Site correction requires the expected Company.');
  if(before.result?.verified)return {ok:true,verified:true,alreadySet:true};
  await selectSchoolSite(tabId,found.frameId,site);
  await executeConnectWiseScript({target,func:clearStatusEmailRecipients});

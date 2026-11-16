@@ -8,7 +8,7 @@ Archived notes from the former README. Entries describe the state at the time; s
 
 This section takes precedence over older release notes below.
 
-- IIQ Rake starts with current open CW tickets filtered by Resources (for example: `*your-login*`). Choose all or newest open tickets, then preview IIQ-to-CW status changes. Pending Closure/Completed/Closed CW records are excluded; historical run records no longer define the backlog.
+- IIQ Rake starts with current open CW tickets filtered by Resources (for Natural: `*ncarr*`). Choose all or newest open tickets, then preview IIQ-to-CW status changes. Pending Closure/Completed/Closed CW records are excluded; historical run records no longer define the backlog.
 
 - Confirmed school acronyms select their exact school Site (see School locations below). Company and notifications are unchanged. ConnectWise populates the address automatically.
 
@@ -327,7 +327,7 @@ Live investigation confirmed that a recorded CW ticket returned no result in Ope
 
 ## 0.11.0 current assigned-ticket rake
 
-Open a CW Service Board list with the top Location, Business Unit and Service Board selectors set to View All. In IIQ Rake, choose that CW tab and an authenticated IIQ tab, enter your Resources search pattern (use your own login pattern), then Scan & preview changes. The Resources pattern is saved locally and is editable for coworkers. Newest means highest CW ticket numbers, not last handled in helper history.
+Open a CW Service Board list with the top Location, Business Unit and Service Board selectors set to View All. In IIQ Rake, choose that CW tab and an authenticated IIQ tab, enter your Resources search pattern (Natural uses `*ncarr*`), then Scan & preview changes. The Resources pattern is saved locally and is editable for coworkers. Newest means highest CW ticket numbers, not last handled in helper history.
 
 The helper clears other column search fields, searches the visible board, waits for fresh result rows, and collects every page. It refuses incomplete or changing counts. If the Next control cannot be identified, increase Rows Per Page to show the full backlog and rescan. Tickets without one IIQ title reference are listed separately, and multiple open CW matches for the same reference still require review. Imported reference JSON also receives the current Resources eligibility check.
 
@@ -374,3 +374,7 @@ The user supplied a 0.11.4 rake result confirming 12 saved_verified CW updates (
 Continue with valid replacement CW/IIQ tabs without rescanning. Manual choices and verified results stay in the saved preview. Clipboard diagnostics remain available during the run. For JSON authoring, use docs/AGENTS.md; repository maintenance instructions are in the root AGENTS.md.
 
 Publication validation (0.11.5): both working and sanitized checkouts passed 245 tests, with 2 optional skips and zero failures.
+
+## 0.12.0
+
+Replace built-in school acronyms with Company-scoped mappings in Settings. Add, edit, remove and export mappings. Remove client-specific Site guards and bundled example acronyms. Existing saved plans remain unchanged.

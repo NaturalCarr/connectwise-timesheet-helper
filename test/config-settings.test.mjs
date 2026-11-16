@@ -10,3 +10,12 @@ test('saved configuration overlays packaged defaults without changing owner', as
 test('no configuration preserves packaged defaults', async () => {
  assert.deepEqual(await configuredDefaults({company:'Example'}, {get:async()=>({})}), {company:'Example'});
 });
+
+test('mapping validation normalizes and persists company-scoped user settings',async()=>{
+ const values=Object.fromEntries(configFields.map(key=>[key,'Example']));values.company='Client One';values.schoolMappings=[{acronym:' sch ',company:'Client One',site:'North Campus'},{acronym:'SCH',company:'Client Two',site:'South Campus'}];
+ const saved=validateDefaults(values);assert.equal(saved.schoolMappings[0].acronym,'SCH');assert.equal((await configuredDefaults({}, {get:async()=>({[configKey]:saved})})).schoolMappings.length,2);
+ assert.throws(()=>validateDefaults({...values,schoolMappings:[...values.schoolMappings,values.schoolMappings[0]]}),/Duplicate acronym/);
+ assert.throws(()=>validateDefaults({...values,schoolMappings:[{acronym:'S',company:'Client',site:'Site'}]}),/2-16/);
+ assert.throws(()=>validateDefaults({...values,schoolMappings:[{acronym:'SCH',company:'Client',site:''}]}),/Company and Site/);
+ assert.deepEqual(validateDefaults({...values,schoolMappings:[]}).schoolMappings,[]);
+});

@@ -32,22 +32,11 @@ For updates, replace the files in the same folder, click **Reload** on the Exten
 
 After a stop, use **Resume** or **Continue selected changes to CW**. Don't rerun the original full JSON after a partial save. Clipboard icons copy diagnostics, including the active step.
 
-## School locations
+## School acronyms
 
-For Democracy Prep Public Schools, these confirmed acronyms select the exact school Site. CW fills the address; unknown acronyms retain your configured default.
+In **Settings → School acronyms**, add an acronym, its exact CW Company, and its exact CW Site. Add, edit, or remove rows, then **Save configuration**. No client schools are built in. Mappings stay in your browser profile and are included when you download CLI settings JSON.
 
-| Acronym | ConnectWise Site |
-|---|---|
-| HPHS | Harlem Prep High School |
-| HPMS | Harlem Prep Middle School |
-| DPEES | Democracy Prep Endurance Elementary School |
-| DPEHS | Democracy Prep Endurance High School |
-| DPHES | Democracy Prep Harlem Elementary School |
-| DPHMS | Democracy Prep Harlem Middle School |
-| DPHHS | Democracy Prep Harlem High School |
-| BPHS | Bronx Prep High School |
-| BPMS | Bronx Prep Middle School |
-| DPCHS | Democracy Prep Charter High School |
+Matching is case-insensitive and scoped by Company. An unknown acronym keeps your configured default Site. Revalidate new work after changing mappings; saved run plans keep their original Sites. ConnectWise fills in the address after Site selection.
 
 ## Guides
 

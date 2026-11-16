@@ -1,12 +1,12 @@
 # Agent protocol
 
-## Current behavior (0.11.5)
+## Current behavior (0.12.0)
 
 This section takes precedence over older release notes below.
 
-- IIQ Rake starts with current open CW tickets filtered by Resources (for example: `*your-login*`). Choose all or newest open tickets, then preview IIQ-to-CW status changes. Pending Closure/Completed/Closed CW records are excluded; historical run records no longer define the backlog.
+- IIQ Rake starts with current open CW tickets filtered by Resources (for Natural: `*your-login*`). Choose all or newest open tickets, then preview IIQ-to-CW status changes. Pending Closure/Completed/Closed CW records are excluded; historical run records no longer define the backlog.
 
-- Confirmed school acronyms select their exact school Site (see School locations below). Company and notifications are unchanged. ConnectWise populates the address automatically.
+- Settings manages schoolMappings as an array of {acronym, company, site}. There are no built-in schools. Company scopes each mapping; unknown acronyms retain the configured default. Existing plans are unchanged.
 
 - Configure Ticket Owner and ticket defaults inside the extension. CLI users can export their own settings JSON.
 - Validate daily/weekly JSON in Multi-Ticket (Timesheets and Reports). Preview / copy Daily Report from JSON opens a Daily Report immediately, before submission completes. JSON names endOfDay/endOfDays remain compatible. Requested statuses aren't proof of saved records.
@@ -289,7 +289,7 @@ Multi-Day JSON replaces the Weekly JSON label in the workspace and example downl
 
 ## School locations (0.9.27)
 
-Newly validated plans for Democracy Prep Public Schools resolve these school acronyms to exact ConnectWise Sites: HPHS = Harlem Prep High School; HPMS = Harlem Prep Middle School; DPEES = Democracy Prep Endurance Elementary School; DPEHS = Democracy Prep Endurance High School; DPHES = Democracy Prep Harlem Elementary School; DPHMS = Democracy Prep Harlem Middle School; DPHHS = Democracy Prep Harlem High School; BPHS = Bronx Prep High School; BPMS = Bronx Prep Middle School; DPCHS = Democracy Prep Charter High School.
+Newly validated plans resolve only the user-managed Company/acronym mappings saved in Settings or supplied in CLI ticket settings.
 
 This supersedes the older company-wide Site rule for mapped schools. Company and notifications are unchanged. Unknown/omitted acronyms retain the configured default; conflicting explicit Sites stop. The Site picker populates addresses automatically; the helper never types address fields. Existing matched tickets receive the mapped Site before owner/time work; Save requires a fresh confirmation and post-reload Site verification. Exact-title duplicate lookup spans Sites within the company to reuse older tickets. Numeric and imported-reference lookup rules remain unchanged. Completed resume items still skip browser work. Older saved plans retain their original Site: revalidate remaining-work JSON, excluding confirmed finished entries, for the new mapping.
 
@@ -342,7 +342,7 @@ Live investigation confirmed that a recorded CW ticket returned no result in Ope
 
 ## 0.11.0 current assigned-ticket rake
 
-Open a CW Service Board list with the top Location, Business Unit and Service Board selectors set to View All. In IIQ Rake, choose that CW tab and an authenticated IIQ tab, enter your Resources search pattern (use your own login pattern), then Scan & preview changes. The Resources pattern is saved locally and is editable for coworkers. Newest means highest CW ticket numbers, not last handled in helper history.
+Open a CW Service Board list with the top Location, Business Unit and Service Board selectors set to View All. In IIQ Rake, choose that CW tab and an authenticated IIQ tab, enter your Resources search pattern (Natural uses `*your-login*`), then Scan & preview changes. The Resources pattern is saved locally and is editable for coworkers. Newest means highest CW ticket numbers, not last handled in helper history.
 
 The helper clears other column search fields, searches the visible board, waits for fresh result rows, and collects every page. It refuses incomplete or changing counts. If the Next control cannot be identified, increase Rows Per Page to show the full backlog and rescan. Tickets without one IIQ title reference are listed separately, and multiple open CW matches for the same reference still require review. Imported reference JSON also receives the current Resources eligibility check.
 
@@ -389,3 +389,9 @@ The user supplied a 0.11.4 rake result confirming 12 saved_verified CW updates (
 Continue with valid replacement CW/IIQ tabs without rescanning. Manual choices and verified results stay in the saved preview. Clipboard diagnostics remain available during the run. For JSON authoring, use docs/AGENTS.md; repository maintenance instructions are in the root AGENTS.md.
 
 Publication validation (0.11.5): both working and sanitized checkouts passed 245 tests, with 2 optional skips and zero failures.
+
+## User-managed school acronyms (0.12.0)
+
+Manage rows in Settings: acronym (2–16 letters/digits), exact CW Company, exact CW Site. Company/acronym pairs must be unique; the same acronym can belong to different companies. Settings export includes schoolMappings for model-independent CLI use. Empty or omitted mappings mean no school overrides. Removing a row stops future overrides; it does not alter saved run plans or tickets. Site correction verifies the configured Company before selecting/saving.
+
+0.12.0 validation: sanitized full suite 238 passed, 2 optional skipped; 11 targeted settings/rake/Site checks passed after removing the default IIQ client URL. No live ticket changes.

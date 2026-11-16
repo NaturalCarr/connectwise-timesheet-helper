@@ -5,11 +5,11 @@
   "items": [
     {
       "recordId": "voice-2026-10-06-hphs-issue-1",
-      "school": "HPHS",
+      "school": "SCH",
       "issue": "Classroom projector has no image",
       "description": "A classroom projector displayed no image from the connected computer. Troubleshoot the display path and document the result.",
       "context": {
-        "building": "HPHS",
+        "building": "SCH",
         "room": "Example room 204",
         "asset": "Example classroom projector",
         "people": [

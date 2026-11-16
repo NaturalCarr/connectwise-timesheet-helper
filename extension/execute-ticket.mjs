@@ -55,7 +55,7 @@ export async function executeTicket(plan, driver, checkpoint = null) {
     if (!openedByNumber && await driver.openTicket(ticketId, plan.ticket, { numberOnly: Boolean(checkpoint?.ticketId || plan.existingTicketId || plan.ticket.titleContains) }) !== true) {
       throw new Error(`Ticket #${ticketId} identity was not verified.`);
     }
-    if (plan.ticket.schoolSite && await driver.ensureTicketSite(ticketId, plan.ticket.site) !== true) throw new Error('School Site was not verified.');
+    if (plan.ticket.schoolSite && await driver.ensureTicketSite(ticketId, plan.ticket.site, plan.ticket.company) !== true) throw new Error('School Site was not verified.');
     // Re-read saved time before resuming final status; a checkpoint is not proof.
     if (checkpoint?.entry && ['saved_verified', 'existing_verified'].includes(checkpoint.entry.status) && plan.timeEntry) {
       const matches = await driver.findTimeEntries(ticketId, plan.timeEntry);

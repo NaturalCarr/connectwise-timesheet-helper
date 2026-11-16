@@ -1,3 +1,4 @@
+import { mappedSchoolSite } from './school-mappings.mjs';
 import { normalizeTicketTitle } from './ticket-title.mjs';
 import { workReportNotes } from './payroll-report.mjs';
 import { normalizeEodExtras } from './eod-extras.mjs';
@@ -57,8 +58,7 @@ function resolveSchoolSite(school, requestedSite, settings) {
   if (school && !/^[A-Z0-9]{2,16}$/.test(school)) {
     throw new Error(`School acronym must be 2-16 letters or digits: ${school || '(empty)'}.`);
   }
-  const sites={HPHS:'Harlem Prep High School',DPEES:'Democracy Prep Endurance Elementary School',DPEHS:'Democracy Prep Endurance High School',DPHES:'Democracy Prep Harlem Elementary School',DPHMS:'Democracy Prep Harlem Middle School',BPHS:'Bronx Prep High School',BPMS:'Bronx Prep Middle School',DPCHS:'Democracy Prep Charter High School',HPMS:'Harlem Prep Middle School',DPHHS:'Democracy Prep Harlem High School'};
-  const site = (clean(settings.company)==='Democracy Prep Public Schools' && sites[school]) || clean(settings.site);
+  const site = mappedSchoolSite(settings,school) || clean(settings.site);
   if (!site) throw new Error('The company-wide ConnectWise Site is missing from ticket settings.');
   const requested = clean(requestedSite);
   if (requested && requested.toLowerCase() !== site.toLowerCase()) {
@@ -97,7 +97,7 @@ export function planWorkItem(item, settings) {
     agreement: clean(settings.agreement),
     source: clean(settings.source),
     site,
-    ...(clean(settings.company)==='Democracy Prep Public Schools' && ['HPHS','DPEES','DPEHS','DPHES','DPHMS','BPHS','BPMS','DPCHS','HPMS','DPHHS'].includes(school) ? { schoolSite: true } : {}),
+    ...(mappedSchoolSite(settings,school) ? { schoolSite: true } : {}),
     summary,
     description: cleanBlock(item.description) || summary,
     ...(titleContains ? { titleContains } : {})

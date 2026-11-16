@@ -19,7 +19,7 @@ Ask for the work date, school/site acronym if used, ticket references, actual wo
 
 Each user configures their own Ticket Owner and ticket defaults through the extension's configuration screen. Do not put another user's name, company, site, agreement, credentials, or browser data into JSON.
 
-Company, board and contact defaults come from the user's configuration. Confirmed school acronyms select the exact school Site using the mappings in README.md; otherwise keep the configured Site. Do not invent mappings or infer a school from the weekday.
+Company, board and contact defaults come from the user configuration. Optional school acronyms resolve through user-managed mappings in Settings. Each mapping has acronym, company and site fields. Do not invent mappings or infer a school from the weekday.
 
 The extension uses the visible signed-in ConnectWise browser UI. Do not use APIs, credentials, or browser-session exports to bypass that workflow. JSON generation needs no access to ConnectWise.
 
@@ -280,10 +280,14 @@ Weekly-format JSON can include an optional inclusive `weekEnd` date to cover mul
 
 Multi-Day JSON replaces the Weekly JSON label in the workspace and example download. Use `schemaVersion: "1.1"`, `startDate`, `endDate`, and `items` for any inclusive date range, including a non-Monday start or multiple weeks. Example range: `"startDate":"2026-10-29", "endDate":"2026-11-12"`. Both dates are required for this format; do not mix them with legacy weekStart/weekEnd. Dated endOfDays metadata must be inside the range. Only supplied time entries are created; missing dates add no work. Existing weekly files remain accepted with their original Monday/Sunday defaults. CLI aliases `plan-multi-day` and `run-multi-day` use the same model-independent planner and browser safeguards. Current samples: examples/multi-day.example.json and extension/MULTI-DAY-EXAMPLE.json. Daily schema 1.2 still works.
 
-School locations (0.9.27): Company stays Democracy Prep Public Schools. Confirmed school acronyms resolve to exact school Sites; omit the optional site field instead of repeating the old company-wide default. See README.md School locations. Notification behavior is unchanged.
+School locations: add and manage client-specific Company/acronym/Site mappings in Settings. There are no built-in schools. Revalidate remaining work after mapping changes.
 
 IIQ Rake (0.10.0) reads rendered IIQ status and updates only matched CW statuses after review. It adds no tickets or time. Reference-list JSON uses schemas/rake.schema.json; validate via plan-rake. Direction must be IIQ_TO_CW.
 
 ## IIQ Rake
 
 Rake reconciles existing CW tickets from IIQ; work JSON does not request a rake. It never creates work records. Pending Closure, Completed and Closed CW tickets are ignored. Use Continue after selecting valid replacement tabs; a new full scan is optional.
+
+## User-managed school acronyms (0.12.0)
+
+Manage rows in Settings: acronym (2–16 letters/digits), exact CW Company, exact CW Site. Company/acronym pairs must be unique; the same acronym can belong to different companies. Settings export includes schoolMappings for model-independent CLI use. Empty or omitted mappings mean no school overrides. Removing a row stops future overrides; it does not alter saved run plans or tickets. Site correction verifies the configured Company before selecting/saving.
