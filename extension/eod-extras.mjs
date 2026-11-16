@@ -1,3 +1,19 @@
+export function normalizeVisitTimes(value = {}) {
+ const result={};
+ for(const key of ['arrivalTime','departureTime']){
+  if(value[key]===undefined || value[key]==='')continue;
+  if(typeof value[key]!=='string' || !/^([01]\d|2[0-3]):[0-5]\d$/.test(value[key]))throw new Error(key+' must use HH:MM in 24-hour time.');
+  result[key]=value[key];
+ }
+ return result;
+}
+export function renderVisitTimes(value) {
+ const times=normalizeVisitTimes(value);
+ const format=t=>{const [h,m]=t.split(':');return (Number(h)%12||12)+':'+m+' '+(Number(h)<12?'AM':'PM');};
+ const fields=[];if(times.arrivalTime)fields.push('<strong>Arrival:</strong> '+format(times.arrivalTime));if(times.departureTime)fields.push('<strong>Departure:</strong> '+format(times.departureTime));
+ const cell='border:1px solid #444;padding:8px;text-align:left;vertical-align:top';
+ return fields.length?'<tr><td style="'+cell+'">Arrival time and departure time</td><td colspan="3" style="'+cell+'">'+fields.join(' &nbsp; | &nbsp; ')+'</td></tr>':'';
+}
 export function normalizeDocCams(value) {
  if(value == null)return null;
  if(typeof value!=='object' || Array.isArray(value))throw new Error('docCams must be an object.');
@@ -24,14 +40,14 @@ export function normalizeEodExtras(value = {}) {
  });
  const grouped=[];
  for(const row of inventory){const prior=grouped.find(other=>other.item.toLowerCase()===row.item.toLowerCase());if(prior)prior.count+=', '+row.count;else grouped.push({...row});}
- const result={inventory:grouped,purchases:value.purchases || [],...(value.docCams!==undefined?{docCams:normalizeDocCams(value.docCams)}:{})}; renderEodExtras(result); return result;
+ const result={...normalizeVisitTimes(value),inventory:grouped,purchases:value.purchases || [],...(value.docCams!==undefined?{docCams:normalizeDocCams(value.docCams)}:{})}; renderEodExtras(result); return result;
 }
 const escape = value => String(value ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 export function renderEodExtras(record, integrated = false) {
  const cell = 'border:1px solid #444;padding:8px;text-align:left;vertical-align:top';
  const table = rows => '<table style="border-collapse:collapse;border:1px solid #444;color:#111;background:#fff" border="1" cellspacing="0" cellpadding="8">'+rows+'</table>';
  const inventory = (record.inventory || []).filter(row => String(row.item || '').trim() || String(row.count || '').trim());
- const purchases = (record.purchases || []).filter(row => row.item || row.quantity || row.url);
+ const purchases = (record.purchases || []).filter(row => row.item || row.quantity || row.url || row.reason);
  let html = inventory.length ? '<h3>Inventory</h3>'+table('<tr><th style="'+cell+'">Item</th><th style="'+cell+'">Count / details</th></tr>'+inventory.map(row => '<tr><td style="'+cell+'">'+escape(row.item)+'</td><td style="'+cell+'">'+escape(formatInventoryCount(row.count))+'</td></tr>').join('')) : '';
  if(integrated) html = inventory.length ? '<tr><th colspan="4" style="'+cell+';background-color:#eee">Inventory</th></tr>'+inventory.map(row => '<tr><th colspan="2" style="'+cell+'">'+escape(row.item)+'</th><td colspan="2" style="'+cell+'">'+escape(formatInventoryCount(row.count))+'</td></tr>').join('') : '';
  const docCams=normalizeDocCams(record.docCams);
@@ -39,11 +55,18 @@ export function renderEodExtras(record, integrated = false) {
  const right='<strong>DocCam needed In</strong>: '+(docCams.neededIn===undefined?'Not recorded':docCams.neededIn.length?docCams.neededIn.map(escape).join(', '):'None');
  const row='<tr><td'+(integrated?' colspan="2"':'')+' style="'+cell+'">'+left+'</td><td'+(integrated?' colspan="2"':'')+' style="'+cell+'">'+right+'</td></tr>';
  html+=integrated?row:table(row);}
- if(purchases.length) html += (integrated ? '<tr><td colspan="4" style="'+cell+'">' : '') + '<h3>Recommended purchases</h3><ul>'+purchases.map(row => {
-  let url; try { url = new URL(row.url); } catch { throw new Error('Enter a valid purchase link.'); }
-  if(!['https:','http:'].includes(url.protocol)) throw new Error('Purchase links must use https:// or http://.');
-  if(!String(row.item || '').trim() || !Number.isSafeInteger(Number(row.quantity)) || Number(row.quantity) < 1) throw new Error('Each purchase needs an item name and a positive whole-number quantity.');
-  return '<li><a href="'+escape(url.href)+'">'+escape(row.item)+' × '+Number(row.quantity)+'</a></li>';
- }).join('')+'</ul>'+(integrated ? '</td></tr>' : '');
+ if(purchases.length) {
+  const purchaseRows=purchases.map(row => {
+   let url; try { url = new URL(row.url); } catch { throw new Error('Enter a valid purchase link.'); }
+   if(!['https:','http:'].includes(url.protocol)) throw new Error('Purchase links must use https:// or http://.');
+   if(!String(row.item || '').trim() || !Number.isSafeInteger(Number(row.quantity)) || Number(row.quantity) < 1) throw new Error('Each purchase needs an item name and a positive whole-number quantity.');
+   if(row.reason!==undefined && typeof row.reason!=='string')throw new Error('Purchase reason must be text.');
+   const span=integrated?' colspan="2"':'';
+   return '<tr><td'+span+' style="'+cell+'"><a href="'+escape(url.href)+'">'+escape(row.item)+' × '+Number(row.quantity)+'</a></td><td'+span+' style="'+cell+'">'+escape(row.reason || '')+'</td></tr>';
+  }).join('');
+  const headings='<tr><th'+(integrated?' colspan="2"':'')+' style="'+cell+'">Item</th><th'+(integrated?' colspan="2"':'')+' style="'+cell+'">Reason</th></tr>';
+  html+=integrated?'<tr><td colspan="4" style="'+cell+'"><h3>Recommended purchases</h3></td></tr>'+headings+purchaseRows:'<h3>Recommended purchases</h3>'+table(headings+purchaseRows);
+ }
+
  return html;
 }

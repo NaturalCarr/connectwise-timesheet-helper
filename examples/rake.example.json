@@ -1,0 +1,18 @@
+{
+  "schemaVersion": "1.0",
+  "direction": "IIQ_TO_CW",
+  "exampleOnly": true,
+  "tickets": [
+    {
+      "reference": "T-12345",
+      "cwTicketIds": [
+        12345
+      ]
+    },
+    {
+      "reference": "T-12346",
+      "cwTicketIds": []
+    }
+  ],
+  "resourcesFilter": "*your-login*"
+}

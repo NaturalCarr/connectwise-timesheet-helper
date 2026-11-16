@@ -8,3 +8,5 @@ for(const id of ['ticket-section','weekly-section']){
  chrome.storage.local.get('helperUi:'+id).then(values=>{if(typeof values['helperUi:'+id]==='boolean')section.open=values['helperUi:'+id];ready=true;}).catch(()=>{ready=true;});
  section.addEventListener('toggle',()=>{if(ready)chrome.storage.local.set({['helperUi:'+id]:section.open}).catch(()=>{});});
 }
+
+$('open-rake').onclick=()=>chrome.tabs.create({url:chrome.runtime.getURL('rake.html'),active:true});

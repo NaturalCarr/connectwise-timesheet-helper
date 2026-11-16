@@ -39,7 +39,7 @@ export function combinedReports(runs) {
   const reportDetails=new Map();
   for(const run of [...runs].sort((a,b)=>a.updatedAt.localeCompare(b.updatedAt))){
     const details=run.plan.mode==='daily'?[{date:run.plan.date,...run.plan.endOfDay}]:(run.plan.endOfDays || []);
-    for(const day of details){const prior=reportDetails.get(day.date)||{};reportDetails.set(day.date,{...prior,...(day.docCams!==undefined?{docCams:day.docCams}:{}),...(day.inventory?.length?{inventory:day.inventory}:{}),...(day.purchases?.length?{purchases:day.purchases}:{})});}
+    for(const day of details){const prior=reportDetails.get(day.date)||{};reportDetails.set(day.date,{...prior,...(day.arrivalTime!==undefined?{arrivalTime:day.arrivalTime}:{}),...(day.departureTime!==undefined?{departureTime:day.departureTime}:{}),...(day.docCams!==undefined?{docCams:day.docCams}:{}),...(day.inventory?.length?{inventory:day.inventory}:{}),...(day.purchases?.length?{purchases:day.purchases}:{})});}
   }
   const finalStatuses=new Map();
   for(const run of [...runs].sort((a,b)=>a.updatedAt.localeCompare(b.updatedAt)))for(const result of run.result?.results||[]){if(['completed_verified','status_changed_verified'].includes(result.status)&&result.ticketStatus)finalStatuses.set(result.ticketId,{status:result.ticketStatus,at:run.updatedAt});}

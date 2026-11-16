@@ -23,3 +23,9 @@ test('weekly inventory remains tied to its report date and rejects duplicate dat
 test('Mac count details normalize consistently without changing counts',()=>{
  assert.deepEqual(normalizeEodExtras({inventory:[{item:'MacBooks',quantity:4,model:'M1'},{item:'MacBooks',quantity:1,model:'M4'},{item:'Chromebooks',quantity:10}]}).inventory,[{item:'MacBooks',count:'4 x M1, 1 x M4'},{item:'Chromebooks',count:'10'}]);
 });
+
+test('purchase reason survives daily and weekly planning, saved reports and history',()=>{
+ const input=load('extension/DAILY-EXAMPLE.json');input.endOfDay.purchases[0].reason='Document Camera Setup and replacement stock';
+ const plan=planDay(input,settings),result=execution(plan);assert.equal(plan.endOfDay.purchases[0].reason,input.endOfDay.purchases[0].reason);assert.match(reportsByDay(plan,result)[0].html,/Document Camera Setup and replacement stock/);assert.match(combinedReports([{plan,result,updatedAt:'2026-01-01'}])[0].html,/Document Camera Setup and replacement stock/);
+ const week=load('extension/WEEKLY-EXAMPLE.json');week.endOfDays[0].purchases[0].reason='Weekly setup';const wp=planWeek(week,settings);assert.match(reportsByDay(wp,execution(wp)).find(r=>r.date===week.endOfDays[0].date).html,/Weekly setup/);
+});

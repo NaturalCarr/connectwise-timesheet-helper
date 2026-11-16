@@ -99,7 +99,8 @@
         {
           "item": "USB-C adapter",
           "quantity": 2,
-          "url": "https://example.com/usb-c-adapter"
+          "url": "https://example.com/usb-c-adapter",
+          "reason": "Connect classroom equipment to staff devices."
         }
       ],
       "docCams": {
@@ -108,7 +109,9 @@
           "211",
           "336"
         ]
-      }
+      },
+      "arrivalTime": "08:00",
+      "departureTime": "16:30"
     }
   ]
 }

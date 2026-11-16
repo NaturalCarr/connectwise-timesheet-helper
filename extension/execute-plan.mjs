@@ -76,6 +76,7 @@ export async function executePlan(plan, driver, options = {}) {
         }
         result.status=previous.status;result.ticketStatus=item.completedStatus;await checkpoint();continue;
       }
+    if (item.ticket.schoolSite && await call('ensureTicketSite', ticketId, item.ticket.site) !== true) throw new Error('School Site was not verified.');
       if (await call('ensureTicketOwner', ticketId, item.ticket.owner) !== true) {
         throw new Error(`Ticket #${ticketId} Owner ${item.ticket.owner} was not verified.`);
       }

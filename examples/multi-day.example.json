@@ -1,0 +1,118 @@
+{
+  "schemaVersion": "1.1",
+  "exampleOnly": true,
+  "timeZone": "America/New_York",
+  "items": [
+    {
+      "recordId": "voice-2026-10-06-hphs-issue-1",
+      "school": "HPHS",
+      "issue": "Classroom projector has no image",
+      "description": "A classroom projector displayed no image from the connected computer. Troubleshoot the display path and document the result.",
+      "context": {
+        "building": "HPHS",
+        "room": "Example room 204",
+        "asset": "Example classroom projector",
+        "people": [
+          {
+            "name": "Example Staff Member",
+            "role": "reportedBy"
+          }
+        ]
+      },
+      "sourceRecordIds": [
+        "voice-note-example-001"
+      ],
+      "timeEntries": [
+        {
+          "recordId": "voice-2026-10-06-hphs-time-1",
+          "date": "2026-10-06",
+          "start": "09:00",
+          "end": "09:25",
+          "notes": "Checked the classroom projector and computer connection. Reseated the video cable and confirmed the computer display appeared on the projector.",
+          "workFacts": [
+            "Checked projector and computer connection",
+            "Reseated video cable",
+            "Confirmed computer display appeared on projector"
+          ],
+          "outcome": "Projector displayed the computer image.",
+          "followUp": "",
+          "workType": "Onsite Support",
+          "workRole": "Onsite Engineer",
+          "billable": "B",
+          "location": "ACS",
+          "businessUnit": "Managed Services",
+          "agreement": "IT Support Services AGR UNLTD/IT Support Services",
+          "ticketStatus": "Working Issue Now",
+          "addNoteTo": "Discussion",
+          "sourceRecordIds": [
+            "voice-note-example-001"
+          ]
+        },
+        {
+          "recordId": "voice-2026-10-06-hphs-time-2",
+          "date": "2026-10-06",
+          "start": "10:10",
+          "end": "10:20",
+          "notes": "Returned to the classroom and confirmed the projector still displayed the computer image after a restart.",
+          "workFacts": [
+            "Returned to classroom",
+            "Verified image after restart"
+          ],
+          "outcome": "Display remained functional after restart.",
+          "followUp": "",
+          "workType": "Onsite Support",
+          "workRole": "Onsite Engineer",
+          "billable": "B",
+          "location": "ACS",
+          "businessUnit": "Managed Services",
+          "agreement": "IT Support Services AGR UNLTD/IT Support Services",
+          "ticketStatus": "Working Issue Now",
+          "addNoteTo": "Discussion",
+          "sourceRecordIds": [
+            "voice-note-example-002"
+          ]
+        }
+      ]
+    }
+  ],
+  "endOfDays": [
+    {
+      "date": "2026-10-06",
+      "inventory": [
+        {
+          "item": "MacBooks",
+          "quantity": 2,
+          "model": "M1"
+        },
+        {
+          "item": "MacBooks",
+          "quantity": 1,
+          "model": "M4"
+        },
+        {
+          "item": "Chromebooks",
+          "quantity": 3
+        }
+      ],
+      "purchases": [
+        {
+          "item": "USB-C adapter",
+          "quantity": 2,
+          "url": "https://example.com/usb-c-adapter",
+          "reason": "Connect classroom equipment to staff devices."
+        }
+      ],
+      "docCams": {
+        "inUse": 12,
+        "neededIn": [
+          "211",
+          "336"
+        ]
+      },
+      "arrivalTime": "08:00",
+      "departureTime": "16:30"
+    }
+  ],
+  "startDate": "2026-10-05",
+  "endDate": "2026-10-11"
+}

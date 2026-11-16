@@ -57,7 +57,8 @@ function resolveSchoolSite(school, requestedSite, settings) {
   if (school && !/^[A-Z0-9]{2,16}$/.test(school)) {
     throw new Error(`School acronym must be 2-16 letters or digits: ${school || '(empty)'}.`);
   }
-  const site = clean(settings.site);
+  const sites={HPHS:'Harlem Prep High School',DPEES:'Democracy Prep Endurance Elementary School',DPEHS:'Democracy Prep Endurance High School',DPHES:'Democracy Prep Harlem Elementary School',DPHMS:'Democracy Prep Harlem Middle School',BPHS:'Bronx Prep High School',BPMS:'Bronx Prep Middle School',DPCHS:'Democracy Prep Charter High School',HPMS:'Harlem Prep Middle School',DPHHS:'Democracy Prep Harlem High School'};
+  const site = (clean(settings.company)==='Democracy Prep Public Schools' && sites[school]) || clean(settings.site);
   if (!site) throw new Error('The company-wide ConnectWise Site is missing from ticket settings.');
   const requested = clean(requestedSite);
   if (requested && requested.toLowerCase() !== site.toLowerCase()) {
@@ -96,6 +97,7 @@ export function planWorkItem(item, settings) {
     agreement: clean(settings.agreement),
     source: clean(settings.source),
     site,
+    ...(clean(settings.company)==='Democracy Prep Public Schools' && ['HPHS','DPEES','DPEHS','DPHES','DPHMS','BPHS','BPMS','DPCHS','HPMS','DPHHS'].includes(school) ? { schoolSite: true } : {}),
     summary,
     description: cleanBlock(item.description) || summary,
     ...(titleContains ? { titleContains } : {})
@@ -212,18 +214,25 @@ export function planWeek(input, settings) {
   if (input.timeZone !== undefined && input.timeZone !== 'America/New_York') {
     throw new Error('timeZone must be America/New_York.');
   }
-  const weekStart = clean(input.weekStart);
+  const multiDay = input.startDate !== undefined || input.endDate !== undefined;
+  if (multiDay && (input.weekStart !== undefined || input.weekEnd !== undefined)) throw new Error('Use startDate/endDate or legacy weekStart/weekEnd, not both.');
+  const weekStart = clean(multiDay ? input.startDate : input.weekStart);
   const monday = new Date(`${weekStart}T12:00:00Z`);
   if (!/^\d{4}-\d{2}-\d{2}$/.test(weekStart) || Number.isNaN(monday.getTime())
-    || monday.toISOString().slice(0, 10) !== weekStart || monday.getUTCDay() !== 1) {
-    throw new Error('weekStart must be a valid Monday in YYYY-MM-DD format.');
+    || monday.toISOString().slice(0, 10) !== weekStart || (!multiDay && monday.getUTCDay() !== 1)) {
+    throw new Error(multiDay ? 'startDate must be a valid date in YYYY-MM-DD format.' : 'weekStart must be a valid Monday in YYYY-MM-DD format.');
   }
   if (!Array.isArray(input.items) || !input.items.length) {
     throw new Error('A week requires at least one work item.');
   }
   const sunday = new Date(monday);
   sunday.setUTCDate(sunday.getUTCDate() + 6);
-  const weekEnd = sunday.toISOString().slice(0, 10);
+  const weekEnd = multiDay ? clean(input.endDate) : input.weekEnd === undefined ? sunday.toISOString().slice(0, 10) : clean(input.weekEnd);
+  const rangeEnd = new Date(`${weekEnd}T12:00:00Z`);
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(weekEnd) || Number.isNaN(rangeEnd.getTime())
+    || rangeEnd.toISOString().slice(0,10) !== weekEnd || weekEnd < weekStart) {
+    throw new Error(multiDay ? 'endDate must be a valid date on or after startDate.' : 'weekEnd must be a valid date on or after weekStart.');
+  }
   const seenTickets = new Set();
   const seenTicketIds = new Set();
   const seenEntries = new Set();
@@ -305,6 +314,7 @@ export function planWeek(input, settings) {
     { action: 'set-ticket-completed-and-verify', ticketIndex, status: ticket.completedStatus }
   ]);
   return { schemaVersion: input.schemaVersion || '1.1', exampleOnly: input.exampleOnly === true,
+    ...(multiDay ? {mode:'multi-day',startDate:weekStart,endDate:weekEnd} : {}),
     timeZone: input.timeZone || 'America/New_York', weekStart, weekEnd, tickets, steps,
     endOfDays: normalizeReportDays(input.endOfDays, weekStart, weekEnd),
     totalEntries: tickets.reduce((sum, ticket) => sum + ticket.timeEntries.length, 0) };
@@ -334,7 +344,7 @@ function normalizeReportDays(value, start, end) {
  if(value === undefined) return [];
  if(!Array.isArray(value)) throw new Error('endOfDays must be an array.');
  const seen=new Set();return value.map(day=>{
-  if(!day || !/^\d{4}-\d{2}-\d{2}$/.test(day.date || '') || day.date<start || day.date>end || Number.isNaN(Date.parse(day.date)) || new Date(day.date).toISOString().slice(0,10)!==day.date) throw new Error('Daily Report date must be a valid date inside the week.');
+  if(!day || !/^\d{4}-\d{2}-\d{2}$/.test(day.date || '') || day.date<start || day.date>end || Number.isNaN(Date.parse(day.date)) || new Date(day.date).toISOString().slice(0,10)!==day.date) throw new Error('Daily Report date must be a valid date inside the selected range.');
   if(seen.has(day.date)) throw new Error('Duplicate Daily Report date.');seen.add(day.date);
   return {date:day.date,subject:clean(day.subject),...normalizeEodExtras(day)};
  });

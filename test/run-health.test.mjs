@@ -1,0 +1,8 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import { checkBackground, recoverInterruptedRuns } from '../extension/run-health.mjs';
+test('health check fails promptly without dispatching a browser action',async()=>{const messages=[];await assert.rejects(checkBackground({sendMessage:m=>{messages.push(m);return new Promise(()=>{});}},10),/did not respond/);assert.deepEqual(messages,[{action:'helperHealth'}]);});
+test('health refuses a background queue with unfinished work',async()=>{await assert.rejects(checkBackground({sendMessage:async()=>({ok:true,pending:1,action:'savePreparedTime'})}),/may have taken effect/);});
+test('health accepts idle background',async()=>{assert.equal((await checkBackground({sendMessage:async()=>({ok:true,pending:0})})).ok,true);});
+test('recovery preserves all evidence and only changes abandoned running runs',async()=>{const evidence={results:[{ticketId:123,entries:[{status:'saved_verified'}]}]};const data={'runHistory:a':{state:'running',evidence},'runHistory:b':{state:'completed'},settings:{state:'running'}};let updates;const count=await recoverInterruptedRuns({request:async(n,o,cb)=>cb({})},{get:async()=>data,set:async x=>{updates=x;}});assert.equal(count,1);assert.deepEqual(updates['runHistory:a'].evidence,evidence);assert.equal(updates['runHistory:a'].state,'stopped');assert.equal(Object.keys(updates).length,1);});
+test('active lock prevents recovery from changing live work',async()=>{let read=false;assert.equal(await recoverInterruptedRuns({request:async(n,o,cb)=>cb(null)},{get:async()=>{read=true;}}),0);assert.equal(read,false);});

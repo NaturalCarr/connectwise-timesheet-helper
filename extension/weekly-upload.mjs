@@ -16,7 +16,7 @@ const eodButton=document.getElementById('preview-json-eod');
 eodButton.onclick=async()=>{try{if(validatedPlan)await openPlannedEod(validatedPlan);}catch(error){status.textContent=error.message;}};
 
 for (const [id, path, name] of [
-  ['download-weekly-sample', 'WEEKLY-EXAMPLE.json', 'ConnectWise-weekly-sample.json'],
+  ['download-weekly-sample', 'MULTI-DAY-EXAMPLE.json', 'ConnectWise-multi-day-sample.json'],
   ['download-daily-sample', 'DAILY-EXAMPLE.json', 'ConnectWise-daily-sample.json']
 ]) document.getElementById(id).addEventListener('click', async () => {
   try {
@@ -62,7 +62,7 @@ validateButton.addEventListener('click', async () => {
     const file = fileInput.files?.[0];
     if (file && file.size > 1024 * 1024) throw new Error('The JSON file must be under 1 MB.');
     const raw = textInput.value.trim() || (file ? await file.text() : '');
-    if (!raw.trim()) throw new Error('Paste a weekly JSON record or select a .json file.');
+    if (!raw.trim()) throw new Error('Paste a Multi-Day or daily JSON record or select a .json file.');
     if (raw.length > 1024 * 1024) throw new Error('The JSON text must be under 1 MB.');
     const record = JSON.parse(raw);
     const response = await fetch(chrome.runtime.getURL('ticket-settings.json'));

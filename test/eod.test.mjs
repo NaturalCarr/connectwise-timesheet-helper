@@ -20,6 +20,7 @@ test('title lookup creates a referenced ticket after a verified empty search', a
   driver.findTickets = async () => [];
   driver.createTicket = async () => 777;
   driver.openTicket = async () => true;
+  driver.ensureTicketSite = async () => true;
   driver.ensureTicketOwner = async () => true;
   driver.setTicketStatus = async () => {};
   driver.verifyTicketStatus = async () => true;

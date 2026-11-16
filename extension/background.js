@@ -1,22 +1,33 @@
-if (typeof importScripts === 'function') importScripts('form-functions.js');
+if (typeof importScripts === 'function') importScripts('form-functions.js', 'iiq-browser.js', 'rake-backlog.js');
 
 var connectwiseActionQueue = Promise.resolve();
+var connectwisePending = 0, connectwiseCurrentAction = null;
 
 chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
+  if (message?.action === 'helperHealth') {
+    sendResponse({ok:true,pending:connectwisePending,action:connectwiseCurrentAction});
+    return false;
+  }
   if (message?.action === 'helperBuild') {
-    sendResponse({ ok: true, version: '0.9.21', ticketSaveMethod: 'exact-element' });
+    sendResponse({ ok: true, version: '0.11.5', ticketSaveMethod: 'exact-element' });
     return false;
   }
   const actions = {
     enterNotes,
+    readIiqStatus: message => readIiqStatusInTab(message),
+    listRakeOpenTickets: message => readRakeBoardInTab(message),
+    checkRakeEligibility: message => checkRakeEligibilityInTab(message),
     inspectTicket: inspectTicketInTab,
+    readRakeTicket: readRakeTicketInTab,
     inspectRunDiagnostics: inspectRunDiagnosticsInTab,
     identifyCurrentTicket: identifyCurrentTicketInTab,
     verifyCurrentTicketCompanySite: verifyCurrentTicketCompanySiteInTab,
     findTickets: findOpenTitleTicketsInTab,
+    findRakeTickets: findTicketsInTab,
     createTicket: createTicketInTab,
     openTicket: openTicketInTab,
     ensureTicketOwner: ensureTicketOwnerInTab,
+    ensureTicketSite: ensureTicketSiteInTab,
     setTicketStatus: setTicketStatusInTab,
     verifyTicketStatus: verifyTicketStatusInTab,
     readTimeRows: readTimeRowsInTab,
@@ -29,10 +40,15 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   };
   const action = actions[message?.action];
   if (!action) return false;
-  const pending = connectwiseActionQueue.then(() => action(message));
+  connectwisePending++;
+  const pending = connectwiseActionQueue.then(async () => {
+    connectwiseCurrentAction = message.action;
+    try { return await action(message); }
+    finally { connectwisePending--; connectwiseCurrentAction = null; }
+  });
   connectwiseActionQueue = pending.catch(() => {});
   pending.then(sendResponse, (error) => sendResponse({ ok: false,
-    error: `[Helper 0.9.21; ${message.action}] ${error.message}`,
+    error: `[Helper 0.11.5; ${message.action}] ${error.message}`,
     ticketId: Number.isSafeInteger(error.ticketId) ? error.ticketId : null }));
   return true;
 });
@@ -442,7 +458,7 @@ function searchBoardForTicket(ticket) {
     set('#Site_name-input', '');
   } else {
     set('#Company_Name-input', ticket.company);
-    set('#Site_name-input', ticket.site);
+    set('#Site_name-input', ticket.schoolSite ? '' : ticket.site);
   }
   one('.cw-toolbar-search').click();
   return { searched: true };
@@ -451,7 +467,7 @@ function searchBoardForTicket(ticket) {
 function inspectBoardSearch(ticket) {
   const inputs = ['#Summary-input', '#Company_Name-input', '#Site_name-input']
     .map((selector) => document.querySelector(selector)?.value || '');
-  if (inputs[0] !== `*${ticket.titleContains || ticket.summary}*` || inputs[1] !== (ticket.titleContains ? '' : ticket.company) || inputs[2] !== (ticket.titleContains ? '' : ticket.site)) {
+  if (inputs[0] !== `*${ticket.titleContains || ticket.summary}*` || inputs[1] !== (ticket.titleContains ? '' : ticket.company) || inputs[2] !== (ticket.titleContains || ticket.schoolSite ? '' : ticket.site)) {
     return { ready: false, reason: 'Search filters changed.' };
   }
   const count = document.body?.innerText.match(/View\s+(\d+)\s*-\s*(\d+)\s+of\s+(\d+)/i);
@@ -464,7 +480,7 @@ function inspectBoardSearch(ticket) {
   const term = normalize(ticket.titleContains || ticket.summary);
   if (rows.some((cells) => !normalize(cells[6]).includes(term)
     || (!ticket.titleContains && (normalize(cells[8]) !== normalize(ticket.company)
-    || normalize(cells[9]) !== normalize(ticket.site))))) {
+    || (!ticket.schoolSite && normalize(cells[9]) !== normalize(ticket.site)))))) {
     return { ready: false, reason: 'Waiting for filtered search results.' };
   }
   if (count && Number(count[2]) < Number(count[3])) {
@@ -472,7 +488,7 @@ function inspectBoardSearch(ticket) {
   }
   const matches = rows.filter((cells) => (ticket.titleContains ? normalize(cells[6]).includes(normalize(ticket.titleContains)) : normalize(cells[6]) === normalize(ticket.summary))
     && (ticket.titleContains || (normalize(cells[8]) === normalize(ticket.company)
-    && normalize(cells[9]) === normalize(ticket.site))))
+    && (ticket.schoolSite || normalize(cells[9]) === normalize(ticket.site)))))
     .map((cells) => ({ ticketId: Number(cells[1]), summary: cells[6], company: cells[8], site: cells[9] }));
   return { ready: true, matches, visibleRows: rows.length, total: count ? Number(count[3]) : 0 };
 }
@@ -486,7 +502,7 @@ function inspectSearchedTicket(ticket) {
   const company = visible('input.cw_company')[0]?.value;
   const site = visible('input.cw_companyViewCompanyAddress')[0]?.value;
   return { matches: Boolean(header && (ticket.titleContains ? normalize(summary).includes(normalize(ticket.titleContains)) : normalize(summary) === normalize(ticket.summary))
-    && (ticket.titleContains || (normalize(company) === normalize(ticket.company) && normalize(site) === normalize(ticket.site)))),
+    && (ticket.titleContains || (normalize(company) === normalize(ticket.company) && (ticket.schoolSite || normalize(site) === normalize(ticket.site))))),
     ticketId: header ? Number(header[1]) : null };
 }
 
@@ -707,6 +723,30 @@ function inspectSelectedTicketOption(selector, value) {
     displayed: inputs.length === 1 ? inputs[0].value : null, count: inputs.length };
 }
 
+function activateExactTicketStatus(ticketId,value) {
+ const normalize=text=>String(text||'').replace(/\s+/g,' ').trim().replace(/~$/,'').trim().toLowerCase();
+ const visible=el=>el && el.getBoundingClientRect().width>0 && el.getBoundingClientRect().height>0;
+ const header=document.body?.innerText.match(/Service Ticket #(\d+)\s*-/);
+ if(header?.[1]!==String(ticketId))throw new Error('Ticket identity changed before Status selection.');
+ const inputs=[...document.querySelectorAll('input.cw_status')].filter(el=>visible(el) && /^Status\s*:/i.test(el.closest('tr')?.innerText.trim()||''));
+ if(inputs.length!==1 || inputs[0].disabled)throw new Error('Ticket Status field is not uniquely available.');
+ const pickers=[...document.querySelectorAll('.gwt-dropdown-options')].filter(visible);
+ if(pickers.length!==1)throw new Error('Expected one open Status picker.');
+ const options=[...pickers[0].querySelectorAll(':scope > .mm_label')].filter(el=>visible(el) && normalize(el.textContent)===normalize(value));
+ if(options.length!==1)throw new Error('Expected one exact '+value+' Status option.');
+ const option=options[0];
+ if(option.getAttribute('aria-disabled')==='true' || option.closest('[inert]'))throw new Error('Requested Status option is disabled.');
+ option.scrollIntoView({block:'nearest',inline:'nearest',behavior:'instant'});
+ const text=option.querySelector('div') || option;
+ // GWT's option selection is handled on mouse down on its text child.
+ // HTMLElement.click() alone on the outer label does not commit this picker.
+ for(const type of ['mousedown','mouseup','click']){
+  if(!text.isConnected)break;
+  text.dispatchEvent(new MouseEvent(type,{bubbles:true,cancelable:true,view:window,button:0,buttons:type==='mousedown'?1:0}));
+ }
+ return {activated:true};
+}
+
 async function chooseTicketOptionInTab(tabId, frameId, selector, value, ticketId = null, retryStatus = true) {
   await chrome.tabs.update(tabId, { active: true });
   const target = { tabId, frameIds: [frameId] };
@@ -729,7 +769,8 @@ async function chooseTicketOptionInTab(tabId, frameId, selector, value, ticketId
   if (!choice.result?.alreadySelected) {
     if (!choice.result?.found) throw new Error(`${selector}: ${value} choice was not located (field: ${JSON.stringify(choice.result?.displayed)}, visible choices: ${choice.result?.options?.join(', ') || 'none'}).`);
     if (selector === 'ticket-status' && ticketId) {
-      await trustedTicketControlClick(tabId, frameId, ticketId, 'status-option', value);
+      const [activation]=await executeConnectWiseScript({target,func:activateExactTicketStatus,args:[String(ticketId),value]});
+      if(!activation?.result?.activated)throw new Error('Exact Status option was not activated. Save was not attempted.');
     } else if (['input.cw_workType','input.cw_billable'].includes(selector) && ticketId) {
       await trustedTicketControlClick(tabId, frameId, ticketId, 'time-option', value, selector);
     } else if (selector === 'input.cw_ticketOwner' && ticketId) {
@@ -797,15 +838,15 @@ async function locateCompanySuggestion(company) {
   throw new Error(`Company suggestion ${company} was not found (field text: ${JSON.stringify(current?.value || '')}, read-only: ${Boolean(current?.readOnly)}, picker opened: ${openedPicker}).`);
 }
 
-function inspectCompanyDefaults(ticket) {
+function inspectCompanyDefaults(ticket, includeAgreement = true) {
   const visible = (selector) => [...document.querySelectorAll(selector)].filter((el) =>
     el.getBoundingClientRect().width > 0 && el.getBoundingClientRect().height > 0);
   const normalize = (value) => String(value || '').trim().replace(/^\$\s*/, '').toLowerCase();
   const fields = [
     ['input.cw_company', ticket.company],
     ['input.cw_contact', ticket.contact],
-    ['input.cw_companyViewCompanyAddress', ticket.site],
-    ['input.cw_agreement', ticket.agreement]
+    ...(includeAgreement ? [['input.cw_companyViewCompanyAddress', ticket.site]] : []),
+    ...(includeAgreement ? [['input.cw_agreement', ticket.agreement]] : [])
   ];
   const mismatches = fields.flatMap(([selector, expected]) => {
     const inputs = visible(selector);
@@ -814,6 +855,27 @@ function inspectCompanyDefaults(ticket) {
       : [`${selector}: displayed ${JSON.stringify(inputs[0].value)}`];
   });
   return { verified: mismatches.length === 0, mismatches };
+}
+
+function inspectAgreementSelection(expected) {
+ const controls=[...document.querySelectorAll('input.cw_agreement')].filter(el=>el.getBoundingClientRect().width>0 && el.getBoundingClientRect().height>0);
+ const normalize=value=>String(value || '').trim().replace(/^\$\s*/, '').toLowerCase();
+ return {count:controls.length,value:controls.length===1?controls[0].value:null,verified:controls.length===1 && normalize(controls[0].value)===normalize(expected)};
+}
+async function ensureNewTicketAgreement(tabId, frameId, expected) {
+ if(typeof expected!=='string' || !expected.trim())throw new Error('A configured Agreement is required before creating a ticket.');
+ const target={tabId,frameIds:[frameId]};
+ const read=async()=>{const [result]=await executeConnectWiseScript({target,func:inspectAgreementSelection,args:[expected]});return result?.result;};
+ let state=await read();
+ if(state?.count!==1)throw new Error('Expected one visible Agreement control. No ticket Save was attempted.');
+ if(!state.verified)await chooseTicketOptionInTab(tabId,frameId,'input.cw_agreement',expected);
+ let stable=0;
+ for(let attempt=0;attempt<32;attempt++){
+  state=await read();stable=state?.verified?stable+1:0;
+  if(stable>=4)return;
+  await new Promise(resolve=>setTimeout(resolve,250));
+ }
+ throw new Error('Agreement did not retain the configured selection: displayed '+JSON.stringify(state?.value)+'. No ticket Save was attempted.');
 }
 
 function inspectNewTicketDraft(ticket) {
@@ -987,24 +1049,7 @@ async function createTicketInTab({ tabId, ticket }) {
   const target = { tabId, frameIds: [newFrame] };
   // ConnectWise may replace the search text while resolving autocomplete options.
   // Verify the selected option and its dependent defaults, not transient typing.
-  await trustedTicketText(tabId, newFrame, 'input.cw_company', ticket.company, false);
-  const [companyChoice] = await executeConnectWiseScript({
-    target, func: locateCompanySuggestion, args: [ticket.company]
-  });
-  if (!companyChoice.result?.found) throw new Error('Exact Company suggestion was not located.');
-  await browserMouse(tabId, companyChoice.result, false);
-  let companyDefaults;
-  let stableChecks = 0;
-  for (let attempt = 0; attempt < 24; attempt++) {
-    const [check] = await executeConnectWiseScript({ target, func: inspectCompanyDefaults, args: [ticket] });
-    companyDefaults = check.result;
-    stableChecks = companyDefaults?.verified ? stableChecks + 1 : 0;
-    if (stableChecks >= 4) break;
-    await new Promise((resolve) => setTimeout(resolve, 250));
-  }
-  if (stableChecks < 4) {
-    throw new Error(`Company selection did not populate the expected fields: ${companyDefaults?.mismatches?.join('; ') || 'unknown mismatch'}.`);
-  }
+  await ensureNewTicketCompany(tabId, newFrame, ticket);
   await chooseTicketOptionInTab(tabId, newFrame, 'input.cw_serviceBoard', ticket.board);
   const statusSelector = 'ticket-status';
   for (const [selector, value] of [
@@ -1012,6 +1057,8 @@ async function createTicketInTab({ tabId, ticket }) {
   ]) {
     await chooseTicketOptionInTab(tabId, newFrame, selector, value);
   }
+  await selectSchoolSite(tabId, newFrame, ticket.site);
+  await ensureNewTicketAgreement(tabId, newFrame, ticket.agreement);
   await trustedTicketText(tabId, newFrame, 'input.cw_PsaSummaryHeader', ticket.summary);
   await trustedTicketText(tabId, newFrame, 'textarea[placeholder="Enter Initial Description..."]', ticket.description);
   await executeConnectWiseScript({ target, func: clearNewTicketEmail });
@@ -1148,7 +1195,7 @@ async function openTicketInTab({ tabId, ticketId, ticket, numberOnly = false }) 
   await connectwiseTab(tabId);
   if (!Number.isSafeInteger(Number(ticketId)) || Number(ticketId) <= 0) throw new Error('A positive ticket number is required.');
   const identity = (open) => numberOnly || (open.summary === ticket.summary
-    && open.company === ticket.company && open.site === ticket.site);
+    && open.company === ticket.company && (ticket.schoolSite || open.site === ticket.site));
   try {
     const open = await inspectTicketInTab({ tabId, ticketId });
     if (identity(open)) return { ok: true, ticketId: Number(ticketId), verified: true };
@@ -2260,4 +2307,115 @@ async function reloadConnectWiseSafely(tabId) {
     if(attached)await chrome.debugger.detach(target).catch(()=>{});
     if(lease)await restoreForeignExtensionFrames(tabId,lease);
   }
+}
+
+function inspectSchoolSite(site) {
+ const visible=el=>el && el.getBoundingClientRect().width>0 && el.getBoundingClientRect().height>0;
+ const fields=[...document.querySelectorAll('input.cw_companyViewCompanyAddress')].filter(visible);
+ const picker=document.getElementById('AddressPickerList-listview-scroller');
+ const companies=[...document.querySelectorAll('input.cw_company')].filter(visible);
+ return {company:companies.length===1?companies[0].value.trim():null,verified:fields.length===1 && fields[0].value.trim()===site && !visible(picker)};
+}
+function schoolSitePickerStep(site, open) {
+ const visible=el=>el && el.getBoundingClientRect().width>0 && el.getBoundingClientRect().height>0;
+ const fields=[...document.querySelectorAll('input.cw_companyViewCompanyAddress')].filter(visible);
+ if(fields.length!==1)throw new Error('Expected one visible Site field.');
+ if(open){
+  const field=fields[0];if(field.value.trim()===site)return {verified:true};
+  const arrow=field.parentElement?.parentElement?.nextElementSibling;
+  if(!visible(arrow))throw new Error('Site arrow was not located.');
+  arrow.click();return {opened:true};
+ }
+ const list=document.getElementById('AddressPickerList-listview-scroller');
+ if(!visible(list))return {waiting:true};
+ const candidates=[...list.querySelectorAll('td a.cw-ml-clickable-cell')].filter(el=>visible(el)&&el.innerText.trim()===site);
+ if(candidates.length>1)throw new Error('Multiple exact Site matches.');
+ if(candidates.length===0)return {waiting:true};
+ candidates[0].click();return {selected:true};
+}
+async function selectSchoolSite(tabId,frameId,site) {
+ const target={tabId,frameIds:[frameId]};
+ const [start]=await executeConnectWiseScript({target,func:schoolSitePickerStep,args:[site,true]});
+ if(start.result?.verified)return;
+ let selected=false,stable=0;
+ for(let n=0;n<120;n++){
+  const [r]=await executeConnectWiseScript({target,func:selected?inspectSchoolSite:schoolSitePickerStep,args:selected?[site]:[site,false]});
+  if(r.result?.selected)selected=true;
+  stable=r.result?.verified?stable+1:0;
+  if(stable>=4)return;
+  await new Promise(resolve=>setTimeout(resolve,250));
+ }
+ throw new Error('Exact Site did not commit and close its picker. No Save was attempted.');
+}
+async function ensureTicketSiteInTab({tabId,ticketId,site}) {
+ const found=await matchingFrame(tabId,ticketId,inspectTicketFrame);
+ const target={tabId,frameIds:[found.frameId]};
+ const [before]=await executeConnectWiseScript({target,func:inspectSchoolSite,args:[site]});
+ if(before.result?.company!=='Democracy Prep Public Schools')throw new Error('School Site correction requires the expected Company.');
+ if(before.result?.verified)return {ok:true,verified:true,alreadySet:true};
+ await selectSchoolSite(tabId,found.frameId,site);
+ await executeConnectWiseScript({target,func:clearStatusEmailRecipients});
+ await trustedTicketSave(tabId,found.frameId,ticketId);
+ for(let n=0;n<120;n++){
+  const [check]=await executeConnectWiseScript({target,func:verifyTicketStatus,args:[String(ticketId),found.state.status]});
+  if(check.result?.verified){
+   await reloadConnectWiseSafely(tabId);
+   for(let attempt=0;attempt<120;attempt++){
+    try{const refreshed=await matchingFrame(tabId,ticketId,inspectTicketFrame);
+     const [saved]=await executeConnectWiseScript({target:{tabId,frameIds:[refreshed.frameId]},func:inspectSchoolSite,args:[site]});
+     if(saved.result?.verified)return {ok:true,verified:true,saved:true};
+    }catch{}
+    await new Promise(resolve=>setTimeout(resolve,500));
+   }
+   throw new Error('Site was not verified after save and reload.');
+  }
+  await new Promise(resolve=>setTimeout(resolve,500));
+ }
+ throw new Error('Site Save was attempted once but not confirmed. Stop before more work.');
+}
+
+async function ensureNewTicketCompany(tabId, frameId, ticket) {
+ const target={tabId,frameIds:[frameId]};
+ await trustedTicketText(tabId,frameId,'input.cw_company',ticket.company,false);
+ const [choice]=await executeConnectWiseScript({target,func:locateCompanySuggestion,args:[ticket.company]});
+ if(!choice.result?.found)throw new Error('Exact Company suggestion was not located.');
+ // Attach, remeasure and hit-test through the shared guarded dropdown path.
+ await trustedTicketControlClick(tabId,frameId,null,'new-ticket-option',ticket.company,'input.cw_company');
+ let stable=0,last;
+ for(let attempt=0;attempt<240;attempt++){
+  const [check]=await executeConnectWiseScript({target,func:inspectCompanyDefaults,args:[ticket,false]});
+  last=check.result;stable=last?.verified?stable+1:0;
+  if(stable>=4)return;
+  await new Promise(resolve=>setTimeout(resolve,250));
+ }
+ throw new Error('Company selection did not populate the expected fields: '+(last?.mismatches?.join('; ')||'unknown mismatch')+'. No Save was attempted.');
+}
+
+async function readRakeTicketInTab({tabId,ticketId,company}) {
+ const normalize=value=>String(value||'').trim().replace(/\s+/g,' ').toLowerCase();
+ if(!normalize(company))throw new Error('The configured CW Company is required.');
+ await openRakeNumberInTab({tabId,ticketId});
+ let stable=0,last=null,signature='';
+ for(let attempt=0;attempt<120;attempt++){
+  try{last=await inspectTicketInTab({tabId,ticketId});}catch{last=null;}
+  const ready=last?.matches && last.summary && last.status && normalize(last.company)===normalize(company);
+  const next=ready?JSON.stringify([last.summary,last.status,normalize(last.company)]):'';
+  stable=ready && next===signature?stable+1:0;signature=next;
+  if(stable>=3)return {...last,ok:true};
+  await new Promise(resolve=>setTimeout(resolve,500));
+ }
+ if(!last?.company || !last?.summary || !last?.status)throw new Error('CW ticket fields did not finish loading: Company '+JSON.stringify(last?.company??null)+', Status '+JSON.stringify(last?.status??null)+'. No status update was attempted.');
+ throw new Error('CW Company mismatch: expected '+JSON.stringify(company)+', read '+JSON.stringify(last.company)+'. No status update was attempted.');
+}
+
+async function openRakeNumberInTab({tabId,ticketId}) {
+ if(!Number.isSafeInteger(ticketId)||ticketId<=0)throw new Error('A positive recorded CW ticket number is required.');
+ await connectwiseTab(tabId);
+ const tab=await chrome.tabs.get(tabId);
+ const current=new URL(tab.url);
+ if(!/^\/v[^/]+\/connectwise\.(?:aspx|html)$/i.test(current.pathname))throw new Error('Choose the main ConnectWise app tab for rake navigation.');
+ // This is the visible ticket link exposed by CW global search, not an API endpoint.
+ const target=new URL(current.origin+current.pathname.replace(/[^/]+$/,'ConnectWise.html'));
+ target.searchParams.set('locale','en_US');target.searchParams.set('routeTo','ServiceFV');target.searchParams.set('srRecID',String(ticketId));
+ await chrome.tabs.update(tabId,{url:target.href,active:true});
 }

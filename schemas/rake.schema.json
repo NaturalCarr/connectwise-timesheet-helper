@@ -1,0 +1,52 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "IIQ to CW Rake reference list",
+  "type": "object",
+  "required": [
+    "schemaVersion",
+    "direction",
+    "tickets"
+  ],
+  "properties": {
+    "schemaVersion": {
+      "const": "1.0"
+    },
+    "direction": {
+      "const": "IIQ_TO_CW"
+    },
+    "exampleOnly": {
+      "type": "boolean"
+    },
+    "tickets": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": [
+          "reference"
+        ],
+        "properties": {
+          "reference": {
+            "type": "string",
+            "pattern": "^T-[0-9]+$"
+          },
+          "cwTicketIds": {
+            "type": "array",
+            "uniqueItems": true,
+            "items": {
+              "type": "integer",
+              "minimum": 1
+            }
+          },
+          "lastHandledAt": {
+            "type": "string"
+          }
+        }
+      }
+    },
+    "resourcesFilter": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 100
+    }
+  }
+}

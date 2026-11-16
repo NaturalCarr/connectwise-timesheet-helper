@@ -68,6 +68,8 @@ test('loaded popup shows title lookup and reveals time fields; owner survives cl
       assert.equal(await page.locator('#ticket-owner-setting').inputValue(), 'Coworker Name');
       assert.equal(await page.evaluate(async () => (await chrome.storage.local.get('helperSettings:ticketOwner'))['helperSettings:ticketOwner']), 'Coworker Name');
       await page.getByText('Download Example Files', {exact:true}).click();
+      assert.equal(await page.getByRole('button',{name:'Multi-Day JSON',exact:true}).count(),1);
+      const multiDownload=page.waitForEvent('download');await page.getByRole('button',{name:'Multi-Day JSON',exact:true}).click();assert.equal((await multiDownload).suggestedFilename(),'ConnectWise-multi-day-sample.json');
       assert.equal(await page.locator('#download-eod-sample').isVisible(),true);
       assert.equal(await page.locator('#copy-eod-sample svg').count(),1);
       await page.evaluate(() => Object.defineProperty(navigator,'clipboard',{configurable:true,value:{async write(items){window.exampleClipboard=await items[0].getType('text/html').then(blob=>blob.text());}}}));

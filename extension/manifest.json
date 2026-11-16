@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "ConnectWise Timesheet Helper",
-  "version": "0.9.21",
+  "version": "0.11.5",
   "description": "Local ConnectWise ticket and timesheet browser workflow.",
   "permissions": [
     "activeTab",
@@ -20,5 +20,8 @@
   "action": {
     "default_popup": "popup.html"
   },
-  "options_page": "settings.html"
+  "options_page": "settings.html",
+  "optional_host_permissions": [
+    "https://*.incidentiq.com/*"
+  ]
 }

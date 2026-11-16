@@ -1,6 +1,6 @@
 # Agent guide: ConnectWise Timesheet Helper JSON
 
-Use this file to prepare daily or weekly JSON for ConnectWise Timesheet Helper 0.9.21 or later. It works with any agent that can produce JSON. The user uploads or pastes the JSON into the extension. Preparing JSON does not submit tickets or time.
+Use this file to prepare Daily or Multi-Day JSON for ConnectWise Timesheet Helper 0.11.5 or later. It works with any agent that can produce JSON. The user uploads or pastes the JSON into the extension. Preparing JSON does not submit tickets or time.
 
 ## 1. Establish the facts
 
@@ -19,7 +19,7 @@ Ask for the work date, school/site acronym if used, ticket references, actual wo
 
 Each user configures their own Ticket Owner and ticket defaults through the extension's configuration screen. Do not put another user's name, company, site, agreement, credentials, or browser data into JSON.
 
-Company/Site/board/contact defaults come from the user's configuration. A school acronym is an optional title prefix, not a replacement for the configured ConnectWise Site. Do not infer the school from the weekday.
+Company, board and contact defaults come from the user's configuration. Confirmed school acronyms select the exact school Site using the mappings in README.md; otherwise keep the configured Site. Do not invent mappings or infer a school from the weekday.
 
 The extension uses the visible signed-in ConnectWise browser UI. Do not use APIs, credentials, or browser-session exports to bypass that workflow. JSON generation needs no access to ConnectWise.
 
@@ -265,3 +265,25 @@ Standalone pages share Workspace, History & Resume, and Settings navigation, con
 ## Report-date calendar (0.9.21)
 
 Daily Reports open on the newest available report date, independent of the order reports were generated or loaded. Report date is now a calendar input instead of a dropdown on the JSON preview, run results, history and generated manual-report pages. The calendar spans available dates. If a selected date has no report, the old preview and editors are cleared and copy is disabled until a valid report date is chosen. Inventory and purchase edits stay tied to their report date.
+
+Purchase recommendations may include optional `reason` text. Put only a user-supplied or clearly supported purchase purpose here. It appears beside the linked item in the Daily Report.
+
+## Arrival and departure (0.9.24)
+
+Daily JSON accepts optional `endOfDay.arrivalTime` and `endOfDay.departureTime` in 24-hour HH:MM format. Weekly JSON accepts the same fields in each dated `endOfDays` record. Example: `{"arrivalTime":"08:00","departureTime":"16:30"}`. These are actual onsite times supplied by the user, not inferred from time entries. They add no records and do not change hours or billing. The Daily Report includes a table row labeled Arrival time and departure time in the Ticket column, with the actual times in the adjoining merged cell. Report editors save and clear these fields independently for each report date; manual report entry has the same inputs. Omit a time when it is unknown. Existing JSON remains compatible.
+
+## Multiple weeks in one JSON (0.9.26)
+
+Weekly-format JSON can include an optional inclusive `weekEnd` date to cover multiple weeks in one validated batch. Example: `{"schemaVersion":"1.1","weekStart":"2026-11-02","weekEnd":"2026-11-12","items":[...]}`. weekStart remains a Monday. Without weekEnd, the range remains the original Monday-Sunday week. Entries and dated endOfDays metadata must fall inside the selected range; duplicate checks, overlap rejection, per-day reports and resume evidence still apply. Only include actual requested work or leave dates; a date range does not generate entries for missing days.
+
+## Multi-Day JSON (0.9.26)
+
+Multi-Day JSON replaces the Weekly JSON label in the workspace and example download. Use `schemaVersion: "1.1"`, `startDate`, `endDate`, and `items` for any inclusive date range, including a non-Monday start or multiple weeks. Example range: `"startDate":"2026-10-29", "endDate":"2026-11-12"`. Both dates are required for this format; do not mix them with legacy weekStart/weekEnd. Dated endOfDays metadata must be inside the range. Only supplied time entries are created; missing dates add no work. Existing weekly files remain accepted with their original Monday/Sunday defaults. CLI aliases `plan-multi-day` and `run-multi-day` use the same model-independent planner and browser safeguards. Current samples: examples/multi-day.example.json and extension/MULTI-DAY-EXAMPLE.json. Daily schema 1.2 still works.
+
+School locations (0.9.27): Company stays Democracy Prep Public Schools. Confirmed school acronyms resolve to exact school Sites; omit the optional site field instead of repeating the old company-wide default. See README.md School locations. Notification behavior is unchanged.
+
+IIQ Rake (0.10.0) reads rendered IIQ status and updates only matched CW statuses after review. It adds no tickets or time. Reference-list JSON uses schemas/rake.schema.json; validate via plan-rake. Direction must be IIQ_TO_CW.
+
+## IIQ Rake
+
+Rake reconciles existing CW tickets from IIQ; work JSON does not request a rake. It never creates work records. Pending Closure, Completed and Closed CW tickets are ignored. Use Continue after selecting valid replacement tabs; a new full scan is optional.

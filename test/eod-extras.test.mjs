@@ -19,3 +19,10 @@ test('purchase links reject unsafe protocols and incomplete rows',()=>{
  for(const url of ['javascript:alert(1)','data:text/html,bad','not a url'])assert.throws(()=>renderEodExtras({purchases:[{item:'Adapter',quantity:1,url}]}));
  for(const quantity of [0,-1,1.5,''])assert.throws(()=>renderEodExtras({purchases:[{item:'Adapter',quantity,url:'https://example.com'}]}));
 });
+
+test('optional purchase reasons render escaped beside links without adding nested tables',()=>{
+ const row={item:'HDMI',quantity:2,url:'https://example.com',reason:'Setup <classroom> & stock'};
+ const html=renderReport({date:'2026-01-01',subject:'Daily Report',tickets:[{ticketId:1,summary:'Work',status:'Completed',notes:'Done',nextStep:''}],purchases:[row]});
+ assert.equal((html.match(/<table /g)||[]).length,1);assert.match(html,/Reason<\/th>/);assert.match(html,/Setup &lt;classroom&gt; &amp; stock/);assert.match(html,/>HDMI × 2<\/a>/);
+ assert.doesNotThrow(()=>renderEodExtras({purchases:[{...row,reason:''}]}));assert.throws(()=>renderEodExtras({purchases:[{...row,reason:42}]}),/reason must be text/);
+});

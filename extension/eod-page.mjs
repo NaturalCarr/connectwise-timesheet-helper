@@ -19,7 +19,7 @@ function row(ticket = {}) {
   $('tickets').append(field);
 }
 function record() {
-  return { date: $('eod-date').value, subject: $('eod-subject').value,
+  return { date: $('eod-date').value, subject: $('eod-subject').value, arrivalTime:$('arrival-time').value, departureTime:$('departure-time').value,
     tickets: [...$('tickets').children].map((field) => ({
       ticketId: field.querySelector('.id').value ? Number(field.querySelector('.id').value) : null,
       titleContains: field.querySelector('.title').value, status: field.querySelector('.state').value,
@@ -36,7 +36,7 @@ document.addEventListener('input', changed);
 document.addEventListener('change', changed);
 $('add').onclick = () => { if (!busy) { row(); changed(); } };
 const saved = (await chrome.storage.local.get(storageKey))[storageKey];
-if (saved) { $('eod-date').value = saved.date || ''; $('eod-subject').value = saved.subject || ''; saved.tickets?.forEach(row); }
+if (saved) { $('arrival-time').value=saved.arrivalTime || ''; $('departure-time').value=saved.departureTime || ''; $('eod-date').value = saved.date || ''; $('eod-subject').value = saved.subject || ''; saved.tickets?.forEach(row); }
 else { const now = new Date(); $('eod-date').value = `${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-${String(now.getDate()).padStart(2,'0')}`; }
 if (!$('tickets').children.length) row();
 async function send(action, tabId, fields) {
@@ -85,7 +85,7 @@ $('run').onclick = async () => navigator.locks.request('connectwise-helper-brows
       $('result').textContent = JSON.stringify(results, null, 2);
     }
     html = renderEod(plan, results); $('preview').innerHTML = html;
-    const report={date:plan.date,subject:plan.subject,docCams:plan.docCams,inventory:plan.inventory,purchases:plan.purchases,tickets:plan.tickets.map((ticket,index)=>({...ticket,summary:results[index].summary,ticketId:results[index].ticketId})),html};
+    const report={date:plan.date,subject:plan.subject,arrivalTime:plan.arrivalTime,departureTime:plan.departureTime,docCams:plan.docCams,inventory:plan.inventory,purchases:plan.purchases,tickets:plan.tickets.map((ticket,index)=>({...ticket,summary:results[index].summary,ticketId:results[index].ticketId})),html};
     attachReportEditor([report],{select:$('report-date'),preview:$('preview'),editor:$('email-editor'),copy:$('copy-email'),status:$('status')});
     $('status').textContent = 'All ticket statuses saved and verified. Email ready to copy; nothing was sent.';
   } catch (error) { $('status').textContent = `Stopped: ${error.message}`; $('result').textContent = JSON.stringify(results, null, 2); }

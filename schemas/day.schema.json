@@ -101,6 +101,10 @@
               "url": {
                 "type": "string",
                 "pattern": "^https?://"
+              },
+              "reason": {
+                "type": "string",
+                "description": "Optional reason for recommending this purchase; shown beside its linked item label."
               }
             }
           }
@@ -148,6 +152,16 @@
               ]
             }
           ]
+        },
+        "arrivalTime": {
+          "type": "string",
+          "pattern": "^([01][0-9]|2[0-3]):[0-5][0-9]$",
+          "description": "Actual onsite arrival time; report metadata only, not a time entry."
+        },
+        "departureTime": {
+          "type": "string",
+          "pattern": "^([01][0-9]|2[0-3]):[0-5][0-9]$",
+          "description": "Actual onsite departure time; report metadata only, not a time entry."
         }
       }
     },

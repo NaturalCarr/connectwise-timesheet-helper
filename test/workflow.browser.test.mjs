@@ -19,6 +19,7 @@ test('runner survives reload after save, resumes without duplicate and edits com
  window.chrome={storage:{local:storage,session:storage},tabs:{async get(){return {id:7,url:'https://na.myconnectwise.net/v2025_1/connectwise.aspx'}},async query(){return [{id:7}]},async update(){},async create(){}},runtime:{getURL:path=>'https://helper.test/'+path,async sendMessage(message){
   values=JSON.parse(localStorage.getItem(key)||'{}');values.actions=(values.actions||[]).concat(message.action);persist();
   switch(message.action){
+   case 'helperHealth':return {ok:true,pending:0};
    case 'findTickets':return {ok:true,matches:[{ticketId:123}]};
    case 'openTicket':return {ok:true,verified:true};
    case 'inspectTicket':return {ok:true,summary:'T-1 - Work'};

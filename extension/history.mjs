@@ -1,3 +1,4 @@
+import { recoverInterruptedRuns } from './run-health.mjs';
 import { allRuns, combinedReports, reviewPlan, verifiedEntry, renderReport } from './workflow.mjs';
 import { attachReportEditor } from './report-editor.mjs';
 const $=id=>document.getElementById(id);
@@ -11,7 +12,7 @@ function renderRuns(){
  for(const run of matches.slice(pageIndex*pageSize,(pageIndex+1)*pageSize)){
   const items=run.plan?.tickets||[],results=(run.evidence||run.result)?.results||[],state=run.state||'ready';
   const article=make('article','history-run'),head=make('div','history-run-head'),info=make('div');
-  const date=run.plan?.date||run.plan?.weekStart||'Ticket run';const title=make('h3','',items.length===1?(items[0].ticket?.summary||'Ticket run'):(run.plan?.weekStart&&!run.plan?.date?'Weekly timesheet':'Daily timesheet'));const dateLabel=make('div','run-date',date);
+  const date=run.plan?.date||run.plan?.weekStart||'Ticket run';const title=make('h3','',items.length===1?(items[0].ticket?.summary||'Ticket run'):(run.plan?.weekStart&&!run.plan?.date?'Multi-Day timesheet':'Daily timesheet'));const dateLabel=make('div','run-date',date);
   const badge=make('span','state-badge '+(['completed','stopped','running','ready'].includes(state)?state:'ready'),state);
   const verified=results.reduce((n,r)=>n+(r.entries||[]).filter(verifiedEntry).length,0),planned=items.reduce((n,t)=>n+(t.timeEntries||[]).length,0);
   const checkpoint=new Date(run.updatedAt);const updated=Number.isNaN(checkpoint.getTime())?'Unknown':checkpoint.toLocaleString(undefined,{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});
@@ -28,7 +29,7 @@ function renderTotals(days){$('totals').replaceChildren();if(!days.length){$('to
  const details=make('details');details.append(make('summary','','Coverage and gaps'),make('p','',day.gaps.length+' gaps · '+day.overlaps.length+' overlaps · '+duration(day.shortfallMinutes)+' short of the 8.5-hour target. Gaps are not counted as work.'));card.append(head,breakdown,details);$('totals').append(card);}
 }
 async function load(){const version=++loadVersion;$('refresh').disabled=true;$('history-status').textContent='';
- try{const runs=await allRuns();if(version!==loadVersion)return;storedRuns=runs;renderRuns();$('run-count').textContent=runs.length;$('attention-count').textContent=runs.filter(r=>r.state!=='completed').length;
+ try{await recoverInterruptedRuns(navigator.locks,chrome.storage.local);const runs=await allRuns();if(version!==loadVersion)return;storedRuns=runs;renderRuns();$('run-count').textContent=runs.length;$('attention-count').textContent=runs.filter(r=>r.state!=='completed').length;
  const entries=new Map();for(const run of [...runs].reverse())for(let i=0;i<((run.evidence||run.result)?.results||[]).length;i++){const result=(run.evidence||run.result).results[i],item=run.plan.tickets[i];for(let j=0;j<(result.entries||[]).length;j++){const saved=result.entries[j],entry=item?.timeEntries[j];if(result.ticketId&&entry&&verifiedEntry(saved))entries.set([result.ticketId,entry.date,entry.start,entry.end,entry.notes].join('|'),{...entry,billable:saved.billable||entry.billable});}}
  const total=reviewPlan({tickets:[{ticket:{summary:'Verified time'},timeEntries:[...entries.values()]}]});renderTotals(total.days);$('saved-time').textContent=duration(total.days.reduce((n,d)=>n+d.totalMinutes,0));
  const reports=combinedReports(runs).reverse();$('report-empty').hidden=!!reports.length;$('report-edit').hidden=!reports.length;$('dates').disabled=!reports.length;$('copy').disabled=!reports.length;

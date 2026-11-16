@@ -1,10 +1,9 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "ConnectWise weekly work plan",
+  "title": "ConnectWise multi-day work plan",
   "type": "object",
   "additionalProperties": false,
   "required": [
-    "weekStart",
     "items"
   ],
   "properties": {
@@ -44,8 +43,7 @@
           },
           "site": {
             "type": "string",
-            "const": "Democracy Prep Public Schools",
-            "description": "Optional; all tickets use the company-wide Site"
+            "description": "Optional exact Site; must agree with the confirmed school mapping, or configured default for unmapped schools."
           },
           "issue": {
             "type": "string",
@@ -311,6 +309,10 @@
                 "url": {
                   "type": "string",
                   "pattern": "^https?://"
+                },
+                "reason": {
+                  "type": "string",
+                  "description": "Optional reason for recommending this purchase; shown beside its linked item label."
                 }
               }
             }
@@ -358,9 +360,75 @@
                 ]
               }
             ]
+          },
+          "arrivalTime": {
+            "type": "string",
+            "pattern": "^([01][0-9]|2[0-3]):[0-5][0-9]$",
+            "description": "Actual onsite arrival time; report metadata only, not a time entry."
+          },
+          "departureTime": {
+            "type": "string",
+            "pattern": "^([01][0-9]|2[0-3]):[0-5][0-9]$",
+            "description": "Actual onsite departure time; report metadata only, not a time entry."
           }
         }
       }
+    },
+    "weekEnd": {
+      "type": "string",
+      "format": "date",
+      "description": "Optional inclusive end date for a multiweek batch. Defaults to Sunday of weekStart; must be on or after weekStart."
+    },
+    "startDate": {
+      "type": "string",
+      "format": "date",
+      "description": "Inclusive start date; any day of the week."
+    },
+    "endDate": {
+      "type": "string",
+      "format": "date",
+      "description": "Inclusive end date; on or after startDate."
     }
-  }
+  },
+  "oneOf": [
+    {
+      "required": [
+        "startDate",
+        "endDate"
+      ],
+      "not": {
+        "anyOf": [
+          {
+            "required": [
+              "weekStart"
+            ]
+          },
+          {
+            "required": [
+              "weekEnd"
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "required": [
+        "weekStart"
+      ],
+      "not": {
+        "anyOf": [
+          {
+            "required": [
+              "startDate"
+            ]
+          },
+          {
+            "required": [
+              "endDate"
+            ]
+          }
+        ]
+      }
+    }
+  ]
 }

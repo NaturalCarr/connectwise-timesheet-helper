@@ -1,3 +1,4 @@
+import { checkBackground, recoverInterruptedRuns } from './run-health.mjs';
 import { openPlannedEod } from './planned-eod.mjs';
 import { createRunMascot } from './run-mascot.mjs';
 import { renderRunReview } from './run-review.mjs';
@@ -23,14 +24,17 @@ $('copy-diagnostics').onclick=async()=>{try{await navigator.clipboard.writeText(
 async function send(action,tabId,fields={}) {
   mascot.heartbeat();
   let result;
+  const waiting=setTimeout(()=>{mascot.set('stopped');status.textContent='Waiting for background action '+action+'. It may still be active. Close runner tabs and reload the extension before resuming; do not start a second run.';},30000);
   try{result=await chrome.runtime.sendMessage({action,tabId,...fields});}
   catch(error){
+    clearTimeout(waiting);
     if(/message channel closed|Extension context invalidated|Receiving end does not exist/i.test(error.message)){
       const stopped=new Error('The helper background connection was interrupted during '+action+'. The action may have taken effect. Reopen this saved run after reloading the extension; Resume must recheck the ticket before any further save.');
       run.diagnostics=(run.diagnostics||[]).concat(diagnostic(action,stopped,fields.ticketId));await saveRun(run);throw stopped;
     }
     throw error;
   }
+  clearTimeout(waiting);
   if(!result?.ok){const error=new Error(result?.error||action+' failed.');if(Number.isSafeInteger(result?.ticketId))error.ticketId=result.ticketId;
     const info=diagnostic(action,error,fields.ticketId||error.ticketId); 
     if(fields.entry)info.entry={date:fields.entry.date,start:fields.entry.start,end:fields.entry.end};
@@ -60,6 +64,8 @@ async function execute(){
  if(!lock){mascot.set('stopped');status.textContent='Another helper run is active. Finish or stop it before starting this run.';return;}
  busy=true;mascot.set('working');$('start-run').disabled=true;
  try{
+  status.textContent='Checking helper background connection…';
+  await checkBackground(chrome.runtime);
   const plan=resumePlan(run.plan,run.evidence||run.result);run.state='running';await saveRun(run);
   tabId=await mainWorkspaceTab(await chooseConnectWiseTab(params),message=>status.textContent=message);
   const driver = {
@@ -76,6 +82,10 @@ async function execute(){
     },
     async openTicket(ticketId, ticket, lookup = {}) {
       return (await send('openTicket', tabId, { ticketId, ticket, numberOnly: lookup.numberOnly === true })).verified;
+    },
+    async ensureTicketSite(ticketId, site) {
+      status.textContent = 'Verifying school Site on #' + ticketId + '…';
+      return (await send('ensureTicketSite', tabId, {ticketId,site})).verified;
     },
     async ensureTicketOwner(ticketId, owner) {
       status.textContent = `Verifying Ticket Owner on #${ticketId}…`;
@@ -137,6 +147,7 @@ async function execute(){
  });
 }
 async function main(){
+ await recoverInterruptedRuns(navigator.locks,chrome.storage.local);
  let plan;
  if(params.get('source')==='history'){
    const id=params.get('runId');run=(await chrome.storage.local.get('runHistory:'+id))['runHistory:'+id];

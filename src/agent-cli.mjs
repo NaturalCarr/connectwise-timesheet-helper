@@ -1,3 +1,4 @@
+import { validateRakeInput } from '../extension/rake-model.mjs';
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { fileURLToPath } from 'node:url';
 import { dirname, resolve, sep } from 'node:path';
@@ -8,7 +9,8 @@ import { runBrowserJob, runTicketBrowserJob } from './browser-job.mjs';
 
 const protocolVersion = '1.0';
 const root = resolve(dirname(fileURLToPath(import.meta.url)), '..');
-const [command, ...args] = process.argv.slice(2);
+const [requestedCommand, ...args] = process.argv.slice(2);
+const command = ({'plan-multi-day':'plan-week','run-multi-day':'run-week'})[requestedCommand] || requestedCommand;
 
 function option(name) {
   const index = args.indexOf(name);
@@ -36,10 +38,14 @@ try {
       protocolVersion,
       ok: true,
       capabilities: {
+        iiqRakePlanning: true,
+        iiqRakeDirection: 'IIQ_TO_CW',
+        iiqRakeBrowser: 'source_only',
         ticketPlanning: true,
         ticketOnlyPlanning: true,
         timeEntryPlanning: true,
         weeklyPlanning: true,
+        multiDayPlanning: true,
         dailyBatchPlanning: true,
         dailyEndOfDayReport: 'source_only',
         googleContactsCsvInspection: true,
@@ -53,6 +59,10 @@ try {
         browserSubmission: false
       }
     }));
+  } else if (command === 'plan-rake') {
+    const path = option('--input');
+    if (!path) throw new Error('plan-rake requires --input <JSON path or ->.');
+    console.log(JSON.stringify({ protocolVersion, ok: true, plan: validateRakeInput(await readJson(path)) }));
   } else if (command === 'lookup-user') {
     const rosterPath = option('--roster');
     const query = option('--query');

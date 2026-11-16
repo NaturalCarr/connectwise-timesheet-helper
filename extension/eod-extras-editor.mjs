@@ -5,6 +5,12 @@ export function mountExtras(report, host, changed) {
  const intro = document.createElement('p'); intro.textContent = 'Add stock counts and purchase recommendations below the ticket table. Saved locally for this date; no ConnectWise changes.';
  host.append(heading,intro);
  const refresh = () => { try { renderEodExtras(report); changed(); } catch(error) { changed(error); } };
+ const visit=document.createElement('section');visit.className='extras-card';
+ const visitHeading=document.createElement('h4');visitHeading.textContent='Arrival & departure';visit.append(visitHeading);
+ const visitHint=document.createElement('p');visitHint.textContent='Actual onsite times for this report date. These fields do not add time entries or change billing.';visit.append(visitHint);
+ const visitRow=document.createElement('div');visitRow.className='doccam-row';
+ for(const [key,title] of [['arrivalTime','Arrival time'],['departureTime','Departure time']]){const label=document.createElement('label');label.textContent=title;const input=document.createElement('input');input.type='time';input.value=report[key] || '';input.setAttribute('aria-label',title);input.oninput=()=>{report[key]=input.value;refresh();};label.append(input);visitRow.append(label);}
+ visit.append(visitRow);host.append(visit);
  const section = (key,title,description,fields) => {
   report[key] ||= [];
   const card=document.createElement('section');card.className='extras-card';
@@ -15,7 +21,7 @@ export function mountExtras(report, host, changed) {
    for(const [name,label,placeholder] of fields){const field=document.createElement('label');field.textContent=label;const input=document.createElement('input');input.value=row[name] || '';input.placeholder=placeholder;input.setAttribute('aria-label',title+' '+label);if(name==='quantity'){input.type='number';input.min='1';input.step='1';}if(name==='url')input.type='url';input.onblur=()=>{if(name==='count'){row[name]=formatInventoryCount(input.value);input.value=row[name];refresh();}};input.oninput=()=>{row[name]=input.value;refresh();};field.append(input);line.append(field);}
    const remove=document.createElement('button');remove.type='button';remove.textContent='Remove';remove.setAttribute('aria-label','Remove '+title+' row '+(index+1));remove.onclick=()=>{report[key].splice(index,1);draw();refresh();};line.append(remove);list.append(line);
   }};
-  add.onclick=()=>{report[key].push(key==='inventory'?{item:'',count:''}:{item:'',quantity:1,url:''});draw();list.lastElementChild.querySelector('input').focus();};draw();card.append(h,hint,list,add);host.append(card);
+  add.onclick=()=>{report[key].push(key==='inventory'?{item:'',count:''}:{item:'',quantity:1,url:'',reason:''});draw();list.lastElementChild.querySelector('input').focus();};draw();card.append(h,hint,list,add);host.append(card);
  };
  section('inventory','Inventory','Record quantities or a model breakdown, such as 4 M1, 5 M5.',[['item','Item','MacBook loaners'],['count','Count / details','4 M1, 5 M5']]);
  const cameras=document.createElement('section');cameras.className='extras-card';
@@ -26,5 +32,5 @@ export function mountExtras(report, host, changed) {
  const clear=document.createElement('button');clear.type='button';clear.textContent='Clear';clear.setAttribute('aria-label','Clear document camera details');
  const updateCameras=()=>{const value={};if(count.value!=='')value.inUse=Number(count.value);if(rooms.value.trim())value.neededIn=rooms.value.split(',').map(r=>r.trim()).filter(Boolean);report.docCams=Object.keys(value).length?value:null;refresh();};
  count.oninput=updateCameras;rooms.oninput=updateCameras;clear.onclick=()=>{count.value='';rooms.value='';report.docCams=null;refresh();};cameraRow.append(countLabel,roomsLabel,clear);cameras.append(camerasTitle,camerasHint,cameraRow);host.append(cameras);
- section('purchases','Recommended purchase links','The complete Item name × quantity label becomes the link in your email.',[['item','Item name','USB-C adapter'],['quantity','Quantity','1'],['url','Purchase link','https://…']]);
+ section('purchases','Recommended purchase links','The complete Item name × quantity label becomes the link in your email.',[['item','Item name','USB-C adapter'],['quantity','Quantity','1'],['url','Purchase link','https://…'],['reason','Reason','Why this item is needed (optional)']]);
 }

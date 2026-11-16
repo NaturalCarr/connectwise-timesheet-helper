@@ -1,4 +1,4 @@
-CURRENT RELEASE: 0.9.21
+CURRENT RELEASE: 0.11.5
 
 ConnectWise Timesheet Helper
 
@@ -43,3 +43,20 @@ and browser profiles out of shared packages.
 
 Repository and releases:
 https://github.com/NaturalCarr/connectwise-timesheet-helper
+
+Recommended purchases have an optional Reason field, also accepted as reason in daily/weekly JSON. The reason appears beside the linked item in the copied report.
+If recovery still stalls, review the ConnectWise form for unsaved changes, close the affected ConnectWise ticket tab as well as helper run tabs, then reopen ConnectWise, reload the extension, select the new tab and Resume the saved run.
+
+Daily Reports accept actual Arrival time and Departure time per report date. These fields do not add time or affect billing.
+
+Blank new-ticket Agreement fields are filled with the exact configured agreement and verified before Save.
+
+To include multiple weeks, add an inclusive weekEnd date to the weekly JSON. Without it, the range remains one week.
+
+Multi-Day JSON supports any startDate/endDate range. Download the Multi-Day JSON example in Download Example Files. Older weekly inputs remain compatible.
+
+0.10.0 IIQ Rake: reload the helper, open IIQ Rake, then Connect IIQ site to grant optional access to your selected Incident IQ origin. Choose signed-in IIQ and CW tabs. Scan previews only; Apply selected changes writes CW status only. All handled means this browser's saved run history. Use recent count 1 for a small first scan. No tickets, time, or IIQ updates are created by the rake.
+
+IIQ Rake: select logged-in IIQ and CW tabs, enter your Resources search pattern,
+then Scan & preview changes. Pending Closure, Completed and Closed are ignored.
+After a stop, choose valid tabs and Continue selected changes to CW.

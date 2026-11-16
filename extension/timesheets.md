@@ -183,3 +183,19 @@ Daily JSON accepts endOfDay.docCams; weekly endOfDays objects accept docCams for
 This metadata fragment is not a complete work record. inUse is the total confirmed working cameras onsite currently in use, a nonnegative whole number. neededIn lists room designations where a camera is needed. Either field may be omitted when unknown. A confirmed zero is valid; an explicit empty neededIn array means none. Unknown fields render Not recorded. Omit docCams, or use null, to leave out the row. These counts add no time.
 
 The editor has DocCams (In Use) and DocCam needed In inputs beside inventory. Type rooms separated by commas. Clear removes the row and saves that local per-date override. Preview, rich clipboard, JSON-generated reports and saved reports all use two merged cells in the same bordered table: DocCams (In Use): 12 | DocCam needed In: 211, 336.
+
+## Purchase reasons (0.9.23)
+
+Recommended purchases accept an optional `reason` string beside item, quantity and url. The editor has a Reason field; previews and rich clipboard reports show a linked Item × quantity label with the reason in the next cell. Reasons stay tied to the report date and are preserved in daily/weekly JSON, saved reports and history. Existing inputs without a reason still work. Example: `{"item":"HDMI cable","quantity":2,"url":"https://example.com/hdmi","reason":"Document-camera setup and replacement stock"}`.
+
+## Arrival and departure (0.9.24)
+
+Daily JSON accepts optional `endOfDay.arrivalTime` and `endOfDay.departureTime` in 24-hour HH:MM format. Weekly JSON accepts the same fields in each dated `endOfDays` record. Example: `{"arrivalTime":"08:00","departureTime":"16:30"}`. These are actual onsite times supplied by the user, not inferred from time entries. They add no records and do not change hours or billing. The Daily Report includes a table row labeled Arrival time and departure time in the Ticket column, with the actual times in the adjoining merged cell. Report editors save and clear these fields independently for each report date; manual report entry has the same inputs. Omit a time when it is unknown. Existing JSON remains compatible.
+
+## Multiple weeks in one JSON (0.9.26)
+
+Weekly-format JSON can include an optional inclusive `weekEnd` date to cover multiple weeks in one validated batch. Example: `{"schemaVersion":"1.1","weekStart":"2026-11-02","weekEnd":"2026-11-12","items":[...]}`. weekStart remains a Monday. Without weekEnd, the range remains the original Monday-Sunday week. Entries and dated endOfDays metadata must fall inside the selected range; duplicate checks, overlap rejection, per-day reports and resume evidence still apply. Only include actual requested work or leave dates; a date range does not generate entries for missing days.
+
+## Multi-Day JSON (0.9.26)
+
+Multi-Day JSON replaces the Weekly JSON label in the workspace and example download. Use `schemaVersion: "1.1"`, `startDate`, `endDate`, and `items` for any inclusive date range, including a non-Monday start or multiple weeks. Example range: `"startDate":"2026-10-29", "endDate":"2026-11-12"`. Both dates are required for this format; do not mix them with legacy weekStart/weekEnd. Dated endOfDays metadata must be inside the range. Only supplied time entries are created; missing dates add no work. Existing weekly files remain accepted with their original Monday/Sunday defaults. CLI aliases `plan-multi-day` and `run-multi-day` use the same model-independent planner and browser safeguards. Current samples: examples/multi-day.example.json and extension/MULTI-DAY-EXAMPLE.json. Daily schema 1.2 still works.

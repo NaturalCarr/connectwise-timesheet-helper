@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><title>IIQ Rake</title><link rel="stylesheet" href="page-ui.css"><link rel="stylesheet" href="rake.css"></head>
+<body>
+<header class="page-heading"><div><span class="eyebrow">Status reconciliation</span><h1>IIQ Rake</h1><p>Read Incident IQ. Review the differences. Update ConnectWise.</p></div><span class="direction">IIQ → CW only</span></header>
+<section class="page-card"><h2>Choose what to check</h2><p>Start from the current CW Service Board. Search your Resources assignment, exclude pending closure/completed/closed tickets, then check their IIQ statuses. No tickets or time entries are created.</p>
+<div class="controls"><label>Scope<select id="scope"><option value="cw-open">All my open CW tickets</option><option value="cw-recent">Newest open CW tickets</option><option value="json">Imported rake JSON</option></select></label><label id="limit-label">Newest tickets (by CW number)<input id="limit" type="number" min="1" value="25"></label></div>
+<label>CW Resources filter<input id="resources-filter" value="" placeholder="*your-login*" maxlength="100" required></label><p>The helper searches this pattern in the Resources column. Use a Service Board with Location, Business Unit and Service Board set to View All for the full backlog.</p><details><summary>Import / export references</summary><p>Imported references are also checked against the current Resources assignment and open status.</p><textarea id="input-json" aria-label="Rake input JSON" rows="2" placeholder='{"schemaVersion":"1.0","direction":"IIQ_TO_CW","tickets":[{"reference":"T-12345","cwTicketIds":[123]}]}'></textarea><button id="export">Download current reference list</button><button id="sample">Download rake example</button></details>
+<div class="controls"><label>IIQ site URL<input id="origin" type="url" value="https://democracyprep.incidentiq.com"></label><button id="connect">Connect IIQ site</button><button id="open-iiq">Open IIQ</button></div>
+<p id="permission-status" role="status">Connect your IIQ site once to allow the helper to read its displayed ticket statuses.</p>
+<div class="controls"><label>Incident IQ tab<select id="iiq-tab"></select></label><label>ConnectWise tab<select id="cw-tab"></select></label><button id="refresh-tabs">Refresh tabs</button></div>
+<button id="scan" class="primary">Scan &amp; preview changes</button><button id="stop" disabled>Stop after current ticket</button>
+</section>
+<button id="copy-top" aria-label="Copy rake diagnostics" title="Copy rake diagnostics">📋</button><p id="source-summary"></p><details id="unlinked" hidden><summary>Open CW tickets without one IIQ reference</summary><ul id="unlinked-rows"></ul></details><p id="status" role="status" aria-live="polite">Choose a scope and scan. Scanning does not save either platform.</p>
+<section class="page-card"><div class="page-heading"><div><h2>Status differences</h2><p id="summary">No scan yet.</p></div><button id="apply" disabled class="primary">Apply selected changes to CW</button></div><p>IIQ is the source of truth. Unmapped statuses need a manual choice. The helper rechecks both platforms before each CW save.</p><div id="rows"></div></section>
+<details><summary>Results and diagnostics <button id="copy" aria-label="Copy rake results" title="Copy rake results">📋</button></summary><pre id="result" aria-label="Rake results"></pre></details>
+<script type="module" src="rake-page.mjs"></script><script type="module" src="page-ui.mjs"></script>
+</body></html>

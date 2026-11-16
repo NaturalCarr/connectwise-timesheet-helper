@@ -16,7 +16,7 @@ This section takes precedence over older release notes below.
 - Local/isolated-browser suite: 162 passed, 2 optional skipped. This isn't live production-save verification.
 
 
-Use this guide to turn the user's account of a workday into JSON for ConnectWise Timesheet Helper. It is model independent. Generate and validate the JSON; submit only when the user asks you to run it.
+Use this guide to turn Natural's account of a workday into JSON for ConnectWise Timesheet Helper. It is model independent. Generate and validate the JSON; submit only when the user asks you to run it.
 
 ## Collect and confirm the day
 
@@ -26,7 +26,7 @@ Use this guide to turn the user's account of a workday into JSON for ConnectWise
 - Do not invent work, troubleshooting, test results, root causes, or account details. Do not add hours solely to hit a target.
 - Count overlapping work once. For concurrent device setup, use shared work blocks instead of summing every device's elapsed setup time.
 - Preserve actual start/end times when known. Check total work, lunch, and other breaks separately. Do not count gaps automatically as work.
-- Write concise professional notes in the user's voice: concrete actions and outcomes, normal wording, no inflated claims. Correct spelling; preserve people's names as supplied. Use the humanizer/naturalsounding skill if available.
+- Write concise professional notes in Natural's voice: concrete actions and outcomes, normal wording, no inflated claims. Correct spelling; preserve people's names as supplied. Use the humanizer/naturalsounding skill if available.
 
 ## Lunch preference
 
@@ -36,14 +36,14 @@ Use workType Payroll Wrap, notes Lunch break., billable AUTO, and the actual lun
 
 ## Ticket references and creation
 
-- An imported reference such as T-90442 belongs in titleContains as a string. It is not a ConnectWise numeric ticket ID.
+- An imported reference such as T-52442 belongs in titleContains as a string. It is not a ConnectWise numeric ticket ID.
 - A confirmed ConnectWise ID belongs in existingTicketId as an integer.
 - Both may be supplied. The numeric ID wins. A confirmed missing ID can fall back to title text; permission/loading/verification failures must stop, not trigger creation.
 - Title text searches the Summary/title field only, with Company, Site, Location, and all other grid filters cleared. The helper prefers open matches. If none are open, it considers closed matches to avoid duplicate tickets. One match is reused; multiple matches stop for a choice.
 - With no match, the current helper can create a ticket after repeat duplicate checks. For title references, it retains the reference in the new title.
 - With neither reference, use issue and optional school. The helper searches the exact title before creation.
 - school is optional. If supplied, it prefixes the new title as ACRONYM - issue. Do not infer a school from the weekday or confuse similar acronyms.
-- ConnectWise Company and Site remain Example Public Schools. Do not substitute a school name or Google organization into Site.
+- ConnectWise Company remains Democracy Prep Public Schools. Supply the school acronym; the helper resolves confirmed school Sites from its mapping (README.md). Omit site unless explicitly needed; a conflicting site stops validation. ConnectWise fills the address after selection.
 - Owner is configured in the extension, not in each JSON item. First-run setup is required. Existing owners are changed through the Owner dropdown; Assign Me can add the signed-in resource when needed. The helper verifies ownership before entering time.
 
 ## Daily JSON
@@ -219,3 +219,21 @@ Daily JSON accepts endOfDay.docCams; weekly endOfDays objects accept docCams for
 This metadata fragment is not a complete work record. inUse is the total confirmed working cameras onsite currently in use, a nonnegative whole number. neededIn lists room designations where a camera is needed. Either field may be omitted when unknown. A confirmed zero is valid; an explicit empty neededIn array means none. Unknown fields render Not recorded. Omit docCams, or use null, to leave out the row. These counts add no time.
 
 The editor has DocCams (In Use) and DocCam needed In inputs beside inventory. Type rooms separated by commas. Clear removes the row and saves that local per-date override. Preview, rich clipboard, JSON-generated reports and saved reports all use two merged cells in the same bordered table: DocCams (In Use): 12 | DocCam needed In: 211, 336.
+
+## Purchase reasons (0.9.23)
+
+Recommended purchases accept an optional `reason` string beside item, quantity and url. The editor has a Reason field; previews and rich clipboard reports show a linked Item × quantity label with the reason in the next cell. Reasons stay tied to the report date and are preserved in daily/weekly JSON, saved reports and history. Existing inputs without a reason still work. Example: `{"item":"HDMI cable","quantity":2,"url":"https://example.com/hdmi","reason":"Document-camera setup and replacement stock"}`.
+
+## Arrival and departure (0.9.24)
+
+Daily JSON accepts optional `endOfDay.arrivalTime` and `endOfDay.departureTime` in 24-hour HH:MM format. Weekly JSON accepts the same fields in each dated `endOfDays` record. Example: `{"arrivalTime":"08:00","departureTime":"16:30"}`. These are actual onsite times supplied by the user, not inferred from time entries. They add no records and do not change hours or billing. The Daily Report includes a table row labeled Arrival time and departure time in the Ticket column, with the actual times in the adjoining merged cell. Report editors save and clear these fields independently for each report date; manual report entry has the same inputs. Omit a time when it is unknown. Existing JSON remains compatible.
+
+## Multiple weeks in one JSON (0.9.26)
+
+Weekly-format JSON can include an optional inclusive `weekEnd` date to cover multiple weeks in one validated batch. Example: `{"schemaVersion":"1.1","weekStart":"2026-11-02","weekEnd":"2026-11-12","items":[...]}`. weekStart remains a Monday. Without weekEnd, the range remains the original Monday-Sunday week. Entries and dated endOfDays metadata must fall inside the selected range; duplicate checks, overlap rejection, per-day reports and resume evidence still apply. Only include actual requested work or leave dates; a date range does not generate entries for missing days.
+
+## Multi-Day JSON (0.9.26)
+
+Multi-Day JSON replaces the Weekly JSON label in the workspace and example download. Use `schemaVersion: "1.1"`, `startDate`, `endDate`, and `items` for any inclusive date range, including a non-Monday start or multiple weeks. Example range: `"startDate":"2026-10-29", "endDate":"2026-11-12"`. Both dates are required for this format; do not mix them with legacy weekStart/weekEnd. Dated endOfDays metadata must be inside the range. Only supplied time entries are created; missing dates add no work. Existing weekly files remain accepted with their original Monday/Sunday defaults. CLI aliases `plan-multi-day` and `run-multi-day` use the same model-independent planner and browser safeguards. Current samples: examples/multi-day.example.json and extension/MULTI-DAY-EXAMPLE.json. Daily schema 1.2 still works.
+
+IIQ Rake (0.10.0): this is a separate one-way status reconciliation workflow. See README.md. Do not add time or create replacement tickets when reconciling. Use schemas/rake.schema.json for imported reference lists.
