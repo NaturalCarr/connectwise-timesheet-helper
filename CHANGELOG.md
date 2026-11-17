@@ -378,3 +378,7 @@ Publication validation (0.11.5): both working and sanitized checkouts passed 245
 ## 0.12.0
 
 Replace built-in school acronyms with Company-scoped mappings in Settings. Add, edit, remove and export mappings. Remove client-specific Site guards and bundled example acronyms. Existing saved plans remain unchanged.
+
+## 0.12.1
+
+Learn school acronyms and explicit Site names from valid JSON imports and save them in Settings. Reject conflicts and skip example imports.

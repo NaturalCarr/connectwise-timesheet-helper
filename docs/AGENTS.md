@@ -291,3 +291,5 @@ Rake reconciles existing CW tickets from IIQ; work JSON does not request a rake.
 ## User-managed school acronyms (0.12.0)
 
 Manage rows in Settings: acronym (2–16 letters/digits), exact CW Company, exact CW Site. Company/acronym pairs must be unique; the same acronym can belong to different companies. Settings export includes schoolMappings for model-independent CLI use. Empty or omitted mappings mean no school overrides. Removing a row stops future overrides; it does not alter saved run plans or tickets. Site correction verifies the configured Company before selecting/saving.
+
+JSON school discovery (0.12.1): valid non-example imports with explicit school and site strings add Company-scoped mappings to Settings. No Site name is inferred from an acronym alone. Existing or within-batch conflicts stop without saving new mappings. CLI planning resolves explicit pairs without changing files.

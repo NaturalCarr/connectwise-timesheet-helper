@@ -1,4 +1,4 @@
-import { mappedSchoolSite } from './school-mappings.mjs';
+import { mappedSchoolSite, settingsWithJsonSchools } from './school-mappings.mjs';
 import { normalizeTicketTitle } from './ticket-title.mjs';
 import { workReportNotes } from './payroll-report.mjs';
 import { normalizeEodExtras } from './eod-extras.mjs';
@@ -70,6 +70,7 @@ function resolveSchoolSite(school, requestedSite, settings) {
 export function planWorkItem(item, settings) {
   if (!item || typeof item !== 'object') throw new Error('Work item must be an object.');
   if (!settings || typeof settings !== 'object') throw new Error('Ticket settings are required.');
+  settings=settingsWithJsonSchools(item,settings);
   const school = clean(item.school).toUpperCase();
   const issue = clean(item.issue);
   const site = resolveSchoolSite(school, item.site, settings);
@@ -202,6 +203,7 @@ export function planTicket(input, settings) {
 }
 
 export function planWeek(input, settings) {
+  settings=settingsWithJsonSchools(input,settings);
   if (!input || typeof input !== 'object' || Array.isArray(input)) {
     throw new Error('Week input must be an object.');
   }

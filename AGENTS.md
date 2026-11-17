@@ -13,3 +13,5 @@ Read README.md and docs/AGENT_PROTOCOL.md before edits or browser operation. See
 - Release ZIPs contain the sanitized extension files with fictional defaults. Update manifest, helper build, install instructions and current docs together. Run relevant tests before committing or publishing.
 
 - Keep README.md focused on features, installation and usage. Put version-by-version implementation notes in CHANGELOG.md or GitHub Releases; Git commits retain source history. Preserve the contributor credits.
+
+- Validated non-example JSON can add explicit school/site pairs under the configured Company. Never infer missing names or overwrite conflicts. Persist mappings only after the whole import validates.

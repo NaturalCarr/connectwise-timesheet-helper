@@ -1,3 +1,4 @@
+import { rememberJsonSchools } from './config-settings.mjs';
 import { openPlannedEod } from './planned-eod.mjs';
 import { renderRunReview } from './run-review.mjs';
 import { reviewText } from './workflow.mjs';
@@ -67,16 +68,18 @@ validateButton.addEventListener('click', async () => {
     const record = JSON.parse(raw);
     const response = await fetch(chrome.runtime.getURL('ticket-settings.json'));
     if (!response.ok) throw new Error('Extension ticket defaults could not be loaded.');
-    const plan = (record.date ? planDay : planWeek)(record, await withTicketOwner(await response.json()));
+    const settings=await withTicketOwner(await response.json());
+    const plan = (record.date ? planDay : planWeek)(record, settings);
     if (plan.exampleOnly) throw new Error('Example-only JSON cannot be run in ConnectWise.');
+    const learned=await rememberJsonSchools(record,settings);
     validatedPlan = plan;
     eodButton.disabled=false;
     renderRunReview(preview,plan);
     const reportCount = new Set(plan.tickets.flatMap((item) => item.timeEntries.map((entry) => entry.date))).size;
-    status.textContent = `Validated ${plan.tickets.length} ticket(s) and ${plan.totalEntries} time entry/entries for ${plan.mode === 'daily' ? plan.date : `${plan.weekStart}–${plan.weekEnd}`}. Daily Report previews for ${reportCount} date(s) are ready now. Use Preview / copy Daily Report from JSON before running. Saved results are verified separately. Nothing has been saved or emailed.`;
+    status.textContent = `Validated ${plan.tickets.length} ticket(s) and ${plan.totalEntries} time entry/entries for ${plan.mode === 'daily' ? plan.date : `${plan.weekStart}–${plan.weekEnd}`}. Daily Report previews for ${reportCount} date(s) are ready now. Use Preview / copy Daily Report from JSON before running. Saved results are verified separately. No ConnectWise records have been saved or emailed.`;
     runButton.disabled = false;
     status.dataset.state = 'valid';
-    status.textContent = `✓ JSON valid — ${status.textContent}`;
+    status.textContent = `✓ JSON valid — ${learned ? learned+" school mapping(s) added to Settings. " : ""}${status.textContent}`;
     status.scrollIntoView({ block: 'nearest' });
   } catch (error) {
     status.dataset.state = 'error';
@@ -123,5 +126,3 @@ document.getElementById('copy-eod-sample').addEventListener('click', async () =>
     status.textContent='Example Daily Report copied with table formatting. Paste into your email composer.';
   } catch(error) { status.textContent=`Example Daily Report copy failed: ${error.message}`; }
 });
-
-

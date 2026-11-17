@@ -36,6 +36,8 @@ After a stop, use **Resume** or **Continue selected changes to CW**. Don't rerun
 
 In **Settings → School acronyms**, add an acronym, its exact CW Company, and its exact CW Site. Add, edit, or remove rows, then **Save configuration**. No client schools are built in. Mappings stay in your browser profile and are included when you download CLI settings JSON.
 
+Validating ticket, Daily or Multi-Day JSON automatically adds explicit school/site pairs to Settings under your configured Company. Missing Site names are never guessed; conflicting mappings stop for review. Example files do not add schools.
+
 Matching is case-insensitive and scoped by Company. An unknown acronym keeps your configured default Site. Revalidate new work after changing mappings; saved run plans keep their original Sites. ConnectWise fills in the address after Site selection.
 
 ## Guides

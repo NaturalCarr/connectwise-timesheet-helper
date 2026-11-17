@@ -13,3 +13,15 @@ export function validateSchoolMappings(value = []) {
 export function mappedSchoolSite(settings,acronym) {
  return validateSchoolMappings(settings.schoolMappings).find(row=>row.acronym===acronym && row.company.toLowerCase()===String(settings.company||'').trim().toLowerCase())?.site || null;
 }
+export function settingsWithJsonSchools(record,settings) {
+ const mappings=validateSchoolMappings(settings.schoolMappings);
+ const company=String(settings.company||'').trim();
+ for(const row of Array.isArray(record?.items)?record.items:[record]){
+  if(!row || typeof row.school!=='string' || !row.school.trim() || typeof row.site!=='string' || !row.site.trim())continue;
+  const candidate=validateSchoolMappings([{acronym:row.school,company,site:row.site}])[0];
+  const prior=mappings.find(m=>m.company.toLowerCase()===company.toLowerCase() && m.acronym===candidate.acronym);
+  if(prior && prior.site.toLowerCase()!==candidate.site.toLowerCase())throw new Error('School mapping conflict for '+candidate.acronym+': saved Site '+prior.site+', JSON Site '+candidate.site+'. Review it in Settings.');
+  if(!prior)mappings.push(candidate);
+ }
+ return {...settings,schoolMappings:mappings};
+}

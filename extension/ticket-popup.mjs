@@ -1,3 +1,4 @@
+import { rememberJsonSchools } from './config-settings.mjs';
 import { defaultPresets } from './workflow.mjs';
 import { withTicketOwner } from './owner-settings.mjs';
 import { planTicket } from './plan.mjs';
@@ -57,14 +58,16 @@ $('load-ticket-json').onclick = async () => {
     const raw = $('ticket-json').value.trim() || (file ? await file.text() : '');
     if (raw.length > 1024*1024) throw new Error('JSON must be under 1 MB.');
     const record = JSON.parse(raw);
-    const plan = planTicket(record, await withTicketOwner(await defaults()));
+    const settings=await withTicketOwner(await defaults());
+    const plan = planTicket(record, settings);
     if (plan.exampleOnly) throw new Error('Example-only JSON cannot be run.');
+    const learned=await rememberJsonSchools(record,settings);
     $('ticket-school').value = record.school || ''; $('ticket-issue').value = record.issue || '';
     $('ticket-description').value = record.description || ''; $('ticket-existing-id').value = record.existingTicketId || '';
     $('ticket-title-contains').value = record.titleContains || ''; recordId = record.recordId || null;
     restore(record.timeEntries || (record.timeEntry ? [record.timeEntry] : []));
     if (fields().length) { $('ticket-complete-after-time').value = record.finalStatus || (record.completeAfterTime === false ? 'Working Issue Now' : 'Completed'); $('ticket-complete-after-time').dispatchEvent(new Event('change', {bubbles:true})); }
-    summary(); await window.popupDraft.save('ticket'); status.textContent = 'JSON loaded. Review the ticket and entries before running.';
+    summary(); await window.popupDraft.save('ticket'); status.textContent = 'JSON loaded. '+(learned?learned+' school mapping(s) added to Settings. ':'')+'Review the ticket and entries before running.';
   } catch(error) { status.textContent = `JSON not loaded: ${error.message}`; }
 };
 document.addEventListener('popup-drafts-cleared', () => { recordId = null; restore(); status.textContent = ''; });
