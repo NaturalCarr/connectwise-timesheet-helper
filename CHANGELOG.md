@@ -382,3 +382,7 @@ Replace built-in school acronyms with Company-scoped mappings in Settings. Add, 
 ## 0.12.1
 
 Learn school acronyms and explicit Site names from valid JSON imports and save them in Settings. Reject conflicts and skip example imports.
+
+## 0.12.2
+
+Site correction waits for stable, nonempty Company and ticket Status before comparing the configured Company. True mismatches report both values and stop before any edit/save. Company is rechecked with the Site after reload. Resume retains confirmed tickets and checks the stopped ticket before entering time. No live save performed for this fix.

@@ -18,8 +18,17 @@ test('Site action response is accepted by the runner when already selected',asyn
  assert.equal(result.ok,true);assert.equal(result.verified,true);assert.equal(result.alreadySet,true);
 });
 test('changed Site success includes ok only after fresh save and reload verification',async()=>{
- let reads=0,saves=0,reloads=0,listener;const ctx={setTimeout:fn=>fn(),chrome:{runtime:{onMessage:{addListener:fn=>listener=fn}}},read:async({func})=>{if(func.name==='inspectSchoolSite'){reads++;return[{result:{company:'Democracy Prep Public Schools',verified:reads>1}}];}return[{result:{verified:true}}];},frame:async()=>({frameId:0,state:{status:'Working Issue Now'}}),select:async()=>{},clear:async()=>{},save:async()=>saves++,reload:async()=>reloads++};
+ let reads=0,saves=0,reloads=0,listener;const ctx={setTimeout:fn=>fn(),chrome:{runtime:{onMessage:{addListener:fn=>listener=fn}}},read:async({func})=>{if(func.name==='inspectSchoolSite'){reads++;return[{result:{company:'Democracy Prep Public Schools',verified:saves>0}}];}return[{result:{verified:true}}];},frame:async()=>({frameId:0,state:{status:'Working Issue Now'}}),select:async()=>{},clear:async()=>{},save:async()=>saves++,reload:async()=>reloads++};
  runInNewContext(source+';executeConnectWiseScript=read;matchingFrame=frame;selectSchoolSite=select;trustedTicketSave=save;reloadConnectWiseSafely=reload;',ctx);
  const result=await new Promise(resolve=>listener({action:'ensureTicketSite',company:'Democracy Prep Public Schools',tabId:1,ticketId:1767401,site:'Democracy Prep Endurance High School'},null,resolve));
  assert.equal(result.ok,true);assert.equal(result.verified,true);assert.equal(result.saved,true);assert.equal(saves,1);assert.equal(reloads,1);
+});
+
+test('Site readiness waits through blank Company before allowing the guard',async()=>{
+ let reads=0;const ctx={...base,read:async()=>[{result:{company:++reads<5?'':' Client One ',verified:true}}],frame:async()=>({frameId:0,state:{status:'Working Issue Now'}})};
+ const result=await runInNewContext(source+';executeConnectWiseScript=read;matchingFrame=frame;waitForSchoolSiteContext(1,42,"North","Client One")',ctx);assert.equal(result.state.verified,true);assert.ok(reads>=8);
+});
+test('Site Company mismatch reports both names and never permits Save',async()=>{
+ const ctx={...base,read:async()=>[{result:{company:'Other Client',verified:true}}],frame:async()=>({frameId:0,state:{status:'Working Issue Now'}})};
+ await assert.rejects(runInNewContext(source+';executeConnectWiseScript=read;matchingFrame=frame;ensureTicketSiteInTab({tabId:1,ticketId:42,site:"North",company:"Client One"})',ctx),/expected "Client One", displayed "Other Client"/);
 });

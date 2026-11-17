@@ -1,4 +1,4 @@
-CURRENT RELEASE: 0.12.1
+CURRENT RELEASE: 0.12.2
 
 ConnectWise Timesheet Helper
 

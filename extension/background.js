@@ -9,7 +9,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     return false;
   }
   if (message?.action === 'helperBuild') {
-    sendResponse({ ok: true, version: '0.12.1', ticketSaveMethod: 'exact-element' });
+    sendResponse({ ok: true, version: '0.12.2', ticketSaveMethod: 'exact-element' });
     return false;
   }
   const actions = {
@@ -48,7 +48,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   });
   connectwiseActionQueue = pending.catch(() => {});
   pending.then(sendResponse, (error) => sendResponse({ ok: false,
-    error: `[Helper 0.12.1; ${message.action}] ${error.message}`,
+    error: `[Helper 0.12.2; ${message.action}] ${error.message}`,
     ticketId: Number.isSafeInteger(error.ticketId) ? error.ticketId : null }));
   return true;
 });
@@ -2347,12 +2347,30 @@ async function selectSchoolSite(tabId,frameId,site) {
  }
  throw new Error('Exact Site did not commit and close its picker. No Save was attempted.');
 }
+async function waitForSchoolSiteContext(tabId,ticketId,site,company) {
+ const normalize=value=>String(value||'').trim().replace(/\s+/g,' ').toLowerCase();
+ if(!normalize(company))throw new Error('Configured Company is missing from the Site request. Reopen the updated run page before Resume. No Site edit or Save was attempted.');
+ let last=null,key='',stable=0;
+ for(let n=0;n<120;n++){
+  try{
+   const found=await matchingFrame(tabId,ticketId,inspectTicketFrame);
+   const target={tabId,frameIds:[found.frameId]};
+   const [read]=await executeConnectWiseScript({target,func:inspectSchoolSite,args:[site]});
+   last=read.result;
+   const next=normalize(last?.company) && normalize(found.state.status)?normalize(last.company)+'|'+normalize(found.state.status):'';
+   stable=next && next===key?stable+1:0;key=next;
+   if(stable>=3){
+    if(normalize(last.company)!==normalize(company))throw Object.assign(new Error('Site Company mismatch: expected '+JSON.stringify(company)+', displayed '+JSON.stringify(last.company)+'. No Site edit or Save was attempted.'),{companyMismatch:true});
+    return {found,target,state:last};
+   }
+  }catch(error){if(error.companyMismatch)throw error;stable=0;key='';}
+  await new Promise(resolve=>setTimeout(resolve,500));
+ }
+ throw new Error('Site Company fields did not finish loading: expected '+JSON.stringify(company)+', displayed '+JSON.stringify(last?.company??null)+'. No Site edit or Save was attempted.');
+}
 async function ensureTicketSiteInTab({tabId,ticketId,site,company}) {
- const found=await matchingFrame(tabId,ticketId,inspectTicketFrame);
- const target={tabId,frameIds:[found.frameId]};
- const [before]=await executeConnectWiseScript({target,func:inspectSchoolSite,args:[site]});
- if(!company || String(before.result?.company||'').trim().toLowerCase()!==company.trim().toLowerCase())throw new Error('School Site correction requires the expected Company.');
- if(before.result?.verified)return {ok:true,verified:true,alreadySet:true};
+ const {found,target,state}=await waitForSchoolSiteContext(tabId,ticketId,site,company);
+ if(state.verified)return {ok:true,verified:true,alreadySet:true};
  await selectSchoolSite(tabId,found.frameId,site);
  await executeConnectWiseScript({target,func:clearStatusEmailRecipients});
  await trustedTicketSave(tabId,found.frameId,ticketId);
@@ -2363,7 +2381,7 @@ async function ensureTicketSiteInTab({tabId,ticketId,site,company}) {
    for(let attempt=0;attempt<120;attempt++){
     try{const refreshed=await matchingFrame(tabId,ticketId,inspectTicketFrame);
      const [saved]=await executeConnectWiseScript({target:{tabId,frameIds:[refreshed.frameId]},func:inspectSchoolSite,args:[site]});
-     if(saved.result?.verified)return {ok:true,verified:true,saved:true};
+     if(saved.result?.verified && String(saved.result.company||'').trim().toLowerCase()===company.trim().toLowerCase())return {ok:true,verified:true,saved:true};
     }catch{}
     await new Promise(resolve=>setTimeout(resolve,500));
    }

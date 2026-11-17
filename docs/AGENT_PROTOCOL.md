@@ -1,6 +1,6 @@
 # Agent protocol
 
-## Current behavior (0.12.1)
+## Current behavior (0.12.2)
 
 This section takes precedence over older release notes below.
 
@@ -398,3 +398,7 @@ Manage rows in Settings: acronym (2–16 letters/digits), exact CW Company, exac
 0.12.0 validation: sanitized full suite 238 passed, 2 optional skipped; 11 targeted settings/rake/Site checks passed after removing the default IIQ client URL. No live ticket changes.
 
 JSON school discovery (0.12.1): valid non-example imports with explicit school and site strings add Company-scoped mappings to Settings. No Site name is inferred from an acronym alone. Existing or within-batch conflicts stop without saving new mappings. CLI planning resolves explicit pairs without changing files.
+
+## 0.12.2
+
+Site correction waits for stable, nonempty Company and ticket Status before comparing the configured Company. True mismatches report both values and stop before any edit/save. Company is rechecked with the Site after reload. Resume retains confirmed tickets and checks the stopped ticket before entering time. No live save performed for this fix.
