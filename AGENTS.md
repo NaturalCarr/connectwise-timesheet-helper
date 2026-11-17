@@ -15,3 +15,5 @@ Read README.md and docs/AGENT_PROTOCOL.md before edits or browser operation. See
 - Keep README.md focused on features, installation and usage. Put version-by-version implementation notes in CHANGELOG.md or GitHub Releases; Git commits retain source history. Preserve the contributor credits.
 
 - Validated non-example JSON can add explicit school/site pairs under the configured Company. Never infer missing names or overwrite conflicts. Persist mappings only after the whole import validates.
+
+- Ticket/time workflows may transfer a mismatched existing ticket to its configured Company/Contact/Agreement/Site. Preserve the ticket ID and all time records, clear recipients, and verify after a single Save and reload before adding time. Stop on unknown prompts or unverified results. Rake must not transfer Companies.

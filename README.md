@@ -4,7 +4,7 @@ A browser extension for ConnectWise tickets, timesheets, and Daily Reports. Uses
 
 ## Features
 
-- **Tickets and time:** find tickets by CW number or title text, create missing tickets, add multiple time entries, and set the final status.
+- **Tickets and time:** find tickets by CW number or title text, create missing tickets, transfer existing tickets to the configured Company/Site, add multiple time entries, and set the final status.
 - **Daily and Multi-Day runs:** validate agent-generated JSON, review the tickets, and process any date range.
 - **Daily Reports:** preview before the run finishes and copy a bordered table into Outlook. Include inventory, document-camera findings, purchase recommendations with reasons, and arrival/departure times. Lunch and Payroll Wrap stay out of the report.
 - **History and Resume:** continue stopped runs without repeating confirmed work.

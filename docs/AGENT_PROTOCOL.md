@@ -1,6 +1,6 @@
 # Agent protocol
 
-## Current behavior (0.12.2)
+## Current behavior (0.13.0)
 
 This section takes precedence over older release notes below.
 
@@ -402,3 +402,9 @@ JSON school discovery (0.12.1): valid non-example imports with explicit school a
 ## 0.12.2
 
 Site correction waits for stable, nonempty Company and ticket Status before comparing the configured Company. True mismatches report both values and stop before any edit/save. Company is rechecked with the Site after reload. Resume retains confirmed tickets and checks the stopped ticket before entering time. No live save performed for this fix.
+
+## Company transfer (0.13.0)
+
+Ticket/time runs can transfer an existing ticket to the configured Company before Site, owner and time work. They reuse the ticket ID, select the exact target Company, configured Contact and Agreement, and target Site, clear email recipients, save once and verify the fields after reload. Missing/ambiguous controls, unrelated pending transfer drafts and unverified saves stop. Confirmed finished tickets remain skipped. An uncertain transfer Save is not repeated in the same document. IIQ Rake does not transfer Companies.
+
+This path has local orchestration coverage but has not completed a live Company transfer. A Company-change dialog or unsupported picker layout may still require review; do not report a transfer as saved until reload readback verifies it.

@@ -9,7 +9,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     return false;
   }
   if (message?.action === 'helperBuild') {
-    sendResponse({ ok: true, version: '0.12.2', ticketSaveMethod: 'exact-element' });
+    sendResponse({ ok: true, version: '0.13.0', ticketSaveMethod: 'exact-element' });
     return false;
   }
   const actions = {
@@ -27,6 +27,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     createTicket: createTicketInTab,
     openTicket: openTicketInTab,
     ensureTicketOwner: ensureTicketOwnerInTab,
+    ensureTicketCompany: ensureTicketCompanyInTab,
     ensureTicketSite: ensureTicketSiteInTab,
     setTicketStatus: setTicketStatusInTab,
     verifyTicketStatus: verifyTicketStatusInTab,
@@ -48,7 +49,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   });
   connectwiseActionQueue = pending.catch(() => {});
   pending.then(sendResponse, (error) => sendResponse({ ok: false,
-    error: `[Helper 0.12.2; ${message.action}] ${error.message}`,
+    error: `[Helper 0.13.0; ${message.action}] ${error.message}`,
     ticketId: Number.isSafeInteger(error.ticketId) ? error.ticketId : null }));
   return true;
 });
@@ -775,6 +776,8 @@ async function chooseTicketOptionInTab(tabId, frameId, selector, value, ticketId
       await trustedTicketControlClick(tabId, frameId, ticketId, 'time-option', value, selector);
     } else if (selector === 'input.cw_ticketOwner' && ticketId) {
       await trustedTicketControlClick(tabId, frameId, ticketId, 'owner-option', value, selector);
+    } else if (ticketId && ['input.cw_company','input.cw_contact','input.cw_agreement'].includes(selector)) {
+      await trustedTicketControlClick(tabId,frameId,ticketId,'field-option',value,selector);
     } else if (!ticketId) {
       await trustedTicketControlClick(tabId, frameId, null, 'new-ticket-option', value, selector);
     } else {
@@ -2367,6 +2370,65 @@ async function waitForSchoolSiteContext(tabId,ticketId,site,company) {
   await new Promise(resolve=>setTimeout(resolve,500));
  }
  throw new Error('Site Company fields did not finish loading: expected '+JSON.stringify(company)+', displayed '+JSON.stringify(last?.company??null)+'. No Site edit or Save was attempted.');
+}
+function inspectTransferFields(ticketId,ticket) {
+ const visible=el=>el && el.getBoundingClientRect().width>0 && el.getBoundingClientRect().height>0;
+ const normalize=value=>String(value||'').trim().replace(/\s+/g,' ').toLowerCase();
+ const header=document.body?.innerText.match(/Service Ticket #(\d+)\s*-/);
+ if(header?.[1]!==String(ticketId))throw new Error('Ticket identity changed during Company transfer.');
+ const fields={};
+ for(const [name,selector] of Object.entries({company:'input.cw_company',contact:'input.cw_contact',agreement:'input.cw_agreement',site:'input.cw_companyViewCompanyAddress'})){
+  const inputs=[...document.querySelectorAll(selector)].filter(visible);fields[name]=inputs.length===1?inputs[0].value:null;
+ }
+ return {fields,verified:Object.keys(fields).every(key=>normalize(fields[key])===normalize(ticket[key]))};
+}
+function companyTransferDraft(ticketId,ticket,phase=null,fromCompany=null) {
+ const state=globalThis.__cwCompanyTransfer;
+ if(state && (state.ticketId!==String(ticketId) || state.company!==ticket.company))throw new Error('A different unsaved Company transfer needs review before continuing.');
+ if(phase)globalThis.__cwCompanyTransfer={ticketId:String(ticketId),company:ticket.company,phase,fromCompany:fromCompany || state?.fromCompany};
+ return globalThis.__cwCompanyTransfer || null;
+}
+async function ensureTicketCompanyInTab({tabId,ticketId,ticket}) {
+ if(!ticket?.company || !ticket?.site)throw new Error('Configured Company and Site are required before transfer. No edit was attempted.');
+ let companyMatches=false;
+ try{await waitForSchoolSiteContext(tabId,ticketId,ticket.site,ticket.company);companyMatches=true;}
+ catch(error){if(!error.companyMismatch)throw error;}
+ const current=await matchingFrame(tabId,ticketId,inspectTicketFrame);
+ const [pending]=await executeConnectWiseScript({target:{tabId,frameIds:[current.frameId]},func:companyTransferDraft,args:[String(ticketId),ticket]});
+ if(pending.result?.phase==='save_attempted')throw new Error('A Company transfer Save was already attempted but not verified. Review/reload the ticket before Resume; no repeat Save was sent.');
+ if(companyMatches && !pending.result)return {ok:true,verified:true,alreadySet:true};
+ if(!ticket.contact || !ticket.agreement)throw new Error('Configured Contact and Agreement are required for Company transfer. No edit was attempted.');
+ const found=await matchingFrame(tabId,ticketId,inspectTicketFrame),target={tabId,frameIds:[found.frameId]},oldStatus=found.state.status;
+ if(!found.state.company || !oldStatus)throw new Error('Source Company and Status were not verified. No edit was attempted.');
+ const fromCompany=pending.result?.fromCompany || found.state.company;
+ await executeConnectWiseScript({target,func:companyTransferDraft,args:[String(ticketId),ticket,'draft',fromCompany]});
+ if(!companyMatches){
+ await trustedTicketText(tabId,found.frameId,'input.cw_company',ticket.company,false);
+ const [choice]=await executeConnectWiseScript({target,func:locateCompanySuggestion,args:[ticket.company]});
+ if(!choice.result?.found)throw new Error('Exact target Company was not found. Transfer was not saved.');
+ await trustedTicketControlClick(tabId,found.frameId,ticketId,'field-option',ticket.company,'input.cw_company');
+ await waitForSchoolSiteContext(tabId,ticketId,ticket.site,ticket.company);
+ }
+ await chooseTicketOptionInTab(tabId,found.frameId,'input.cw_contact',ticket.contact,ticketId);
+ await chooseTicketOptionInTab(tabId,found.frameId,'input.cw_agreement',ticket.agreement,ticketId);
+ const [site]=await executeConnectWiseScript({target,func:inspectSchoolSite,args:[ticket.site]});
+ if(!site.result?.verified)await selectSchoolSite(tabId,found.frameId,ticket.site);
+ const [draft]=await executeConnectWiseScript({target,func:inspectTransferFields,args:[String(ticketId),ticket]});
+ if(!draft.result?.verified)throw new Error('Transferred Company/Contact/Agreement/Site did not retain the configured values. No Save was attempted.');
+ await executeConnectWiseScript({target,func:clearStatusEmailRecipients});
+ await executeConnectWiseScript({target,func:companyTransferDraft,args:[String(ticketId),ticket,'save_attempted',fromCompany]});
+ await trustedTicketSave(tabId,found.frameId,ticketId,oldStatus);
+ let confirmed=false;
+ for(let n=0;n<120;n++){
+  const [saved]=await executeConnectWiseScript({target,func:verifyTicketStatus,args:[String(ticketId),oldStatus]});
+  if(saved.result?.verified){confirmed=true;break;}await new Promise(resolve=>setTimeout(resolve,500));
+ }
+ if(!confirmed)throw new Error('Company transfer Save was attempted once but not confirmed. Resume must recheck this ticket; no replacement was created.');
+ await reloadConnectWiseSafely(tabId);
+ const reloaded=await waitForSchoolSiteContext(tabId,ticketId,ticket.site,ticket.company);
+ const [saved]=await executeConnectWiseScript({target:reloaded.target,func:inspectTransferFields,args:[String(ticketId),ticket]});
+ if(!saved.result?.verified)throw new Error('Company transfer was not verified after reload. Stop before adding time.');
+ return {ok:true,verified:true,saved:true,transferred:true,ticketId,fromCompany,company:ticket.company,site:ticket.site};
 }
 async function ensureTicketSiteInTab({tabId,ticketId,site,company}) {
  const {found,target,state}=await waitForSchoolSiteContext(tabId,ticketId,site,company);

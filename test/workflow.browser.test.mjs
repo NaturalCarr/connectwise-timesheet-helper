@@ -23,6 +23,7 @@ test('runner survives reload after save, resumes without duplicate and edits com
    case 'findTickets':return {ok:true,matches:[{ticketId:123}]};
    case 'openTicket':return {ok:true,verified:true};
    case 'inspectTicket':return {ok:true,summary:'T-1 - Work'};
+   case 'ensureTicketCompany':return {ok:true,verified:true,alreadySet:true};
    case 'ensureTicketOwner':return {ok:true,verified:true};
    case 'setTicketStatus':return {ok:true};
    case 'verifyTicketStatus':return {ok:true,verified:true};

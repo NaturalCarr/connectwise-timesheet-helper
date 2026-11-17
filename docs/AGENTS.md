@@ -293,3 +293,9 @@ Rake reconciles existing CW tickets from IIQ; work JSON does not request a rake.
 Manage rows in Settings: acronym (2–16 letters/digits), exact CW Company, exact CW Site. Company/acronym pairs must be unique; the same acronym can belong to different companies. Settings export includes schoolMappings for model-independent CLI use. Empty or omitted mappings mean no school overrides. Removing a row stops future overrides; it does not alter saved run plans or tickets. Site correction verifies the configured Company before selecting/saving.
 
 JSON school discovery (0.12.1): valid non-example imports with explicit school and site strings add Company-scoped mappings to Settings. No Site name is inferred from an acronym alone. Existing or within-batch conflicts stop without saving new mappings. CLI planning resolves explicit pairs without changing files.
+
+## Company transfer (0.13.0)
+
+Ticket/time runs can transfer an existing ticket to the configured Company before Site, owner and time work. They reuse the ticket ID, select the exact target Company, configured Contact and Agreement, and target Site, clear email recipients, save once and verify the fields after reload. Missing/ambiguous controls, unrelated pending transfer drafts and unverified saves stop. Confirmed finished tickets remain skipped. An uncertain transfer Save is not repeated in the same document. IIQ Rake does not transfer Companies.
+
+This path has local orchestration coverage but has not completed a live Company transfer. A Company-change dialog or unsupported picker layout may still require review; do not report a transfer as saved until reload readback verifies it.

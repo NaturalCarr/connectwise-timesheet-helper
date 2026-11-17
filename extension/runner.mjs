@@ -83,6 +83,10 @@ async function execute(){
     async openTicket(ticketId, ticket, lookup = {}) {
       return (await send('openTicket', tabId, { ticketId, ticket, numberOnly: lookup.numberOnly === true })).verified;
     },
+    async ensureTicketCompany(ticketId,ticket){
+      status.textContent='Verifying Company and Site on #'+ticketId+'…';
+      return (await send('ensureTicketCompany',tabId,{ticketId,ticket})).verified;
+    },
     async ensureTicketSite(ticketId, site, company) {
       status.textContent = 'Verifying school Site on #' + ticketId + '…';
       return (await send('ensureTicketSite', tabId, {ticketId,site,company})).verified;
