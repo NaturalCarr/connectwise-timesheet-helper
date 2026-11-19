@@ -299,3 +299,5 @@ JSON school discovery (0.12.1): valid non-example imports with explicit school a
 Ticket/time runs can transfer an existing ticket to the configured Company before Site, owner and time work. They reuse the ticket ID, select the exact target Company, configured Contact and Agreement, and target Site, clear email recipients, save once and verify the fields after reload. Missing/ambiguous controls, unrelated pending transfer drafts and unverified saves stop. Confirmed finished tickets remain skipped. An uncertain transfer Save is not repeated in the same document. IIQ Rake does not transfer Companies.
 
 This path has local orchestration coverage but has not completed a live Company transfer. A Company-change dialog or unsupported picker layout may still require review; do not report a transfer as saved until reload readback verifies it.
+
+Daily and Multi-Day ticket items accept omitFromEod: true. This keeps all ticket/time work but excludes the ticket from planned and saved Daily Reports (helper 0.13.3+). Escalate / Awaiting lead and Scheduling Required are supported finalStatus values.

@@ -30,7 +30,9 @@ For updates, replace the files in the same folder, click **Reload** on the Exten
 
 **IIQ Rake:** select signed-in IIQ and CW tabs. Use a CW Service Board with top filters set to **View All**, enter your Resources pattern (for example, `*your-login*`), and scan. Review before applying. IIQ is read-only; rake doesn't create tickets or time.
 
-After a stop, use **Resume** or **Continue selected changes to CW**. Don't rerun the original full JSON after a partial save. Clipboard icons copy diagnostics, including the active step.
+After a stop, use **Resume** or **Continue selected changes to CW**. If a CW tab was closed, choose its replacement in the run page's **ConnectWise tab** picker, then Resume. Don't rerun the original full JSON after a partial save. Clipboard icons copy diagnostics, including the active step.
+
+Set `omitFromEod: true` on a Daily or Multi-Day ticket item to keep its time and ticket details while leaving it out of the Daily Report.
 
 ## School acronyms
 

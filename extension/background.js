@@ -9,7 +9,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
     return false;
   }
   if (message?.action === 'helperBuild') {
-    sendResponse({ ok: true, version: '0.13.0', ticketSaveMethod: 'exact-element' });
+    sendResponse({ ok: true, version: '0.13.3', ticketSaveMethod: 'exact-element' });
     return false;
   }
   const actions = {
@@ -49,7 +49,7 @@ chrome.runtime.onMessage.addListener((message, _sender, sendResponse) => {
   });
   connectwiseActionQueue = pending.catch(() => {});
   pending.then(sendResponse, (error) => sendResponse({ ok: false,
-    error: `[Helper 0.13.0; ${message.action}] ${error.message}`,
+    error: `[Helper 0.13.3; ${message.action}] ${error.message}`,
     ticketId: Number.isSafeInteger(error.ticketId) ? error.ticketId : null }));
   return true;
 });
@@ -1614,7 +1614,7 @@ function verifyTicketStatus(ticketId, status) {
 
 async function setTicketStatusInTab({ tabId, ticketId, status, forceSave = false }) {
   if (!['Scheduled Remote', 'Scheduled Onsite', 'Working Issue Now', 'Scheduling Required',
-    'Waiting Parts/Repair', 'Waiting Client Response', 'Waiting on 3rd Party',
+    'Escalate / Awaiting lead', 'Waiting Parts/Repair', 'Waiting Client Response', 'Waiting on 3rd Party',
     'Waiting for next onsite visit', 'Pending Closure', 'Completed', 'Closed',
     'Closed/Client Unresponsive'].includes(status)) throw new Error('Unsupported ticket status.');
   let found;

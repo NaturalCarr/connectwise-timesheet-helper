@@ -43,7 +43,7 @@ Use workType Payroll Wrap, notes Lunch break., billable AUTO, and the actual lun
 - With no match, the current helper can create a ticket after repeat duplicate checks. For title references, it retains the reference in the new title.
 - With neither reference, use issue and optional school. The helper searches the exact title before creation.
 - school is optional. If supplied, it prefixes the new title as ACRONYM - issue. Do not infer a school from the weekday or confuse similar acronyms.
-- ConnectWise Company remains Democracy Prep Public Schools. Supply the school acronym; the helper resolves confirmed school Sites from its mapping (README.md). Omit site unless explicitly needed; a conflicting site stops validation. ConnectWise fills the address after selection.
+- Use the configured ConnectWise Company and exact school Site. Acronym mappings are user-managed in Settings. ConnectWise fills the address after Site selection.
 - Owner is configured in the extension, not in each JSON item. First-run setup is required. Existing owners are changed through the Owner dropdown; Assign Me can add the signed-in resource when needed. The helper verifies ownership before entering time.
 
 ## Daily JSON
@@ -125,7 +125,7 @@ Onsite [DO NOT USE] is displayed but disabled in the GUI. Do not select it. Copy
 
 ## Ticket final statuses
 
-Scheduled Remote; Scheduled Onsite; Working Issue Now; Scheduling Required; Waiting Parts/Repair; Waiting Client Response; Waiting on 3rd Party; Waiting for next onsite visit; Pending Closure; Completed; Closed; Closed/Client Unresponsive.
+Scheduled Remote; Scheduled Onsite; Working Issue Now; Scheduling Required; Escalate / Awaiting lead; Waiting Parts/Repair; Waiting Client Response; Waiting on 3rd Party; Waiting for next onsite visit; Pending Closure; Completed; Closed; Closed/Client Unresponsive.
 
 Choose the status supported by the user's account of the work. Work Type and ticket status are different: Payroll Wrap is a Work Type, not a ticket status.
 
@@ -237,3 +237,5 @@ Weekly-format JSON can include an optional inclusive `weekEnd` date to cover mul
 Multi-Day JSON replaces the Weekly JSON label in the workspace and example download. Use `schemaVersion: "1.1"`, `startDate`, `endDate`, and `items` for any inclusive date range, including a non-Monday start or multiple weeks. Example range: `"startDate":"2026-10-29", "endDate":"2026-11-12"`. Both dates are required for this format; do not mix them with legacy weekStart/weekEnd. Dated endOfDays metadata must be inside the range. Only supplied time entries are created; missing dates add no work. Existing weekly files remain accepted with their original Monday/Sunday defaults. CLI aliases `plan-multi-day` and `run-multi-day` use the same model-independent planner and browser safeguards. Current samples: examples/multi-day.example.json and extension/MULTI-DAY-EXAMPLE.json. Daily schema 1.2 still works.
 
 IIQ Rake (0.10.0): this is a separate one-way status reconciliation workflow. See README.md. Do not add time or create replacement tickets when reconciling. Use schemas/rake.schema.json for imported reference lists.
+
+Daily and Multi-Day ticket items accept omitFromEod: true. This keeps all ticket/time work but excludes the ticket from planned and saved Daily Reports (helper 0.13.3+). Escalate / Awaiting lead and Scheduling Required are supported finalStatus values.

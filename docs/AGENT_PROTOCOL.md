@@ -1,5 +1,19 @@
 # Agent protocol
 
+## Report exclusions (0.13.3)
+
+Daily/Multi-Day items accept boolean omitFromEod. True keeps ticket execution and time records intact, excluding the ticket only from planned and saved Daily Reports. Missing means included. Release validation: 249 passed, 2 optional skipped; no live saves.
+
+## Run tab replacement (0.13.2)
+
+Daily/Multi-Day run pages expose a ConnectWise tab picker and Refresh tabs above Resume. A replacement selection is stored with the saved run without clearing evidence or changing its plan. Resume validates the selected live CW tab before browser actions; controls are locked during execution. Closed tab IDs in navigation can fall back to a valid saved tab or the sole CW tab; ambiguous choices still stop. A closed execution target is never replaced mid-action. Local checks do not establish live saves.
+
+## Status support (0.13.1)
+
+Daily/Multi-Day JSON, status selectors and the browser save guard accept `Escalate / Awaiting lead`. `Scheduling Required` remains supported. For IIQ On Hold work, choose Scheduling Required when arranging a visit or Escalate / Awaiting lead when waiting for escalation/direction; do not submit On Hold as a CW status. This update has local validation coverage; no live status save is implied.
+
+
+
 ## Current behavior (0.13.0)
 
 This section takes precedence over older release notes below.

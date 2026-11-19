@@ -16,8 +16,9 @@ test('runner survives reload after save, resumes without duplicate and edits com
  values['helperSettings:ticketOwner']='Person';
  values['weeklyJob:00000000-0000-0000-0000-000000000001']={exampleOnly:false,tickets:[{recordId:'a',ticket:{summary:'T-1 - Work',status:'Working Issue Now',owner:'Person'},completedStatus:'Completed',timeEntries:[entry]}]};persist();
  const storage={async get(keys){values=JSON.parse(localStorage.getItem(key)||'{}');if(keys===null)return structuredClone(values);return Object.fromEntries((Array.isArray(keys)?keys:[keys]).map(k=>[k,structuredClone(values[k])]))},async set(next){values=JSON.parse(localStorage.getItem(key)||'{}');Object.assign(values,next);persist();},async remove(keys){for(const k of Array.isArray(keys)?keys:[keys])delete values[k];persist();}};
- window.chrome={storage:{local:storage,session:storage},tabs:{async get(){return {id:7,url:'https://na.myconnectwise.net/v2025_1/connectwise.aspx'}},async query(){return [{id:7}]},async update(){},async create(){}},runtime:{getURL:path=>'https://helper.test/'+path,async sendMessage(message){
-  values=JSON.parse(localStorage.getItem(key)||'{}');values.actions=(values.actions||[]).concat(message.action);persist();
+ const liveTabs=()=>JSON.parse(localStorage.getItem(key)||'{}').liveTabs||[7];
+ window.chrome={storage:{local:storage,session:storage},tabs:{async get(id){if(!liveTabs().includes(id))throw Error('No tab with id: '+id);return {id,url:'https://na.myconnectwise.net/v2025_1/connectwise.aspx'}},async query(){return liveTabs().map(id=>({id,title:'Manage: Ticket '+id,url:'https://na.myconnectwise.net/v2025_1/connectwise.aspx'}))},async update(){},async create(){}},runtime:{getURL:path=>'https://helper.test/'+path,async sendMessage(message){
+  values=JSON.parse(localStorage.getItem(key)||'{}');values.actions=(values.actions||[]).concat(message.action);if(message.tabId)values.lastBrowserTab=message.tabId;persist();
   switch(message.action){
    case 'helperHealth':return {ok:true,pending:0};
    case 'findTickets':return {ok:true,matches:[{ticketId:123}]};
@@ -65,11 +66,19 @@ test('runner survives reload after save, resumes without duplicate and edits com
  await page.screenshot({path:'.local/runner-carlton-stopped.png',fullPage:true});
  assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('test-state')).saves),1);
  const savedUrl=page.url();assert.match(savedUrl,/source=history/);
+ await page.evaluate(()=>{const state=JSON.parse(localStorage.getItem('test-state'));state.liveTabs=[8,9];localStorage.setItem('test-state',JSON.stringify(state));});
  await page.reload();await page.waitForFunction(()=>!document.getElementById('start-run-top').hidden);
+ await page.waitForFunction(()=>document.querySelectorAll('#connectwise-tab option').length===3);
+ assert.equal(await page.locator('#connectwise-tab').inputValue(),'');
+ const evidenceBefore=await page.evaluate(()=>Object.entries(JSON.parse(localStorage.getItem('test-state'))).find(([k])=>k.startsWith('runHistory:'))[1].evidence);
+ await page.locator('#connectwise-tab').selectOption('9');
+ await page.waitForFunction(()=>document.getElementById('tab-picker-status').textContent.startsWith('Tab selected.'));
+ assert.deepEqual(await page.evaluate(()=>Object.entries(JSON.parse(localStorage.getItem('test-state'))).find(([k])=>k.startsWith('runHistory:'))[1].evidence),evidenceBefore);
  assert.equal(await page.locator('#start-run-top').textContent(),await page.locator('#start-run').textContent());
  await page.locator('#start-run-top').click();
  await page.waitForFunction(()=>document.getElementById('status').textContent.startsWith('Run saved and verified.'));
  assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('test-state')).saves),1);
+ assert.equal(await page.evaluate(()=>JSON.parse(localStorage.getItem('test-state')).lastBrowserTab),9);
  await page.waitForFunction(()=>document.querySelector('#run-mascot').dataset.state==='completed');
  assert.equal(await page.locator('[data-mascot-label]').textContent(),'Completed');
  const shirt=await page.locator('#run-mascot').evaluate(root=>getComputedStyle([...root.querySelectorAll('path')].find(p=>p.getAttribute('fill').includes('--shirt-main'))).fill);

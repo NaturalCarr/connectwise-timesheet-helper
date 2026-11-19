@@ -1,9 +1,12 @@
 export async function chooseConnectWiseTab(params) {
   const configured = Number(params.get('tabId'));
   if (Number.isSafeInteger(configured) && configured > 0) {
-    const tab = await chrome.tabs.get(configured);
-    if (!tab.url?.startsWith('https://na.myconnectwise.net/')) throw new Error('Configured tab is not ConnectWise.');
-    return configured;
+    let tab;
+    try { tab = await chrome.tabs.get(configured); } catch { /* Reopened tabs have a new ID. */ }
+    if (tab) {
+      if (!tab.url?.startsWith('https://na.myconnectwise.net/')) throw new Error('Configured tab is not ConnectWise.');
+      return configured;
+    }
   }
   const saved = (await chrome.storage.local.get('connectwiseTabId')).connectwiseTabId;
   if (Number.isSafeInteger(saved)) {

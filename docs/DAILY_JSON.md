@@ -108,3 +108,5 @@ Weekly-format JSON can include an optional inclusive `weekEnd` date to cover mul
 ## Multi-Day JSON (0.9.26)
 
 Multi-Day JSON replaces the Weekly JSON label in the workspace and example download. Use `schemaVersion: "1.1"`, `startDate`, `endDate`, and `items` for any inclusive date range, including a non-Monday start or multiple weeks. Example range: `"startDate":"2026-10-29", "endDate":"2026-11-12"`. Both dates are required for this format; do not mix them with legacy weekStart/weekEnd. Dated endOfDays metadata must be inside the range. Only supplied time entries are created; missing dates add no work. Existing weekly files remain accepted with their original Monday/Sunday defaults. CLI aliases `plan-multi-day` and `run-multi-day` use the same model-independent planner and browser safeguards. Current samples: examples/multi-day.example.json and extension/MULTI-DAY-EXAMPLE.json. Daily schema 1.2 still works.
+
+Daily and Multi-Day ticket items accept omitFromEod: true. This keeps all ticket/time work but excludes the ticket from planned and saved Daily Reports (helper 0.13.3+). Escalate / Awaiting lead and Scheduling Required are supported finalStatus values.

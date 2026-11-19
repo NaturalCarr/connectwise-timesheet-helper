@@ -1,5 +1,21 @@
 # Development notes and version history
 
+## 0.13.3 — Keep selected tickets out of Daily Reports
+
+Release validation: 249 checks passed, 2 optional skipped, zero failures in the sanitized checkout with isolated browser fixtures enabled. No live ConnectWise records changed.
+
+Added `omitFromEod: true` to Daily and Multi-Day ticket items. Tickets still run normally and retain all time and details; planned reports and saved-run reports leave those tickets out. This is useful for internal meetings or detailed audits that should stay on the ticket. Also includes 0.13.1 escalation-status support and 0.13.2 replacement-tab recovery. Local validation covers report exclusion without dropping time records; no production saves were performed for these changes.
+
+## 0.13.3 — Keep selected tickets out of Daily Reports
+
+Added `omitFromEod: true` to Daily and Multi-Day ticket items. Tickets still run normally and retain all time and details; planned reports and saved-run reports leave those tickets out. This is useful for internal meetings or detailed audits that should stay on the ticket. Also includes 0.13.1 escalation-status support and 0.13.2 replacement-tab recovery. Local validation covers report exclusion without dropping time records; no production saves were performed for these changes.
+
+## 0.13.2 — Run tab replacement
+
+Added a ConnectWise tab picker and Refresh tabs above Resume on Daily/Multi-Day run pages. Changing tabs retains the saved plan and verified evidence. Resume checks the replacement tab before browser work; active runs lock the picker. Closed configured navigation tabs can recover to a saved or sole valid tab, while ambiguous choices stop. Validation: 13 navigation/workflow checks and the isolated browser recovery fixture passed. The fixture replaced a closed tab among two candidates, retained evidence, resumed on the selected tab, and kept the time Save count at one. No live ConnectWise saves were performed.
+
+
+
 Archived notes from the former README. Entries describe the state at the time; see [README.md](README.md) for current features and setup. Git commits and GitHub Releases also retain development history.
 
 # ConnectWise timesheet helper

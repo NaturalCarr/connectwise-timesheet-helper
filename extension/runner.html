@@ -8,6 +8,10 @@
     #result { height:160px;box-sizing:border-box;overflow:auto; }
     #result.logs-expanded {height:auto;max-height:none;}
     #toggle-logs {min-width:34px;min-height:34px;font-size:20px;vertical-align:middle;}
+    .run-tab-picker {margin:16px 0;padding:16px;border:1px solid #dbe3ef;border-radius:12px;background:#fff;}
+    .run-tab-picker label {display:block;font-weight:600;margin-bottom:8px;}
+    .run-tab-picker select {max-width:100%;width:460px;margin-right:8px;}
+    #tab-picker-status {margin:8px 0 0;font-size:13px;}
     pre { white-space: pre-wrap; overflow-wrap: anywhere; padding: 16px; background: #f2f4f6; }
   </style>
 <link rel="stylesheet" href="run-review.css"><link rel="stylesheet" href="run-mascot.css">
@@ -15,6 +19,7 @@
 <body>
   <section id="run-mascot" class="run-mascot" data-state="ready" aria-label="Run status"><div data-mascot-label role="status" aria-live="polite">Ready</div><div data-mascot-dancer></div><p data-mascot-note></p></section>
   <h1>ConnectWise daily / weekly run</h1>
+  <div class="run-tab-picker"><label for="connectwise-tab">ConnectWise tab</label><select id="connectwise-tab" aria-describedby="tab-picker-status"><option value="">Choose a ConnectWise tab…</option></select><button id="refresh-tabs" type="button">Refresh tabs</button><p id="tab-picker-status" role="status"></p></div>
   <button id="start-run-top" type="button" hidden>Resume stopped run</button>
   <button id="preview-json-eod" type="button" disabled>Preview / copy Daily Report from JSON</button>
   <p id="status" role="status">Loading the weekly work record…</p>

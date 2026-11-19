@@ -58,6 +58,9 @@
           "endOfDayNotes": {
             "type": "string"
           },
+          "omitFromEod": {
+            "type": "boolean"
+          },
           "nextStep": {
             "type": "string"
           },

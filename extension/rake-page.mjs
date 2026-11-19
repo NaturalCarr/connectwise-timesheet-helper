@@ -15,7 +15,7 @@ function origin() {
 let lastInput=null, detailTabId=null;
 async function input(browser = null) {
  const resourcesFilter=$('resources-filter').value.trim();
- if(!resourcesFilter)throw new Error('Enter your CW Resources filter, for example *ncarr*.');
+ if(!resourcesFilter)throw new Error('Enter your CW Resources filter, for example *your-login*.');
  if ($('scope').value === 'json') return validateRakeInput({...JSON.parse($('input-json').value),resourcesFilter});
  if(!browser){if(lastInput)return lastInput;throw new Error('Scan the CW backlog first, then export its reference list.');}
  $('status').textContent='Collecting open CW tickets assigned through Resources '+resourcesFilter+'…';

@@ -17,6 +17,24 @@ syncRunButtons();
 $('toggle-logs').onclick=()=>{const expanded=output.classList.toggle('logs-expanded');const button=$('toggle-logs');button.textContent=expanded?'−':'+';button.setAttribute('aria-expanded',String(expanded));button.setAttribute('aria-label',expanded?'Collapse logs':'Expand logs');button.title=expanded?'Collapse logs':'Expand logs';};
 const params=new URLSearchParams(location.hash.slice(1));
 let run,reportResult,tabId,busy=false,legacyTicket=false;
+async function refreshTabs(preferred=Number($('connectwise-tab').value)||run?.browserTabId||Number(params.get('tabId'))) {
+ const tabs=await chrome.tabs.query({url:'https://na.myconnectwise.net/*'});
+ const saved=(await chrome.storage.local.get('connectwiseTabId')).connectwiseTabId;
+ const selected=tabs.some(t=>t.id===preferred)?preferred:tabs.some(t=>t.id===saved)?saved:tabs.length===1?tabs[0].id:null;
+ const picker=$('connectwise-tab');picker.replaceChildren(new Option('Choose a ConnectWise tab…',''));
+ for(const tab of tabs)picker.add(new Option((tab.title||'ConnectWise')+' — tab '+tab.id,String(tab.id)));
+ picker.value=selected?String(selected):'';
+ $('tab-picker-status').textContent=selected?'Selected tab will be used when you resume. Confirmed work is retained.':tabs.length?'Choose the tab to continue this saved run.':'Open a signed-in ConnectWise tab, then refresh this list.';
+}
+$('refresh-tabs').onclick=()=>refreshTabs().catch(error=>{$('tab-picker-status').textContent=error.message;});
+$('connectwise-tab').onchange=async()=>{
+ try {
+  const id=Number($('connectwise-tab').value);if(!id){$('tab-picker-status').textContent='Choose a ConnectWise tab before resuming.';return;}
+  await chooseConnectWiseTab(new URLSearchParams({tabId:String(id)}));
+  if(run){run.browserTabId=id;await saveRun(run);}
+  $('tab-picker-status').textContent='Tab selected. Resume continues this run using the existing saved evidence.';
+ }catch(error){$('tab-picker-status').textContent=error.message;}
+};
 const copyIcon=$('copy-run-result').innerHTML;
 $('copy-run-result').onclick=async()=>{try{await navigator.clipboard.writeText(output.textContent);$('copy-run-status').textContent='Results copied.';}catch(e){$('copy-run-status').textContent=e.message;}};
 $('copy-diagnostics').innerHTML=copyIcon;
@@ -62,12 +80,19 @@ async function execute(){
  if(busy)return;
  await navigator.locks.request('connectwise-helper-browser-run',{ifAvailable:true},async lock=>{
  if(!lock){mascot.set('stopped');status.textContent='Another helper run is active. Finish or stop it before starting this run.';return;}
- busy=true;mascot.set('working');$('start-run').disabled=true;
+ busy=true;mascot.set('working');$('start-run').disabled=true;$('connectwise-tab').disabled=true;$('refresh-tabs').disabled=true;
  try{
   status.textContent='Checking helper background connection…';
   await checkBackground(chrome.runtime);
-  const plan=resumePlan(run.plan,run.evidence||run.result);run.state='running';await saveRun(run);
-  tabId=await mainWorkspaceTab(await chooseConnectWiseTab(params),message=>status.textContent=message);
+  const plan=resumePlan(run.plan,run.evidence||run.result);
+  const chosen=Number($('connectwise-tab').value);
+  if(!Number.isSafeInteger(chosen)||chosen<=0)throw new Error('Choose a ConnectWise tab above, then Resume. Your saved progress is retained.');
+  // Validate the current selection; never switch targets during a running action.
+  const current=await chrome.tabs.get(chosen).catch(()=>{throw new Error('The selected ConnectWise tab was closed. Refresh tabs, choose its replacement, then Resume.');});
+  if(!current.url?.startsWith('https://na.myconnectwise.net/'))throw new Error('The selected tab is no longer ConnectWise. Choose a valid tab above.');
+  tabId=await mainWorkspaceTab(chosen,message=>status.textContent=message);
+  run.browserTabId=tabId;params.set('tabId',String(tabId));await refreshTabs(tabId);
+  run.state='running';await saveRun(run);
   const driver = {
     async readTicketSummary(ticketId) {
       return (await send('inspectTicket', tabId, { ticketId })).summary;
@@ -147,7 +172,7 @@ async function execute(){
   await showReports();mascot.set(result.ok?'completed':'stopped');
   if(reportResult){const reply={...result};if(result.ok){reply.endOfDays=combinedReports([run]);if(plan.mode==='daily')reply.endOfDay=reply.endOfDays[0];}await reportResult(legacyTicket?{...reply.results?.[0],entry:reply.results?.[0]?.entries?.length===1?reply.results[0].entries[0]:undefined,ok:reply.ok}:reply);}
  }catch(error){mascot.set('stopped');run.state='stopped';run.diagnostics=(run.diagnostics||[]).concat(diagnostic('runner',error));await saveRun(run);status.textContent=error.message;output.textContent=JSON.stringify(run.result||{ok:false,error:error.message},null,2);$('copy-run-result').disabled=false;}
- finally{busy=false;$('start-run').disabled=false;}
+ finally{busy=false;$('start-run').disabled=false;$('connectwise-tab').disabled=false;$('refresh-tabs').disabled=false;}
  });
 }
 async function main(){
@@ -172,6 +197,7 @@ async function main(){
  if(correctPendingHuddles(run.plan,run.evidence||run.result))await saveRun(run);
  mascot.set(run.state==='completed'?'completed':run.state==='ready'?'ready':'stopped');
  showReview(plan);$('start-run').hidden=false;$('start-run').textContent=run.result?'Resume / recheck saved run':'Start reviewed run';
+ await refreshTabs();
  status.textContent='Review planned lookups, statuses, time totals, gaps and billing below. AUTO billing remains unknown until read from ConnectWise.';
  if(run.result){output.textContent=JSON.stringify(run.result,null,2);$('copy-run-result').disabled=false;}
  await showReports();$('start-run').onclick=execute;

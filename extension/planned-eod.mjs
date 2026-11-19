@@ -6,6 +6,7 @@ export function plannedReports(plan) {
   const details=plan.mode==='daily'?plan.endOfDay:plan.endOfDays?.find(day=>day.date===date);
   const tickets=[];
   plan.tickets.forEach((item,index)=>{
+   if(item.omitFromEod)return;
    const entries=item.timeEntries.filter(entry=>entry.date===date && !isPayrollWrap(entry));
    if(!entries.length || /payroll\s+wrap/i.test(item.ticket.summary))return;
    const daily=plan.mode==='daily'?plan.endOfDay?.tickets[index]:null;

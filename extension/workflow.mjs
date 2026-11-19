@@ -48,7 +48,7 @@ export function combinedReports(runs) {
     for(let i=0;i<(run.result?.results||[]).length;i++) {
       const result=run.result.results[i],item=run.plan.tickets[i];
       const final=finalStatuses.get(result.ticketId);
-      if(!item || !result.ticketId || !final || final.at<run.updatedAt) continue;
+      if(!item || item.omitFromEod || !result.ticketId || !final || final.at<run.updatedAt) continue;
       for(let j=0;j<(result.entries||[]).length;j++) {
         const saved=result.entries[j],entry=item.timeEntries[j];
         if(!entry || !verifiedEntry(saved) || isPayrollWrap(entry)) continue;

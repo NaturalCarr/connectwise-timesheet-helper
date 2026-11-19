@@ -2,7 +2,7 @@ import { cleanEodNotes } from './payroll-report.mjs';
 import { normalizeEodExtras, renderEodExtras, renderVisitTimes } from './eod-extras.mjs';
 export const isDitlTitle = (title) => /(^|\s)ditl(?=\s|$)/i.test(String(title || ''));
 export const eodStatuses = ['Scheduled Remote', 'Scheduled Onsite', 'Working Issue Now',
-  'Scheduling Required', 'Waiting Parts/Repair', 'Waiting Client Response', 'Waiting on 3rd Party',
+  'Scheduling Required', 'Escalate / Awaiting lead', 'Waiting Parts/Repair', 'Waiting Client Response', 'Waiting on 3rd Party',
   'Waiting for next onsite visit', 'Pending Closure', 'Completed', 'Closed', 'Closed/Client Unresponsive'];
 
 const escape = (value) => String(value).replace(/[&<>"']/g, (char) =>

@@ -259,6 +259,7 @@ export function planWeek(input, settings) {
       throw new Error(`Item ${itemIndex + 1} requires at least one time entry.`);
     }
     const base = planWorkItem(item, settings);
+    if (item.omitFromEod !== undefined && typeof item.omitFromEod !== 'boolean') throw new Error(`Item ${itemIndex + 1}: omitFromEod must be a boolean.`);
     const issueRecordId = clean(item.recordId);
     if (item.recordId !== undefined && !issueRecordId) throw new Error(`Item ${itemIndex + 1} recordId must be a nonempty string.`);
     if (issueRecordId && seenRecordIds.has(issueRecordId)) throw new Error(`Duplicate recordId: ${issueRecordId}.`);
@@ -306,7 +307,7 @@ export function planWeek(input, settings) {
     const { timeEntry: _unused, ...ticket } = base;
     if (item.finalStatus !== undefined && !eodStatuses.includes(item.finalStatus)) throw new Error(`Item ${itemIndex + 1}: unsupported finalStatus.`);
     return { ...ticket, completedStatus: item.finalStatus || ticket.completedStatus, recordId: issueRecordId || null, context: item.context || null,
-      sourceRecordIds, timeEntries, requiresTimeEntryDetails: false };
+      sourceRecordIds, timeEntries, omitFromEod: item.omitFromEod === true, requiresTimeEntryDetails: false };
   });
   const steps = tickets.flatMap((ticket, ticketIndex) => [
     { action: ticket.action, ticketIndex },
